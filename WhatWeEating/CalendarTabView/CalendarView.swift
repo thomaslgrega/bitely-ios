@@ -8,11 +8,19 @@
 import SwiftUI
 
 struct CalendarView: View {
+    @Binding var selectedDate: Date
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        DatePicker(
+            "Select a date",
+            selection: $selectedDate,
+            displayedComponents: [.date]
+        )
+        .datePickerStyle(.graphical)
+        .frame(width: 320, height: 400)
     }
 }
 
 #Preview {
-    CalendarView()
+    CalendarView(selectedDate: .constant(Date()))
 }

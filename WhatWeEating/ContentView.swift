@@ -8,18 +8,20 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var selectedTab = 0
+
     var body: some View {
-        TabView {
-            Tab("Calendar", systemImage: "calendar") {
-                CalendarTabView()
+        TabView(selection: $selectedTab) {
+            Tab("Calendar", systemImage: "calendar", value: 0) {
+                CalendarTabView(selectedTab: $selectedTab)
             }
 
-            Tab("Shopping List", systemImage: "list.bullet.rectangle.portrait") {
+            Tab("Shopping List", systemImage: "list.bullet.rectangle.portrait", value: 1) {
                 ShoppingListTabView()
             }
 
-            Tab("Recipes", systemImage: "fork.knife") {
-                RecipesTabView()
+            Tab("Recipes", systemImage: "fork.knife", value: 2) {
+                RecipesTabView(selectedDate: Date.now)
             }
         }
     }

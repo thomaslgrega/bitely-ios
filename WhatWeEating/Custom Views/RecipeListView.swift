@@ -8,11 +8,21 @@
 import SwiftUI
 
 struct RecipeListView: View {
+    @Binding var selectedCategory: FoodCategories?
+    @Binding var selectedRecipesTab: RecipesTabGroup
+
+    @State private var recipes = [Recipe]()
+
     var body: some View {
-        Text("Recipes")
+        List(recipes) { recipe in
+            VStack {
+                Text(recipe.name)
+            }
+        }
+        .listStyle(.inset)
     }
 }
 
 #Preview {
-    RecipeListView()
+    RecipeListView(selectedCategory: .constant(FoodCategories.Beef), selectedRecipesTab: .constant(RecipesTabGroup.all))
 }
