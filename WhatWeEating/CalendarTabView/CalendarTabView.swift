@@ -35,7 +35,7 @@ struct CalendarTabView: View {
             .bold()
         }
         .sheet(isPresented: $showRecipeSheet) {
-            RecipesTabView(selectedDate: selectedDate)
+            RecipesTabView()
         }
     }
 

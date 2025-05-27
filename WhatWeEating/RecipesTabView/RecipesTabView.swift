@@ -11,11 +11,9 @@ struct RecipesTabView: View {
     @State private var vm = RecipesTabViewVM()
     @State private var selectedRecipesTabGroup = RecipesTabGroup.all
     @State private var selectedFoodCategory: FoodCategories?
-    @State var selectedDate: Date
 
     var body: some View {
         NavigationStack {
-            Text(selectedFoodCategory?.rawValue ?? "No Category")
             Picker("Filter", selection: $selectedRecipesTabGroup) {
                 Text("All").tag(RecipesTabGroup.all)
                 Text("Favorites").tag(RecipesTabGroup.favorites)
@@ -24,44 +22,53 @@ struct RecipesTabView: View {
             .pickerStyle(.segmented)
             .padding(.vertical)
 
-            if selectedRecipesTabGroup == RecipesTabGroup.all && selectedFoodCategory == nil {
-                ScrollView {
-                    ForEach(FoodCategories.allCases, id: \.self) { category in
-                        VStack {
-                            ZStack {
-                                Image(category.rawValue.lowercased())
+            switch selectedRecipesTabGroup {
+            case .all:
+                if selectedFoodCategory != nil {
+                    List(vm.recipes) { recipe in
+                        Text(recipe.strMeal)
+                    }
+                    .listStyle(.plain)
+                } else {
+                    ScrollView {
+                        ForEach(FoodCategories.allCases, id: \.self) { category in
+                            VStack {
+                                ZStack {
+                                    Image(category.rawValue.lowercased())
 
-                                RoundedRectangle(cornerRadius: 15)
-                                    .foregroundStyle(.black.opacity(0.3))
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .foregroundStyle(.black.opacity(0.3))
 
-                                Text(category.rawValue)
-                                    .font(.largeTitle)
-                                    .bold()
-                                    .foregroundStyle(.white)
-                                    .padding()
+                                    Text(category.rawValue)
+                                        .font(.largeTitle)
+                                        .bold()
+                                        .foregroundStyle(.white)
+                                        .padding()
+                                }
+                                .padding(.horizontal)
                             }
-                            .padding(.horizontal)
-                        }
-                        .onTapGesture {
-                            selectedFoodCategory = category
+                            .onTapGesture {
+                                selectedFoodCategory = category
+                            }
                         }
                     }
                 }
-            } else {
+            default:
                 RecipeListView(selectedCategory: $selectedFoodCategory, selectedRecipesTab: $selectedRecipesTabGroup)
             }
         }
-//        switch selectedRecipesTabGroup {
-//        case .all:
-//            Text("ALL RECIPES")
-//        case .favorites:
-//            Text("FAVORITE RECIPES")
-//        case .mine:
-//            Text("MY RECIPES")
-//        }
+        .onChange(of: selectedFoodCategory) { oldCategory, newCategory in
+            guard let newCategory else {
+                return
+            }
+
+            Task {
+                await vm.fetchRecipesByCategory(category: newCategory)
+            }
+        }
     }
 }
 
 #Preview {
-    RecipesTabView(selectedDate: Date.now)
+    RecipesTabView()
 }

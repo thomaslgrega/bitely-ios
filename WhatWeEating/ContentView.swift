@@ -21,7 +21,7 @@ struct ContentView: View {
             }
 
             Tab("Recipes", systemImage: "fork.knife", value: 2) {
-                RecipesTabView(selectedDate: Date.now)
+                RecipesTabView()
             }
         }
     }

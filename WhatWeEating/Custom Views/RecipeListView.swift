@@ -16,7 +16,7 @@ struct RecipeListView: View {
     var body: some View {
         List(recipes) { recipe in
             VStack {
-                Text(recipe.name)
+                
             }
         }
         .listStyle(.inset)
