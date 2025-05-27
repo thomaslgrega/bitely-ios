@@ -27,15 +27,19 @@ struct RecipesTabView: View {
             case .all:
                 if selectedFoodCategory != nil {
                     List(vm.recipes) { recipe in
-                        HStack {
-                            KFImage(URL(string: recipe.strMealThumb))
-                                .resizable()
-                                .frame(width: 64, height: 64)
-                            Text(recipe.strMeal)
+                        NavigationLink(value: recipe.id) {
+                            HStack {
+                                KFImage(URL(string: recipe.strMealThumb))
+                                    .resizable()
+                                    .frame(width: 64, height: 64)
+                                Text(recipe.strMeal)
+                            }
                         }
-
                     }
                     .listStyle(.plain)
+                    .navigationDestination(for: String.self) { recipeID in
+                        RecipeInfoView(recipeId: recipeID, vm: $vm)
+                    }
                 } else {
                     ScrollView {
                         ForEach(FoodCategories.allCases, id: \.self) { category in

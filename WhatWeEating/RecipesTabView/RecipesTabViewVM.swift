@@ -25,7 +25,6 @@ class RecipesTabViewVM {
 
     func fetchRecipesByCategory(category: FoodCategories) async {
         guard let url = URL(string: baseURL + "filter.php?c=\(category.rawValue)") else {
-            print("Bad URL")
             return
         }
 
@@ -35,6 +34,21 @@ class RecipesTabViewVM {
             recipes = decodedData.meals
         } catch {
             print(error)
+        }
+    }
+
+    func fetchRecipeById(id: String) async -> Recipe? {
+        guard let url = URL(string: baseURL + "lookup.php?i=\(id)") else {
+            return nil
+        }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let decodedData = try JSONDecoder().decode(Response.self, from: data)
+            return decodedData.meals.first
+        } catch {
+            print(error)
+            return nil
         }
     }
 }

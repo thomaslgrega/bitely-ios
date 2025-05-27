@@ -22,7 +22,6 @@ struct CalendarTabView: View {
                     let day = calendar.component(.dayOfYear, from: newValue)
                     let year = calendar.component(.year, from: newValue)
                     recipes = testStore[day + year] ?? []
-                    print(selectedDate)
                 }
 
             Button("Add Meal", systemImage: "plus.circle") {
