@@ -5,6 +5,7 @@
 //  Created by Thomas Grega on 5/27/25.
 //
 
+import Kingfisher
 import SwiftUI
 
 struct RecipeInfoView: View {
@@ -16,13 +17,23 @@ struct RecipeInfoView: View {
     var body: some View {
         if let recipe {
             ScrollView {
-                Text("Instructions")
-                    .font(.title)
-                Text(recipe.strInstructions ?? "")
+                VStack {
+                    KFImage(URL(string: recipe.strMealThumb))
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity)
 
+                    Text("Ingredients")
+                        .font(.largeTitle)
+
+                    Text("Instructions")
+                        .font(.largeTitle)
+                    Text(recipe.strInstructions ?? "")
+                        .font(.title3)
+                }
             }
             .navigationTitle(recipe.strMeal)
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
         } else {
             ProgressView()
                 .task {
