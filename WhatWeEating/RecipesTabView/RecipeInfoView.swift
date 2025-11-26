@@ -17,7 +17,7 @@ struct RecipeInfoView: View {
     var body: some View {
         if let recipe {
             ScrollView {
-                VStack {
+                VStack(alignment: .leading) {
                     KFImage(URL(string: recipe.strMealThumb))
                         .resizable()
                         .aspectRatio(contentMode: .fit)
@@ -25,6 +25,16 @@ struct RecipeInfoView: View {
 
                     Text("Ingredients")
                         .font(.largeTitle)
+                    ForEach(Array(recipe.ingredients.keys), id: \.self) { ingredient in
+                        HStack {
+                            Text("\(recipe.ingredients[ingredient] ?? "")")
+                                .bold()
+                                .font(.title3)
+
+                            Text(ingredient)
+                                .font(.title3)
+                        }
+                    }
 
                     Text("Instructions")
                         .font(.largeTitle)
