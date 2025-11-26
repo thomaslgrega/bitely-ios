@@ -6,23 +6,37 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct RecipeListView: View {
-    @Binding var selectedCategory: FoodCategories?
-    @Binding var selectedRecipesTab: RecipesTabGroup
+    let selectedCategory: FoodCategories?
 
-    @State private var recipes = [Recipe]()
+    @Binding var vm: RecipesTabViewVM
 
     var body: some View {
-        List(recipes) { recipe in
-            VStack {
-                
+        List(vm.recipes) { recipe in
+            NavigationLink(value: recipe) {
+                HStack {
+                    KFImage(URL(string: recipe.strMealThumb))
+                        .resizable()
+                        .frame(width: 64, height: 64)
+                    Text(recipe.strMeal)
+                }
             }
         }
-        .listStyle(.inset)
+        .listStyle(.plain)
+        .navigationTitle(selectedCategory?.rawValue ?? "")
+        .navigationDestination(for: Recipe.self) { recipe in
+            RecipeInfoView(recipeId: recipe.id, vm: $vm)
+        }
+        .task {
+            if let selectedCategory {
+                await vm.fetchRecipesByCategory(category: selectedCategory)
+            }
+        }
     }
 }
 
 #Preview {
-    RecipeListView(selectedCategory: .constant(FoodCategories.Beef), selectedRecipesTab: .constant(RecipesTabGroup.all))
+    RecipeListView(selectedCategory: .Beef, vm: .constant(RecipesTabViewVM()))
 }

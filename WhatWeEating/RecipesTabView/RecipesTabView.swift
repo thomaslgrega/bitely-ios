@@ -5,7 +5,6 @@
 //  Created by Thomas Grega on 4/23/25.
 //
 
-import Kingfisher
 import SwiftUI
 
 struct RecipesTabView: View {
@@ -25,56 +24,35 @@ struct RecipesTabView: View {
 
             switch selectedRecipesTabGroup {
             case .all:
-                if selectedFoodCategory != nil {
-                    List(vm.recipes) { recipe in
-                        NavigationLink(value: recipe.id) {
-                            HStack {
-                                KFImage(URL(string: recipe.strMealThumb))
+                ScrollView {
+                    ForEach(FoodCategories.allCases, id: \.self) { category in
+                        NavigationLink(value: category) {
+                            ZStack {
+                                Image(category.rawValue.lowercased())
                                     .resizable()
-                                    .frame(width: 64, height: 64)
-                                Text(recipe.strMeal)
-                            }
-                        }
-                    }
-                    .listStyle(.plain)
-                    .navigationDestination(for: String.self) { recipeID in
-                        RecipeInfoView(recipeId: recipeID, vm: $vm)
-                    }
-                } else {
-                    ScrollView {
-                        ForEach(FoodCategories.allCases, id: \.self) { category in
-                            VStack {
-                                ZStack {
-                                    Image(category.rawValue.lowercased())
+                                    .scaledToFill()
 
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .foregroundStyle(.black.opacity(0.3))
+                                LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .top, endPoint: .bottom)
 
+                                VStack {
+                                    Spacer()
                                     Text(category.rawValue)
                                         .font(.largeTitle)
                                         .bold()
                                         .foregroundStyle(.white)
-                                        .padding()
                                 }
-                                .padding(.horizontal)
+                                .padding()
                             }
-                            .onTapGesture {
-                                selectedFoodCategory = category
-                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 15))
+                            .padding(.horizontal)
                         }
+                    }
+                    .navigationDestination(for: FoodCategories.self) { category in
+                        RecipeListView(selectedCategory: category, vm: $vm)
                     }
                 }
             default:
-                RecipeListView(selectedCategory: $selectedFoodCategory, selectedRecipesTab: $selectedRecipesTabGroup)
-            }
-        }
-        .onChange(of: selectedFoodCategory) { oldCategory, newCategory in
-            guard let newCategory else {
-                return
-            }
-
-            Task {
-                await vm.fetchRecipesByCategory(category: newCategory)
+                RecipeListView(selectedCategory: .Beef, vm: $vm)
             }
         }
     }

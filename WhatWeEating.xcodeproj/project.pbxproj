@@ -9,15 +9,31 @@
 /* Begin PBXBuildFile section */
 		246C05972DE65941004A8920 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 246C05962DE65941004A8920 /* Kingfisher */; };
 		246DF16A2DF0ED9E00B0F7DC /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 246DF1692DF0ED9E00B0F7DC /* FirebaseAnalytics */; };
+		246DF16D2DF13B5400B0F7DC /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 246DF16C2DF13B5400B0F7DC /* FirebaseAuth */; };
+		246DF1752DF258BB00B0F7DC /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 246DF1742DF258BB00B0F7DC /* GoogleSignIn */; };
+		246DF1772DF258BB00B0F7DC /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 246DF1762DF258BB00B0F7DC /* GoogleSignInSwift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2421D9E22DB71E1900267C57 /* WhatWeEating.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WhatWeEating.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		246DF1792DF25A5A00B0F7DC /* Exceptions for "WhatWeEating" folder in "WhatWeEating" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2421D9E12DB71E1900267C57 /* WhatWeEating */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2421D9E42DB71E1900267C57 /* WhatWeEating */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				246DF1792DF25A5A00B0F7DC /* Exceptions for "WhatWeEating" folder in "WhatWeEating" target */,
+			);
 			path = WhatWeEating;
 			sourceTree = "<group>";
 		};
@@ -28,7 +44,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				246DF1772DF258BB00B0F7DC /* GoogleSignInSwift in Frameworks */,
 				246DF16A2DF0ED9E00B0F7DC /* FirebaseAnalytics in Frameworks */,
+				246DF1752DF258BB00B0F7DC /* GoogleSignIn in Frameworks */,
+				246DF16D2DF13B5400B0F7DC /* FirebaseAuth in Frameworks */,
 				246C05972DE65941004A8920 /* Kingfisher in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -40,6 +59,7 @@
 			isa = PBXGroup;
 			children = (
 				2421D9E42DB71E1900267C57 /* WhatWeEating */,
+				246DF16B2DF13B5400B0F7DC /* Frameworks */,
 				2421D9E32DB71E1900267C57 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -50,6 +70,13 @@
 				2421D9E22DB71E1900267C57 /* WhatWeEating.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		246DF16B2DF13B5400B0F7DC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -74,6 +101,9 @@
 			packageProductDependencies = (
 				246C05962DE65941004A8920 /* Kingfisher */,
 				246DF1692DF0ED9E00B0F7DC /* FirebaseAnalytics */,
+				246DF16C2DF13B5400B0F7DC /* FirebaseAuth */,
+				246DF1742DF258BB00B0F7DC /* GoogleSignIn */,
+				246DF1762DF258BB00B0F7DC /* GoogleSignInSwift */,
 			);
 			productName = WhatWeEating;
 			productReference = 2421D9E22DB71E1900267C57 /* WhatWeEating.app */;
@@ -106,6 +136,7 @@
 			packageReferences = (
 				246C05952DE65941004A8920 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				246DF1682DF0ED9E00B0F7DC /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				246DF1732DF258BB00B0F7DC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2421D9E32DB71E1900267C57 /* Products */;
@@ -268,6 +299,7 @@
 				DEVELOPMENT_TEAM = DLGA93Q99A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WhatWeEating/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -297,6 +329,7 @@
 				DEVELOPMENT_TEAM = DLGA93Q99A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WhatWeEating/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -355,6 +388,14 @@
 				minimumVersion = 11.14.0;
 			};
 		};
+		246DF1732DF258BB00B0F7DC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -367,6 +408,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 246DF1682DF0ED9E00B0F7DC /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAnalytics;
+		};
+		246DF16C2DF13B5400B0F7DC /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 246DF1682DF0ED9E00B0F7DC /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		246DF1742DF258BB00B0F7DC /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 246DF1732DF258BB00B0F7DC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		246DF1762DF258BB00B0F7DC /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 246DF1732DF258BB00B0F7DC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

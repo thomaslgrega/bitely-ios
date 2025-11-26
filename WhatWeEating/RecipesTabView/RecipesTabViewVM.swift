@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum FoodCategories: String, CaseIterable {
+enum FoodCategories: String, CaseIterable, Hashable {
     case Beef, Chicken, Dessert, Lamb, Miscellaneous, Pasta, Pork, Seafood, Side, Starter, Vegan, Vegetarian, Breakfast, Goat
 }
 

@@ -11,7 +11,7 @@ struct Response: Codable {
     var meals: [Recipe]
 }
 
-struct Recipe: Codable, Identifiable {
+struct Recipe: Codable, Identifiable, Hashable {
     enum CodingKeys: String, CodingKey {
         case id = "idMeal"
         case strMeal, strCategory, strInstructions, strMealThumb
