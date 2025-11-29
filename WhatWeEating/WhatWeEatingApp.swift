@@ -5,8 +5,9 @@
 //  Created by Thomas Grega on 4/21/25.
 //
 
-import SwiftUI
 import Firebase
+import SwiftUI
+import SwiftData
 
 class AppDelegate: NSObject, UIApplicationDelegate {
   func application(_ application: UIApplication,
@@ -25,5 +26,6 @@ struct WhatWeEatingApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: Recipe.self)
     }
 }

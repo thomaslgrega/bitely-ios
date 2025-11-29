@@ -23,6 +23,10 @@ struct ContentView: View {
             Tab("Recipes", systemImage: "fork.knife", value: 2) {
                 RecipesTabView()
             }
+
+            Tab("Saved", systemImage: "bookmark", value: 3) {
+                
+            }
         }
     }
 }
