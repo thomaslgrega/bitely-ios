@@ -25,7 +25,7 @@ struct ContentView: View {
             }
 
             Tab("Saved", systemImage: "bookmark", value: 3) {
-                
+                SavedRecipesTabView()
             }
         }
     }

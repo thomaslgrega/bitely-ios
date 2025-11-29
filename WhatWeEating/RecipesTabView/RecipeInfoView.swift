@@ -6,11 +6,12 @@
 //
 
 import Kingfisher
+import SwiftData
 import SwiftUI
 
 struct RecipeInfoView: View {
+    @Environment(\.modelContext) var modelContext
     var recipeId: String
-
     @Binding var vm: RecipesTabViewVM
     @State private var recipe: Recipe?
 
@@ -18,10 +19,27 @@ struct RecipeInfoView: View {
         if let recipe {
             ScrollView {
                 VStack(alignment: .leading) {
-                    KFImage(URL(string: recipe.strMealThumb))
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: .infinity)
+                    ZStack(alignment: .topTrailing) {
+                        KFImage(URL(string: recipe.strMealThumb))
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: .infinity)
+
+                        ZStack {
+                            Circle()
+                                .frame(width: 50, height: 50)
+                                .padding()
+                            Button {
+                                saveRecipe()
+                            } label: {
+                                Image(systemName: "bookmark")
+                                    .bold()
+                                    .foregroundStyle(.white)
+                                    .font(.title3)
+                            }
+
+                        }
+                    }
 
                     Text("Ingredients")
                         .font(.largeTitle)
@@ -50,6 +68,11 @@ struct RecipeInfoView: View {
                     recipe = await vm.fetchRecipeById(id: recipeId)
                 }
         }
+    }
+
+    func saveRecipe() {
+        guard let recipe else { return }
+        modelContext.insert(recipe)
     }
 }
 

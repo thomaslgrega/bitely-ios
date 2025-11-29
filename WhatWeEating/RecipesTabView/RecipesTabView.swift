@@ -8,51 +8,36 @@
 import SwiftUI
 
 struct RecipesTabView: View {
-    @State private var vm = RecipesTabViewVM()
-    @State private var selectedRecipesTabGroup = RecipesTabGroup.all
     @State private var selectedFoodCategory: FoodCategories?
 
     var body: some View {
         NavigationStack {
-            Picker("Filter", selection: $selectedRecipesTabGroup) {
-                Text("All").tag(RecipesTabGroup.all)
-                Text("Favorites").tag(RecipesTabGroup.favorites)
-                Text("My Recipes").tag(RecipesTabGroup.mine)
-            }
-            .pickerStyle(.segmented)
-            .padding(.vertical)
+            ScrollView {
+                ForEach(FoodCategories.allCases, id: \.self) { category in
+                    NavigationLink(value: category) {
+                        ZStack {
+                            Image(category.rawValue.lowercased())
+                                .resizable()
+                                .scaledToFill()
 
-            switch selectedRecipesTabGroup {
-            case .all:
-                ScrollView {
-                    ForEach(FoodCategories.allCases, id: \.self) { category in
-                        NavigationLink(value: category) {
-                            ZStack {
-                                Image(category.rawValue.lowercased())
-                                    .resizable()
-                                    .scaledToFill()
+                            LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .top, endPoint: .bottom)
 
-                                LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .top, endPoint: .bottom)
-
-                                VStack {
-                                    Spacer()
-                                    Text(category.rawValue)
-                                        .font(.largeTitle)
-                                        .bold()
-                                        .foregroundStyle(.white)
-                                }
-                                .padding()
+                            VStack {
+                                Spacer()
+                                Text(category.rawValue)
+                                    .font(.largeTitle)
+                                    .bold()
+                                    .foregroundStyle(.white)
                             }
-                            .clipShape(RoundedRectangle(cornerRadius: 15))
-                            .padding(.horizontal)
+                            .padding()
                         }
-                    }
-                    .navigationDestination(for: FoodCategories.self) { category in
-                        RecipeListView(selectedCategory: category, vm: $vm)
+                        .clipShape(RoundedRectangle(cornerRadius: 15))
+                        .padding(.horizontal)
                     }
                 }
-            default:
-                RecipeListView(selectedCategory: .Beef, vm: $vm)
+                .navigationDestination(for: FoodCategories.self) { category in
+                    RecipeListView(selectedCategory: category)
+                }
             }
         }
     }

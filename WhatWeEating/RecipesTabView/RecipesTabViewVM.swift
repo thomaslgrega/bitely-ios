@@ -11,12 +11,6 @@ enum FoodCategories: String, CaseIterable, Hashable {
     case Beef, Chicken, Dessert, Lamb, Miscellaneous, Pasta, Pork, Seafood, Side, Starter, Vegan, Vegetarian, Breakfast, Goat
 }
 
-enum RecipesTabGroup {
-    case all
-    case favorites
-    case mine
-}
-
 @Observable
 class RecipesTabViewVM {
     private let baseURL = "https://www.themealdb.com/api/json/v1/1/"

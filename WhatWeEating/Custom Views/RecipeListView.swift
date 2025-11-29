@@ -9,9 +9,11 @@ import SwiftUI
 import Kingfisher
 
 struct RecipeListView: View {
+    @Environment(\.modelContext) var modelContext
     let selectedCategory: FoodCategories?
 
-    @Binding var vm: RecipesTabViewVM
+//    @Binding var vm: RecipesTabViewVM
+    @State var vm = RecipesTabViewVM()
 
     var body: some View {
         List(vm.recipes) { recipe in
@@ -38,5 +40,5 @@ struct RecipeListView: View {
 }
 
 #Preview {
-    RecipeListView(selectedCategory: .Beef, vm: .constant(RecipesTabViewVM()))
+    RecipeListView(selectedCategory: .Beef)
 }
