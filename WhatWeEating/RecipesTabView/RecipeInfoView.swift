@@ -11,6 +11,7 @@ import SwiftUI
 
 struct RecipeInfoView: View {
     @Environment(\.modelContext) var modelContext
+    var savedRecipeIds: Set<String>
     var recipeId: String
     @Binding var vm: RecipesTabViewVM
     @State private var recipe: Recipe?
@@ -30,9 +31,9 @@ struct RecipeInfoView: View {
                                 .frame(width: 50, height: 50)
                                 .padding()
                             Button {
-                                saveRecipe()
+                                savedRecipeIds.contains(recipeId) ? deleteRecipe() : saveRecipe()
                             } label: {
-                                Image(systemName: "bookmark")
+                                Image(systemName: savedRecipeIds.contains(recipeId) ? "bookmark.fill" : "bookmark")
                                     .bold()
                                     .foregroundStyle(.white)
                                     .font(.title3)
@@ -43,13 +44,13 @@ struct RecipeInfoView: View {
 
                     Text("Ingredients")
                         .font(.largeTitle)
-                    ForEach(Array(recipe.ingredients.keys), id: \.self) { ingredient in
+                    ForEach(recipe.ingredients) { ingredient in
                         HStack {
-                            Text("\(recipe.ingredients[ingredient] ?? "")")
+                            Text(ingredient.measurement)
                                 .bold()
                                 .font(.title3)
 
-                            Text(ingredient)
+                            Text(ingredient.name)
                                 .font(.title3)
                         }
                     }
@@ -74,8 +75,13 @@ struct RecipeInfoView: View {
         guard let recipe else { return }
         modelContext.insert(recipe)
     }
+
+    func deleteRecipe() {
+        guard let recipe else { return }
+        modelContext.delete(recipe)
+    }
 }
 
 #Preview {
-    RecipeInfoView(recipeId: "12345", vm: .constant(RecipesTabViewVM()))
+    RecipeInfoView(savedRecipeIds: Set(), recipeId: "12345", vm: .constant(RecipesTabViewVM()))
 }

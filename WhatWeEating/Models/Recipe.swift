@@ -12,6 +12,12 @@ struct Response: Codable {
     var meals: [Recipe]
 }
 
+struct Ingredient: Identifiable {
+    let id: String
+    let name: String
+    let measurement: String
+}
+
 @Model
 class Recipe: Codable, Identifiable, Hashable {
     enum CodingKeys: String, CodingKey {
@@ -253,7 +259,7 @@ class Recipe: Codable, Identifiable, Hashable {
 }
 
 extension Recipe {
-    var ingredients: [String: String] {
+    var ingredients: [Ingredient] {
         let ingredientNames = [
             strIngredient1, strIngredient2, strIngredient3, strIngredient4, strIngredient5,
             strIngredient6, strIngredient7, strIngredient8, strIngredient9, strIngredient10,
@@ -268,21 +274,17 @@ extension Recipe {
             strMeasure16, strMeasure17, strMeasure18, strMeasure19, strMeasure20
         ]
 
-        var dict = [String: String]()
+        var ingredientsArr = [Ingredient]()
 
         for i in 0..<20 {
-            guard let name = ingredientNames[i] else {
-                break
-            }
+            guard let name = ingredientNames[i] else { break }
+            guard let measurement = measurements[i] else { break }
+            if name == "" || measurement == "" { break }
 
-            guard let measurement = measurements[i] else {
-                break
-            }
-
-            dict[name] = measurement
+            ingredientsArr.append(Ingredient(id: "\(i)", name: name, measurement: measurement))
         }
 
-        return dict
+        return ingredientsArr
     }
 }
 

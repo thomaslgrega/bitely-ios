@@ -5,11 +5,18 @@
 //  Created by Thomas Grega on 4/29/25.
 //
 
+import SwiftData
 import SwiftUI
 import Kingfisher
 
 struct RecipeListView: View {
     @Environment(\.modelContext) var modelContext
+    @Query var savedRecipes: [Recipe]
+
+    var savedRecipeIds: Set<String> {
+        return Set(savedRecipes.map { $0.id })
+    }
+
     let selectedCategory: FoodCategories?
 
 //    @Binding var vm: RecipesTabViewVM
@@ -29,7 +36,7 @@ struct RecipeListView: View {
         .listStyle(.plain)
         .navigationTitle(selectedCategory?.rawValue ?? "")
         .navigationDestination(for: Recipe.self) { recipe in
-            RecipeInfoView(recipeId: recipe.id, vm: $vm)
+            RecipeInfoView(savedRecipeIds: savedRecipeIds, recipeId: recipe.id, vm: $vm)
         }
         .task {
             if let selectedCategory {
