@@ -12,7 +12,7 @@ struct Response: Codable {
     var meals: [Recipe]
 }
 
-struct Ingredient: Identifiable {
+struct Ingredient: Identifiable, Hashable {
     let id: String
     let name: String
     let measurement: String

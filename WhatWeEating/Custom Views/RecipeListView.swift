@@ -11,15 +11,13 @@ import Kingfisher
 
 struct RecipeListView: View {
     @Environment(\.modelContext) var modelContext
-    @Query var savedRecipes: [Recipe]
+    @Query(sort: [SortDescriptor(\Recipe.strMeal)]) var savedRecipes: [Recipe]
 
     var savedRecipeIds: Set<String> {
-        return Set(savedRecipes.map { $0.id })
+        Set(savedRecipes.map { $0.id })
     }
 
     let selectedCategory: FoodCategories?
-
-//    @Binding var vm: RecipesTabViewVM
     @State var vm = RecipesTabViewVM()
 
     var body: some View {
@@ -36,7 +34,7 @@ struct RecipeListView: View {
         .listStyle(.plain)
         .navigationTitle(selectedCategory?.rawValue ?? "")
         .navigationDestination(for: Recipe.self) { recipe in
-            RecipeInfoView(savedRecipeIds: savedRecipeIds, recipeId: recipe.id, vm: $vm)
+            RecipeInfoView(savedRecipeIds: savedRecipeIds, recipeId: recipe.id)
         }
         .task {
             if let selectedCategory {

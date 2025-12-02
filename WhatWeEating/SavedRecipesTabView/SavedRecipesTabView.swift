@@ -12,15 +12,20 @@ struct SavedRecipesTabView: View {
     @Environment(\.modelContext) var modelContext
     @Query(sort: [SortDescriptor(\Recipe.strMeal)]) var recipes: [Recipe]
 
-    @State private var vm = SavedRecipesTabViewVM()
+    var savedRecipesId: Set<String> {
+        Set(recipes.map { $0.id })
+    }
 
     var body: some View {
         NavigationStack {
             List {
                 ForEach(recipes) { recipe in
-                    Text(recipe.strMeal)
+                    NavigationLink(recipe.strMeal, value: recipe)
                 }
                 .onDelete(perform: deleteSavedRecipe)
+            }
+            .navigationDestination(for: Recipe.self) { recipe in
+                RecipeInfoView(savedRecipeIds: savedRecipesId, recipeId: recipe.id, recipe: recipe)
             }
         }
     }

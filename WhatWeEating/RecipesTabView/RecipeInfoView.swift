@@ -13,8 +13,8 @@ struct RecipeInfoView: View {
     @Environment(\.modelContext) var modelContext
     var savedRecipeIds: Set<String>
     var recipeId: String
-    @Binding var vm: RecipesTabViewVM
-    @State private var recipe: Recipe?
+    @State var vm = RecipesTabViewVM()
+    @State var recipe: Recipe?
 
     var body: some View {
         if let recipe {
@@ -83,5 +83,5 @@ struct RecipeInfoView: View {
 }
 
 #Preview {
-    RecipeInfoView(savedRecipeIds: Set(), recipeId: "12345", vm: .constant(RecipesTabViewVM()))
+    RecipeInfoView(savedRecipeIds: Set(), recipeId: "12345")
 }
