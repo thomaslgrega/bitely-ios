@@ -24,9 +24,15 @@ struct RecipeListView: View {
         List(vm.recipes) { recipe in
             NavigationLink(value: recipe) {
                 HStack {
-                    KFImage(URL(string: recipe.strMealThumb))
-                        .resizable()
-                        .frame(width: 64, height: 64)
+                    if let imageURL = recipe.strMealThumb {
+                        KFImage(URL(string: imageURL))
+                            .resizable()
+                            .frame(width: 64, height: 64)
+                    } else {
+                        Image(systemName: "photo")
+                            .resizable()
+                            .frame(width: 64, height: 64)
+                    }
                     Text(recipe.strMeal)
                 }
             }

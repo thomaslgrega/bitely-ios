@@ -21,10 +21,17 @@ struct RecipeInfoView: View {
             ScrollView {
                 VStack(alignment: .leading) {
                     ZStack(alignment: .topTrailing) {
-                        KFImage(URL(string: recipe.strMealThumb))
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(maxWidth: .infinity)
+                        if let imageURL = recipe.strMealThumb {
+                            KFImage(URL(string: imageURL))
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Image(systemName: "photo")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxWidth: .infinity)
+                        }
 
                         ZStack {
                             Circle()
@@ -46,7 +53,7 @@ struct RecipeInfoView: View {
                         .font(.largeTitle)
                     ForEach(recipe.ingredients) { ingredient in
                         HStack {
-                            Text(ingredient.measurement)
+                            Text(ingredient.measurementRaw)
                                 .bold()
                                 .font(.title3)
 
