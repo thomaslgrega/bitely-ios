@@ -19,7 +19,7 @@ struct AddRecipeView: View {
             Section("Ingredients") {
                 ForEach($recipe.ingredients) { $ingredient in
                     HStack {
-                        if ingredient.measurementQty != nil {
+                        if ingredient.isParsed {
                             TextField("Qty", value: $ingredient.measurementQty, format: .number)
                                 .keyboardType(.decimalPad)
 
@@ -72,7 +72,7 @@ struct AddRecipeView: View {
     }
 
     func addNewIngredient() {
-        recipe.ingredients.append(Ingredient(name: "", measurementRaw: "", measurementQty: 0))
+        recipe.ingredients.append(Ingredient(name: "", measurementRaw: "", isParsed: true))
     }
 
     func removeIngredient(_ ingredient: Ingredient)	 {
@@ -83,5 +83,7 @@ struct AddRecipeView: View {
 }
 
 #Preview {
-    AddRecipeView(recipe: Recipe(id: "", strMeal: "", strMealThumb: "", ingredients: [Ingredient(id: "1", name: "Tomato", measurementRaw: "2"), Ingredient(id: "2", name: "Potato", measurementRaw: "3")]))
+    let ingredient1 = Ingredient(id: "1", name: "Tomato", measurementRaw: "2")
+    let ingredient2 = Ingredient(id: "2", name: "Sugar", measurementRaw: "200g", measurementQty: 3, measurementUnit: MeasurementUnit.gram, isParsed: true)
+    return AddRecipeView(recipe: Recipe(id: "", strMeal: "", strMealThumb: "", ingredients: [ingredient1, ingredient2]))
 }

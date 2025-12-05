@@ -116,13 +116,15 @@ class Ingredient: Identifiable, Hashable {
     var measurementRaw: String
     var measurementQty: Double?
     var measurementUnit: MeasurementUnit?
+    var isParsed: Bool
 
-    init(id: String = UUID().uuidString, name: String, measurementRaw: String, measurementQty: Double? = nil, measurementUnit: MeasurementUnit? = nil) {
+    init(id: String = UUID().uuidString, name: String, measurementRaw: String, measurementQty: Double? = nil, measurementUnit: MeasurementUnit? = nil, isParsed: Bool = false) {
         self.id = id
         self.name = name
         self.measurementRaw = measurementRaw
         self.measurementQty = measurementQty
         self.measurementUnit = measurementUnit
+        self.isParsed = isParsed
     }
 }
 
