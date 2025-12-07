@@ -38,38 +38,47 @@ struct RecipeInfoView: View {
                                 .frame(width: 50, height: 50)
                                 .padding()
                             Button {
-                                savedRecipeIds.contains(recipeId) ? deleteRecipe() : saveRecipe()
+                                savedRecipeIds.contains(recipeId) ? deleteRecipe() : bookmarkRecipe()
                             } label: {
                                 Image(systemName: savedRecipeIds.contains(recipeId) ? "bookmark.fill" : "bookmark")
                                     .bold()
                                     .foregroundStyle(.white)
                                     .font(.title3)
                             }
-
                         }
                     }
 
-                    Text("Ingredients")
-                        .font(.largeTitle)
-                    ForEach(recipe.ingredients) { ingredient in
-                        HStack {
-                            Text(ingredient.measurementRaw)
-                                .bold()
-                                .font(.title3)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Ingredients")
+                            .font(.largeTitle)
 
-                            Text(ingredient.name)
-                                .font(.title3)
+                        ForEach(recipe.ingredients) { ingredient in
+                            HStack {
+                                Text(ingredient.measurementRaw.trimmingCharacters(in: .whitespacesAndNewlines))
+                                    .bold()
+                                    .font(.title3)
+
+                                Text(ingredient.name)
+                                    .font(.title3)
+                            }
                         }
-                    }
 
-                    Text("Instructions")
-                        .font(.largeTitle)
-                    Text(recipe.strInstructions ?? "")
-                        .font(.title3)
+                        Text("Instructions")
+                            .font(.largeTitle)
+                        Text(recipe.strInstructions ?? "")
+                            .font(.title3)
+                    }
+                    .padding()
                 }
             }
             .navigationTitle(recipe.strMeal)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                NavigationLink("Edit", value: recipe)
+            }
+            .navigationDestination(for: Recipe.self) { recipe in
+                AddRecipeView(recipe: recipe)
+            }
         } else {
             ProgressView()
                 .task {
@@ -78,7 +87,7 @@ struct RecipeInfoView: View {
         }
     }
 
-    func saveRecipe() {
+    func bookmarkRecipe() {
         guard let recipe else { return }
         modelContext.insert(recipe)
     }
