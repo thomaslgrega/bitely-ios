@@ -20,7 +20,9 @@ struct AddRecipeView: View {
 
             Section("Ingredients") {
                 ForEach($recipe.ingredients) { $ingredient in
-                    IngredientRowView(ingredient: $ingredient, onDelete: removeIngredient)
+                    IngredientRowView(ingredient: $ingredient, onDelete: {
+                        removeIngredient(ingredient)
+                    })
                 }
 
                 if recipe.ingredients.count < 20 {

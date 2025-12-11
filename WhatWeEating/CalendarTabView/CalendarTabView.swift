@@ -12,11 +12,10 @@ struct CalendarTabView: View {
     @State private var selectedDate = Date()
     @State private var showRecipeSheet = false
 
-    @Binding var selectedTab: Int
-
     var body: some View {
         VStack {
             CalendarView(selectedDate: $selectedDate)
+                .tint(.orange)
                 .onChange(of: selectedDate) { oldValue, newValue in
                     let calendar = Calendar.current
                     let day = calendar.component(.dayOfYear, from: newValue)
@@ -28,9 +27,9 @@ struct CalendarTabView: View {
                 showRecipeSheet = true
             }
             .padding()
-            .background(.blue)
-            .cornerRadius(5)
+            .background(.orange)
             .foregroundStyle(.white)
+            .cornerRadius(5)
             .bold()
         }
         .sheet(isPresented: $showRecipeSheet) {
@@ -50,5 +49,5 @@ struct CalendarTabView: View {
 }
 
 #Preview {
-    CalendarTabView(selectedTab: .constant(1))
+    CalendarTabView()
 }

@@ -7,24 +7,31 @@
 
 import SwiftUI
 
+enum mainTabs {
+    case calendar
+    case shoppingList
+    case searchRecipes
+    case bookmarkedRecipes
+}
+
 struct ContentView: View {
-    @State private var selectedTab = 0
+    @State private var selectedTab: mainTabs = .calendar
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Calendar", systemImage: "calendar", value: 0) {
-                CalendarTabView(selectedTab: $selectedTab)
+            Tab("Calendar", systemImage: "calendar", value: .calendar) {
+                CalendarTabView()
             }
 
-            Tab("Shopping List", systemImage: "list.bullet.rectangle.portrait", value: 1) {
+            Tab("Shopping List", systemImage: "basket", value: .shoppingList) {
                 ShoppingListTabView()
             }
 
-            Tab("Recipes", systemImage: "fork.knife", value: 2) {
+            Tab("Recipes", systemImage: "fork.knife", value: .searchRecipes) {
                 RecipesTabView()
             }
 
-            Tab("Saved", systemImage: "bookmark", value: 3) {
+            Tab("Saved", systemImage: "bookmark", value: .bookmarkedRecipes) {
                 SavedRecipesTabView()
             }
         }

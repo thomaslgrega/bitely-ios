@@ -9,7 +9,7 @@ import SwiftUI
 
 struct IngredientRowView: View {
     @Binding var ingredient: Ingredient
-    var onDelete: (Ingredient) -> Void
+    var onDelete: () -> Void
 
     var body: some View {
         HStack {
@@ -39,7 +39,7 @@ struct IngredientRowView: View {
 
             Spacer()
             Button(role: .destructive) {
-                onDelete(ingredient)
+                onDelete()
             } label: {
                 Image(systemName: "minus.circle")
             }
@@ -51,6 +51,6 @@ struct IngredientRowView: View {
 #Preview {
     IngredientRowView(
         ingredient: .constant(Ingredient(id: "1", name: "Lemon Juice", measurementRaw: "1 cup", measurementQty: 1, measurementUnit: MeasurementUnit.cup, isParsed: true)),
-        onDelete: { _ in }
+        onDelete: { }
     )
 }

@@ -15,6 +15,7 @@ struct RecipeInfoView: View {
     var recipeId: String
     @State var vm = RecipesTabViewVM()
     @State var recipe: Recipe?
+    @State var showShoppingListSheet = false
 
     var body: some View {
         if let recipe {
@@ -40,17 +41,28 @@ struct RecipeInfoView: View {
                             Button {
                                 savedRecipeIds.contains(recipeId) ? deleteRecipe() : bookmarkRecipe()
                             } label: {
-                                Image(systemName: savedRecipeIds.contains(recipeId) ? "bookmark.fill" : "bookmark")
+                                Image(systemName: savedRecipeIds.contains(recipeId) ? "star.fill" : "star")
                                     .bold()
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(.yellow)
                                     .font(.title3)
                             }
                         }
                     }
 
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Ingredients")
-                            .font(.largeTitle)
+                        HStack {
+                            Text("Ingredients")
+                                .font(.largeTitle)
+                            Spacer()
+                            Button {
+                                showShoppingListSheet = true
+                            } label: {
+                                Image(systemName: "basket")
+                                    .font(.title)
+                                    .foregroundStyle(.orange)
+                            }
+
+                        }
 
                         ForEach(recipe.ingredients) { ingredient in
                             HStack {
@@ -78,6 +90,9 @@ struct RecipeInfoView: View {
             }
             .navigationDestination(for: Recipe.self) { recipe in
                 AddRecipeView(recipe: recipe)
+            }
+            .sheet(isPresented: $showShoppingListSheet) {
+                RecipeShoppingListView(items: recipe.ingredients)
             }
         } else {
             ProgressView()
