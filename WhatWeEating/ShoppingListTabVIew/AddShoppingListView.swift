@@ -10,7 +10,9 @@ import SwiftUI
 struct AddShoppingListView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
-    @Binding var selectedShoppingList: ShoppingList?
+    
+    var onCreate: (ShoppingList) -> Void
+
     @State var name: String = ""
     @State var items: [ShoppingListItem] = []
 
@@ -77,11 +79,11 @@ struct AddShoppingListView: View {
         items = items.filter({ $0.ingredient.name != "" })
         let newShoppingList = ShoppingList(name: name, items: items)
         modelContext.insert(newShoppingList)
-        selectedShoppingList = newShoppingList
+        onCreate(newShoppingList)
         dismiss()
     }
 }
 
 #Preview {
-    AddShoppingListView(selectedShoppingList: .constant(ShoppingList(name: "Target")))
+    AddShoppingListView(onCreate: { _ in })
 }
