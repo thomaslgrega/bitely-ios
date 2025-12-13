@@ -13,7 +13,7 @@ struct CalendarTabView: View {
     @State private var showRecipeSheet = false
 
     var body: some View {
-        VStack {
+        ScrollView {
             CalendarView(selectedDate: $selectedDate)
                 .tint(.orange)
                 .onChange(of: selectedDate) { oldValue, newValue in
@@ -23,17 +23,40 @@ struct CalendarTabView: View {
                     recipes = testStore[day + year] ?? []
                 }
 
-            Button("Add Meal", systemImage: "plus.circle") {
-                showRecipeSheet = true
+            Divider()
+
+            VStack(alignment: .leading) {
+                Section("Breakfast") {
+                    
+                }
+                Section("Lunch") {
+
+                }
+
+                Section("Dinner") {
+
+                }
+
+                HStack {
+                    Spacer()
+                    Button("Add Meal", systemImage: "plus.circle") {
+                        showRecipeSheet = true
+                    }
+                    .padding()
+                    .background(.orange)
+                    .foregroundStyle(.white)
+                    .cornerRadius(5)
+                    .bold()
+
+                    Spacer()
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
-            .background(.orange)
-            .foregroundStyle(.white)
-            .cornerRadius(5)
-            .bold()
+
         }
         .sheet(isPresented: $showRecipeSheet) {
-            RecipesTabView()
+            SavedRecipesTabView()
         }
     }
 
