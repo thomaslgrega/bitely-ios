@@ -77,7 +77,7 @@ struct RecipeShoppingListView: View {
             .navigationTitle("Choose Ingredients")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showAddNewShoppingListSheet) {
-                AddShoppingListView { shoppingList in
+                AddShoppingListView(shoppingList: ShoppingList(name: "")) { shoppingList in
                     selectedShoppingList = shoppingList
                 }
             }

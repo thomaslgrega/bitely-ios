@@ -9,16 +9,15 @@ import Foundation
 import SwiftData
 
 @Model
-class Ingredient: Identifiable, Hashable {
-    var id: String
+class Ingredient: Hashable {
+    @Attribute(.unique) var id = UUID()
     var name: String
     var measurementRaw: String
     var measurementQty: Double?
     var measurementUnit: MeasurementUnit?
     var isParsed: Bool
 
-    init(id: String = UUID().uuidString, name: String, measurementRaw: String, measurementQty: Double? = nil, measurementUnit: MeasurementUnit? = nil, isParsed: Bool = false) {
-        self.id = id
+    init(name: String, measurementRaw: String, measurementQty: Double? = nil, measurementUnit: MeasurementUnit? = nil, isParsed: Bool = false) {
         self.name = name
         self.measurementRaw = measurementRaw
         self.measurementQty = measurementQty

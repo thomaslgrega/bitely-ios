@@ -34,7 +34,7 @@ struct ShoppingListTabView: View {
                 }
             }
             .sheet(isPresented: $showAddShoppingListSheet) {
-                AddShoppingListView(onCreate: { _ in })
+                AddShoppingListView(shoppingList: ShoppingList(name: ""), onCreate: { _ in })
             }
         }
     }

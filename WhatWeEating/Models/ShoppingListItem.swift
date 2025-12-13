@@ -10,12 +10,11 @@ import SwiftData
 
 @Model
 class ShoppingListItem: Identifiable {
-    var id: String
+    @Attribute(.unique) var id = UUID()
     var ingredient: Ingredient
     var purchased: Bool = false
 
     init(ingredient: Ingredient) {
-        self.id = UUID().uuidString
         self.ingredient = ingredient
     }
 }

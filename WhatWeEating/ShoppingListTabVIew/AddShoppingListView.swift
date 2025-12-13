@@ -10,30 +10,28 @@ import SwiftUI
 struct AddShoppingListView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
-    
-    var onCreate: (ShoppingList) -> Void
+    @Bindable var shoppingList: ShoppingList
 
-    @State var name: String = ""
-    @State var items: [ShoppingListItem] = []
+    var onCreate: (ShoppingList) -> Void
 
     var body: some View {
         NavigationStack {
             Form {
                 //TODO: Image field
 
-                Section {
-                    TextField("Name", text: $name)
+                Section("Name") {
+                    TextField("Costco, Target, etc.", text: $shoppingList.name)
                 }
 
                 Section("Ingredients") {
-                    ForEach($items) { $item in
+                    ForEach($shoppingList.items) { $item in
                         IngredientRowView(
                             ingredient: $item.ingredient,
                             onDelete: { removeItem(item) }
                         )
                     }
 
-                    if items.count < 20 {
+                    if shoppingList.items.count < 20 {
                         HStack {
                             Image(systemName: "plus.circle")
                                 .foregroundStyle(.blue)
@@ -61,29 +59,41 @@ struct AddShoppingListView: View {
     }
 
     func removeItem(_ item: ShoppingListItem) {
-        items.removeAll { $0.id == item.id }
+        shoppingList.items.removeAll { $0.id == item.id }
     }
 
     func addItem() {
         let newIngredient = Ingredient(name: "", measurementRaw: "", isParsed: true)
-        items.append(ShoppingListItem(ingredient: newIngredient))
+        shoppingList.items.append(ShoppingListItem(ingredient: newIngredient))
     }
 
     func saveShoppingList() {
         //TODO: Add image
         //TODO: Add check for shopping Lists with no name. Either a default name or stop users from creating
-        if name == "" {
-            name = "Shopping List"
+        if shoppingList.name == "" {
+            shoppingList.name = "Shopping List"
         }
 
-        items = items.filter({ $0.ingredient.name != "" })
-        let newShoppingList = ShoppingList(name: name, items: items)
-        modelContext.insert(newShoppingList)
-        onCreate(newShoppingList)
+        shoppingList.items = shoppingList.items.filter({ $0.ingredient.name != "" })
+        shoppingList.items = shoppingList.items.map { item in
+            if let qty = item.ingredient.measurementQty {
+                if let unit = item.ingredient.measurementUnit {
+                    item.ingredient.measurementRaw = "\(qty.trimTrailingZeros()) \(unit)"
+                } else {
+                    item.ingredient.measurementRaw = "\(qty)"
+                }
+            }
+
+            return item
+        }
+
+        modelContext.insert(shoppingList)
+        onCreate(shoppingList)
         dismiss()
     }
 }
 
 #Preview {
-    AddShoppingListView(onCreate: { _ in })
+    let list = ShoppingList(name: "Target")
+    AddShoppingListView(shoppingList: list, onCreate: { _ in })
 }

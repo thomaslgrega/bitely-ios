@@ -14,7 +14,7 @@ struct IngredientRowView: View {
     var body: some View {
         HStack {
             if ingredient.isParsed {
-                TextField("Qty", value: $ingredient.measurementQty, format: .number)
+                TextField("Qty", value: $ingredient.measurementQty, format: .number.precision(.fractionLength(0...2)))
                     .keyboardType(.decimalPad)
 
                 Picker("", selection: Binding(
@@ -50,7 +50,7 @@ struct IngredientRowView: View {
 
 #Preview {
     IngredientRowView(
-        ingredient: .constant(Ingredient(id: "1", name: "Lemon Juice", measurementRaw: "1 cup", measurementQty: 1, measurementUnit: MeasurementUnit.cup, isParsed: true)),
+        ingredient: .constant(Ingredient(name: "Lemon Juice", measurementRaw: "1 cup", measurementQty: 1, measurementUnit: MeasurementUnit.cup, isParsed: true)),
         onDelete: { }
     )
 }

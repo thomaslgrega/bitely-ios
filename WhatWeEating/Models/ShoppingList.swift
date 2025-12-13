@@ -9,8 +9,8 @@ import Foundation
 import SwiftData
 
 @Model
-class ShoppingList: Identifiable {
-    var id: String
+class ShoppingList {
+    @Attribute(.unique) var id = UUID()
     var name: String
 
     @Relationship(deleteRule: .cascade)
@@ -19,7 +19,6 @@ class ShoppingList: Identifiable {
     var image: String?
 
     init(name: String, items: [ShoppingListItem] = [], image: String? = nil) {
-        self.id = UUID().uuidString
         self.name = name
         self.items = items
         self.image = image

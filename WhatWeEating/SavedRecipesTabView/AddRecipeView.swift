@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct AddRecipeView: View {
+    @FocusState private var isKeyboardActive: Bool
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     @Bindable var recipe: Recipe
@@ -16,6 +17,7 @@ struct AddRecipeView: View {
         Form {
             Section("Recipe Name") {
                 TextField("Recipe Name", text: $recipe.strMeal)
+                    .focused($isKeyboardActive)
             }
 
             Section("Ingredients") {
@@ -24,6 +26,7 @@ struct AddRecipeView: View {
                         removeIngredient(ingredient)
                     })
                 }
+                .focused($isKeyboardActive)
 
                 if recipe.ingredients.count < 20 {
                     HStack {
@@ -36,6 +39,7 @@ struct AddRecipeView: View {
 
             Section("Instructions") {
                 TextField("Instructions", text: $recipe.strInstructions.orEmpty(), axis: .vertical)
+                    .focused($isKeyboardActive)
             }
         }
         .navigationTitle("Add a New Recipe")
@@ -45,6 +49,14 @@ struct AddRecipeView: View {
                 saveRecipe()
             } label: {
                 Text("Save")
+            }
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    isKeyboardActive = false
+                }
             }
         }
     }
@@ -63,11 +75,7 @@ struct AddRecipeView: View {
         for ingredient in recipe.ingredients {
             if ingredient.isParsed {
                 if let qty = ingredient.measurementQty {
-                    let formatter = NumberFormatter()
-                    formatter.minimumFractionDigits = 0
-                    formatter.maximumFractionDigits = 1
-                    formatter.numberStyle = .decimal
-                    ingredient.measurementRaw = "\(formatter.string(from: NSNumber(value: qty)) ?? "") \(ingredient.measurementUnit?.displayName ?? "")"
+                    ingredient.measurementRaw = "\(qty.trimTrailingZeros()) \(ingredient.measurementUnit?.displayName ?? "")"
                 }
             }
         }
@@ -78,8 +86,8 @@ struct AddRecipeView: View {
 }
 
 #Preview {
-    let ingredient1 = Ingredient(id: "1", name: "Tomato", measurementRaw: "2")
-    let ingredient2 = Ingredient(id: "2", name: "Sugar", measurementRaw: "200g", measurementQty: 3, measurementUnit: MeasurementUnit.gram, isParsed: true)
+    let ingredient1 = Ingredient(name: "Tomato", measurementRaw: "2")
+    let ingredient2 = Ingredient(name: "Sugar", measurementRaw: "200g", measurementQty: 3, measurementUnit: MeasurementUnit.gram, isParsed: true)
 
     NavigationStack {
         AddRecipeView(recipe: Recipe(id: "", strMeal: "", strMealThumb: "", ingredients: [ingredient1, ingredient2]))
