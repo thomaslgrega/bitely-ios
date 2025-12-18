@@ -9,7 +9,7 @@ import SwiftUI
 
 struct CustomListCardView: View {
     let mainText: String
-    let trailingIcon: String
+    let trailingIcon: String?
     let cardOnTapAction: () -> Void
     let iconOnTapAction: () -> Void
 
@@ -20,12 +20,14 @@ struct CustomListCardView: View {
             
             Spacer()
 
-            Button {
-                iconOnTapAction()
-            } label: {
-                Image(systemName: trailingIcon)
-                    .foregroundStyle(Color.primaryMain)
-                    .padding()
+            if let trailingIcon {
+                Button {
+                    iconOnTapAction()
+                } label: {
+                    Image(systemName: trailingIcon)
+                        .foregroundStyle(Color.primaryMain)
+                        .padding()
+                }
             }
         }
         .frame(minHeight: 50)

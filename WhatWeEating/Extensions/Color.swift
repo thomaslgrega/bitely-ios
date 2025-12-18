@@ -21,6 +21,7 @@ extension Color {
     static let secondary100 = Color(hex: "#F1F5F9")
     static let secondary200 = Color(hex: "#E2E8F0")
     static let secondary400 = Color(hex: "#94A3B8")
+    static let secondary700 = Color(hex: "#334155")
 
     // Accent - Teal
     static let accentMain = Color(hex: "#14B8A6")

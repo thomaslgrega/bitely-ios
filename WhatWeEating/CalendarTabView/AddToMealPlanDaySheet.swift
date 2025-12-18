@@ -38,10 +38,16 @@ struct AddToMealPlanDaySheet: View {
                     }
                 }
             }
-            .navigationTitle("Add a \(mealType.rawValue.lowercased())")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
+                }
+
+                ToolbarItem(placement: .principal) {
+                    Text("Add a \(mealType.rawValue.lowercased())")
+                        .foregroundStyle(Color.secondary700)
+                        .bold()
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -55,6 +61,8 @@ struct AddToMealPlanDaySheet: View {
                     .disabled(selectedRecipe == nil)
                 }
             }
+            .toolbarBackground(Color.secondary100, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
 }

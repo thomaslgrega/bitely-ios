@@ -11,38 +11,54 @@ import SwiftUI
 struct ShoppingListTabView: View {
     @Environment(\.modelContext) var modelContext
     @Query(sort: [SortDescriptor(\ShoppingList.name)]) var shoppingLists: [ShoppingList]
+    @State private var selectedList: ShoppingList?
 
     @State private var showAddShoppingListSheet = false
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(shoppingLists) { list in
-                    NavigationLink(value: list) {
-                        Text(list.name)
+            ZStack {
+                ScrollView {
+                    ForEach(shoppingLists) { list in
+                        CustomListCardView(mainText: list.name, trailingIcon: "trash") {
+                            selectedList = list
+                        } iconOnTapAction: {
+                            modelContext.delete(list)
+                        }
                     }
-                }
-                .onDelete(perform: deleteList)
-                .font(.title3)
-            }
-            .navigationDestination(for: ShoppingList.self) { shoppingList in
-                ShoppingListInfoView(list: shoppingList)
-            }
-            .toolbar {
-                Button("Add List") {
-                    showAddShoppingListSheet = true
-                }
-            }
-            .sheet(isPresented: $showAddShoppingListSheet) {
-                AddShoppingListView(shoppingList: ShoppingList(name: ""), onCreate: { _ in })
-            }
-        }
-    }
+                    .font(.title3)
 
-    func deleteList(_ offset: IndexSet) {
-        for index in offset {
-            let list = shoppingLists[index]
-            modelContext.delete(list)
+                    Spacer()
+                }
+                .foregroundStyle(Color.secondaryMain)
+                .padding()
+                .navigationTitle("Shopping Lists")
+                .navigationDestination(item: $selectedList) { shoppingList in
+                    ShoppingListInfoView(list: shoppingList)
+                }
+                .sheet(isPresented: $showAddShoppingListSheet) {
+                    AddShoppingListView(shoppingList: ShoppingList(name: ""), onCreate: { _ in })
+                }
+
+                VStack {
+                    Spacer()
+
+                    HStack {
+                        Spacer()
+                        Button {
+                            showAddShoppingListSheet = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .foregroundStyle(Color.secondary100)
+                                .font(.title)
+                        }
+                        .frame(width: 50, height: 50)
+                        .background(Color.primaryMain)
+                        .clipShape(Circle())
+                    }
+                    .padding(32)
+                }
+            }
         }
     }
 }
@@ -53,11 +69,28 @@ struct ShoppingListTabView: View {
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
 
-    let list1 = ShoppingList(name: "Target")
-    let list2 = ShoppingList(name: "Costco")
+    let lists = [
+        ShoppingList(name: "Target"),
+        ShoppingList(name: "Costco"),
+        ShoppingList(name: "Walmart"),
+        ShoppingList(name: "Safeway"),
+        ShoppingList(name: "Target"),
+        ShoppingList(name: "Costco"),
+        ShoppingList(name: "Walmart"),
+        ShoppingList(name: "Safeway"),
+        ShoppingList(name: "Target"),
+        ShoppingList(name: "Costco"),
+        ShoppingList(name: "Walmart"),
+        ShoppingList(name: "Safeway"),
+        ShoppingList(name: "Target"),
+        ShoppingList(name: "Costco"),
+        ShoppingList(name: "Walmart"),
+        ShoppingList(name: "Safeway"),
+    ]
 
-    container.mainContext.insert(list1)
-    container.mainContext.insert(list2)
+    for list in lists {
+        container.mainContext.insert(list)
+    }
 
     return ShoppingListTabView()
         .modelContainer(container)

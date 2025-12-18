@@ -10,10 +10,9 @@ import SwiftUI
 struct MealPlanDayView: View {
     @Environment(\.modelContext) var modelContext
     @Bindable var mealPlanDay: MealPlanDay
-    @State private var showSavedRecipesSheet = false
     @State private var showDeleteAlert = false
     @State private var selectedRecipe: Recipe?
-    @State private var selectedMealType: MealType = .breakfast
+    @State private var selectedMealType: MealType?
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -26,7 +25,6 @@ struct MealPlanDayView: View {
                         Spacer()
 
                         Button {
-                            showSavedRecipesSheet = true
                             selectedMealType = type
                         } label: {
                             Image(systemName: "plus")
@@ -63,8 +61,8 @@ struct MealPlanDayView: View {
             }
         }
         .foregroundStyle(Color.secondaryMain)
-        .sheet(isPresented: $showSavedRecipesSheet) {
-            AddToMealPlanDaySheet(mealType: selectedMealType, addRecipeToCalendar: addRecipeToCalendar)
+        .sheet(item: $selectedMealType) { mealType in
+            AddToMealPlanDaySheet(mealType: mealType, addRecipeToCalendar: addRecipeToCalendar)
         }
         .navigationDestination(item: $selectedRecipe) { recipe in
             RecipeInfoView(recipeId: recipe.id)

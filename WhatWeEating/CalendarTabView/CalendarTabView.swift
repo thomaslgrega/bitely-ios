@@ -22,9 +22,9 @@ struct CalendarTabView: View {
         NavigationStack {
             DatePickerView(selectedDate: $selectedDate)
                 .tint(Color.primaryMain)
-            
+
             Divider()
-            
+
             ScrollView {
                 if let mealPlanDay = selectedDateMealPlan {
                     MealPlanDayView(mealPlanDay: mealPlanDay)

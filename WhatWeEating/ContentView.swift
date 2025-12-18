@@ -35,6 +35,7 @@ struct ContentView: View {
                 SavedRecipesTabView()
             }
         }
+        .tint(Color.primaryMain)
     }
 }
 
