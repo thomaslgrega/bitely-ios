@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct CalendarView: View {
+struct DatePickerView: View {
     @Binding var selectedDate: Date
 
     var body: some View {
@@ -22,5 +22,5 @@ struct CalendarView: View {
 }
 
 #Preview {
-    CalendarView(selectedDate: .constant(Date()))
+    DatePickerView(selectedDate: .constant(Date()))
 }

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct AddRecipeView: View {
+struct EditRecipeView: View {
     @FocusState private var isKeyboardActive: Bool
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
@@ -90,6 +90,6 @@ struct AddRecipeView: View {
     let ingredient2 = Ingredient(name: "Sugar", measurementRaw: "200g", measurementQty: 3, measurementUnit: MeasurementUnit.gram, isParsed: true)
 
     NavigationStack {
-        AddRecipeView(recipe: Recipe(id: "", strMeal: "", strMealThumb: "", ingredients: [ingredient1, ingredient2]))
+        EditRecipeView(recipe: Recipe(id: "", strMeal: "", strMealThumb: "", ingredients: [ingredient1, ingredient2]))
     }
 }
