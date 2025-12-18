@@ -37,7 +37,7 @@ struct SavedRecipesTabView: View {
                 case .addRecipe(let recipe):
                     EditRecipeView(recipe: recipe)
                 case .showRecipe(let recipe):
-                    RecipeInfoView(savedRecipeIds: savedRecipesId, recipeId: recipe.id, recipe: recipe)
+                    RecipeInfoView(recipeId: recipe.id, recipe: recipe)
                 }
             }
         }

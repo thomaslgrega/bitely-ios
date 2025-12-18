@@ -11,11 +11,15 @@ import SwiftUI
 
 struct RecipeInfoView: View {
     @Environment(\.modelContext) var modelContext
-    var savedRecipeIds: Set<String>
+    @Query var savedRecipes: [Recipe]
     var recipeId: String
     @State var vm = RecipesTabViewVM()
     @State var recipe: Recipe?
     @State var showShoppingListSheet = false
+
+    var savedRecipeIds: Set<String> {
+        Set(savedRecipes.map { $0.id })
+    }
 
     var body: some View {
         if let recipe {
@@ -114,5 +118,5 @@ struct RecipeInfoView: View {
 }
 
 #Preview {
-    RecipeInfoView(savedRecipeIds: Set(), recipeId: "12345")
+    RecipeInfoView(recipeId: "12345")
 }

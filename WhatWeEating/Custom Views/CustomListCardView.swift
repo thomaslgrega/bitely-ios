@@ -10,16 +10,23 @@ import SwiftUI
 struct CustomListCardView: View {
     let mainText: String
     let trailingIcon: String
-    let onTapAction: () -> Void
+    let cardOnTapAction: () -> Void
+    let iconOnTapAction: () -> Void
 
     var body: some View {
         HStack {
             Text(mainText)
                 .padding()
+            
             Spacer()
-            Image(systemName: trailingIcon)
-                .foregroundStyle(Color.primaryMain)
-                .padding()
+
+            Button {
+                iconOnTapAction()
+            } label: {
+                Image(systemName: trailingIcon)
+                    .foregroundStyle(Color.primaryMain)
+                    .padding()
+            }
         }
         .frame(minHeight: 50)
         .background(Color.secondary100)
@@ -29,11 +36,11 @@ struct CustomListCardView: View {
                 .stroke(Color.secondary200, lineWidth: 1)
         )
         .onTapGesture {
-            onTapAction()
+            cardOnTapAction()
         }
     }
 }
 
 #Preview {
-    CustomListCardView(mainText: "French Toast", trailingIcon: "trash", onTapAction: {})
+    CustomListCardView(mainText: "French Toast", trailingIcon: "trash", cardOnTapAction: {}, iconOnTapAction: {})
 }

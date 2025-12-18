@@ -11,7 +11,8 @@ struct MealPlanDayView: View {
     @Environment(\.modelContext) var modelContext
     @Bindable var mealPlanDay: MealPlanDay
     @State private var showSavedRecipesSheet = false
-    @State private var showRecipeInfoSheet = false
+    @State private var showDeleteAlert = false
+    @State private var selectedRecipe: Recipe?
     @State private var selectedMealType: MealType = .breakfast
 
     var body: some View {
@@ -35,7 +36,6 @@ struct MealPlanDayView: View {
                         .frame(width: 40, height: 40)
                         .foregroundStyle(Color.primaryMain)
                     }
-//                    .padding(.vertical)
 
                     if mealPlanDay[type].isEmpty {
                         Text("You don't have any meals planned for \(type.rawValue)")
@@ -45,7 +45,15 @@ struct MealPlanDayView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             ForEach(mealPlanDay[type]) { recipe in
                                 CustomListCardView(mainText: recipe.strMeal, trailingIcon: "trash") {
-                                    showRecipeInfoSheet = true
+                                    selectedRecipe = recipe
+                                } iconOnTapAction: {
+                                    showDeleteAlert = true
+                                }
+                                .alert("Remove \(recipe.strMeal) from \(type.rawValue.lowercased())?", isPresented: $showDeleteAlert) {
+                                    Button("Cancel", role: .cancel) { }
+                                    Button("Delete", role: .destructive) {
+                                        removeRecipeFromCalendar(recipe, type)
+                                    }
                                 }
                             }
                         }
@@ -58,13 +66,19 @@ struct MealPlanDayView: View {
         .sheet(isPresented: $showSavedRecipesSheet) {
             AddToMealPlanDaySheet(mealType: selectedMealType, addRecipeToCalendar: addRecipeToCalendar)
         }
-        .sheet(isPresented: $showRecipeInfoSheet) {
-//            RecipeInfoView(savedRecipeIds: <#T##Set<String>#>, recipeId: <#T##String#>)
+        .navigationDestination(item: $selectedRecipe) { recipe in
+            RecipeInfoView(recipeId: recipe.id)
         }
     }
 
     func addRecipeToCalendar(_ recipe: Recipe, _ mealType: MealType) {
         mealPlanDay[mealType].append(recipe)
+    }
+
+    func removeRecipeFromCalendar(_ recipe: Recipe, _ mealType: MealType) {
+        if let idx = mealPlanDay[mealType].firstIndex(where: { $0.id == recipe.id }) {
+            mealPlanDay[mealType].remove(at: idx)
+        }
     }
 }
 

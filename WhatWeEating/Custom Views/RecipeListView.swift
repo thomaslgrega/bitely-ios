@@ -40,7 +40,7 @@ struct RecipeListView: View {
         .listStyle(.plain)
         .navigationTitle(selectedCategory?.rawValue ?? "")
         .navigationDestination(for: Recipe.self) { recipe in
-            RecipeInfoView(savedRecipeIds: savedRecipeIds, recipeId: recipe.id)
+            RecipeInfoView(recipeId: recipe.id)
         }
         .task {
             if let selectedCategory {

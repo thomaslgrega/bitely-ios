@@ -19,25 +19,27 @@ struct CalendarTabView: View {
     }
 
     var body: some View {
-        DatePickerView(selectedDate: $selectedDate)
-            .tint(Color.primaryMain)
-
-        Divider()
-
-        ScrollView {
-            if let mealPlanDay = selectedDateMealPlan {
-                MealPlanDayView(mealPlanDay: mealPlanDay)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-            } else {
-                ProgressView()
+        NavigationStack {
+            DatePickerView(selectedDate: $selectedDate)
+                .tint(Color.primaryMain)
+            
+            Divider()
+            
+            ScrollView {
+                if let mealPlanDay = selectedDateMealPlan {
+                    MealPlanDayView(mealPlanDay: mealPlanDay)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                } else {
+                    ProgressView()
+                }
             }
-        }
-        .onAppear {
-            loadMealPlanDay()
-        }
-        .onChange(of: selectedDate) { _, _ in
-            loadMealPlanDay()
+            .onAppear {
+                loadMealPlanDay()
+            }
+            .onChange(of: selectedDate) { _, _ in
+                loadMealPlanDay()
+            }
         }
     }
 
