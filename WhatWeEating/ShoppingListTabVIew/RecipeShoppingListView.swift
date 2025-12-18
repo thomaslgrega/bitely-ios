@@ -41,12 +41,13 @@ struct RecipeShoppingListView: View {
                             Image(systemName: "plus")
                             Text("Create a new shopping list")
                         }
+                        .padding()
                     }
                     .frame(maxWidth: .infinity, minHeight: 32)
-                    .background(.orange)
-                    .foregroundStyle(.white)
+                    .background(Color.primaryMain)
+                    .foregroundStyle(Color.secondary100)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .font(.title2)
+                    .font(.title3)
                     .padding(.vertical)
 
                     Divider()

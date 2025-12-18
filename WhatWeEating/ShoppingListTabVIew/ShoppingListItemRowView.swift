@@ -13,7 +13,7 @@ struct ShoppingListItemRowView: View {
     var body: some View {
         HStack {
             Image(systemName: item.purchased ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(item.purchased ? .orange : .primary)
+                .foregroundStyle(item.purchased ? Color.primaryMain : Color.secondaryMain)
             Text(item.ingredient.name)
                 .strikethrough(item.purchased ? true : false)
             Text("(\(item.ingredient.measurementRaw))")

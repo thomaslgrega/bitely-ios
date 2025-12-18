@@ -59,7 +59,7 @@ struct RecipeInfoView: View {
                             } label: {
                                 Image(systemName: "basket")
                                     .font(.title)
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.primaryMain)
                             }
 
                         }
@@ -89,7 +89,7 @@ struct RecipeInfoView: View {
                 NavigationLink("Edit", value: recipe)
             }
             .navigationDestination(for: Recipe.self) { recipe in
-                AddRecipeView(recipe: recipe)
+                EditRecipeView(recipe: recipe)
             }
             .sheet(isPresented: $showShoppingListSheet) {
                 RecipeShoppingListView(items: recipe.ingredients)

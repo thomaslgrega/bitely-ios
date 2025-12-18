@@ -8,11 +8,32 @@
 import SwiftUI
 
 struct CustomListCardView: View {
+    let mainText: String
+    let trailingIcon: String
+    let onTapAction: () -> Void
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        HStack {
+            Text(mainText)
+                .padding()
+            Spacer()
+            Image(systemName: trailingIcon)
+                .foregroundStyle(Color.primaryMain)
+                .padding()
+        }
+        .frame(minHeight: 50)
+        .background(Color.secondary100)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.secondary200, lineWidth: 1)
+        )
+        .onTapGesture {
+            onTapAction()
+        }
     }
 }
 
 #Preview {
-    CustomListCardView()
+    CustomListCardView(mainText: "French Toast", trailingIcon: "trash", onTapAction: {})
 }

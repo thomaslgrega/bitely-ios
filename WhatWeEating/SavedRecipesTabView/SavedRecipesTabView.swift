@@ -35,7 +35,7 @@ struct SavedRecipesTabView: View {
             .navigationDestination(for: RecipesDestinations.self) { destination in
                 switch destination {
                 case .addRecipe(let recipe):
-                    AddRecipeView(recipe: recipe)
+                    EditRecipeView(recipe: recipe)
                 case .showRecipe(let recipe):
                     RecipeInfoView(savedRecipeIds: savedRecipesId, recipeId: recipe.id, recipe: recipe)
                 }

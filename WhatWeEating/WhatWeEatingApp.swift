@@ -26,6 +26,6 @@ struct WhatWeEatingApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: [Recipe.self, ShoppingList.self])
+        .modelContainer(for: [Recipe.self, ShoppingList.self, MealPlanDay.self])
     }
 }
