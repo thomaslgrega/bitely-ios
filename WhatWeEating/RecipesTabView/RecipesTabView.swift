@@ -8,32 +8,44 @@
 import SwiftUI
 
 struct RecipesTabView: View {
-    @State private var selectedFoodCategory: FoodCategories?
-
     var body: some View {
         NavigationStack {
             ScrollView {
                 ForEach(FoodCategories.allCases, id: \.self) { category in
                     NavigationLink(value: category) {
-                        ZStack {
+                        HStack {
                             Image(category.rawValue.lowercased())
                                 .resizable()
-                                .scaledToFill()
+                                .scaledToFit()
+                                .padding()
 
-                            LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .top, endPoint: .bottom)
+                            Text(category.rawValue)
+                                .foregroundStyle(Color.secondaryMain)
+                                .font(.title)
 
-                            VStack {
-                                Spacer()
-                                Text(category.rawValue)
-                                    .font(.largeTitle)
+                            Spacer()
+
+                            ZStack {
+                                Capsule()
+                                    .frame(width: 40, height: 32)
+                                    .foregroundStyle(Color.primaryMain)
+
+                                Image(systemName: "arrow.right")
+                                    .foregroundStyle(Color.secondary100)
                                     .bold()
-                                    .foregroundStyle(.white)
                             }
-                            .padding()
+                            .padding(.trailing)
                         }
-                        .clipShape(RoundedRectangle(cornerRadius: 15))
-                        .padding(.horizontal)
                     }
+                    .frame(maxHeight: 100, alignment: .leading)
+                    .background(Color.secondary100)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.secondary200, lineWidth: 1)
+                    )
+                    .padding(.horizontal)
+                    .padding(.top, 8)
                 }
                 .navigationDestination(for: FoodCategories.self) { category in
                     RecipeListView(selectedCategory: category)
