@@ -13,12 +13,17 @@ struct RecipeInfoView: View {
     @Environment(\.modelContext) var modelContext
     @Query var savedRecipes: [Recipe]
     var recipeId: String
+    let allowEdit: Bool
     @State var vm = RecipesTabViewVM()
     @State var recipe: Recipe?
     @State var showShoppingListSheet = false
 
-    var savedRecipeIds: Set<String> {
-        Set(savedRecipes.map { $0.id })
+    var isSaved: Bool {
+        savedRecipes.contains(where: { $0.id == recipeId })
+    }
+
+    var savedRecipe: Recipe? {
+        savedRecipes.first(where: { $0.id == recipeId })
     }
 
     var body: some View {
@@ -43,11 +48,11 @@ struct RecipeInfoView: View {
                                 .frame(width: 50, height: 50)
                                 .padding()
                             Button {
-                                savedRecipeIds.contains(recipeId) ? deleteRecipe() : bookmarkRecipe()
+                                isSaved ? deleteRecipe() : bookmarkRecipe()
                             } label: {
-                                Image(systemName: savedRecipeIds.contains(recipeId) ? "star.fill" : "star")
+                                Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                                     .bold()
-                                    .foregroundStyle(.yellow)
+                                    .foregroundStyle(Color.primaryMain)
                                     .font(.title3)
                             }
                         }
@@ -90,7 +95,9 @@ struct RecipeInfoView: View {
             .navigationTitle(recipe.strMeal)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                NavigationLink("Edit", value: recipe)
+                if allowEdit {
+                    NavigationLink("Edit", value: recipe)
+                }
             }
             .navigationDestination(for: Recipe.self) { recipe in
                 EditRecipeView(recipe: recipe)
@@ -112,11 +119,11 @@ struct RecipeInfoView: View {
     }
 
     func deleteRecipe() {
-        guard let recipe else { return }
-        modelContext.delete(recipe)
+        guard let recipeToDelete = savedRecipe else { return }
+        modelContext.delete(recipeToDelete)
     }
 }
 
 #Preview {
-    RecipeInfoView(recipeId: "12345")
+    RecipeInfoView(recipeId: "12345", allowEdit: true)
 }

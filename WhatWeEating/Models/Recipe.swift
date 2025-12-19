@@ -68,13 +68,18 @@ class Recipe: Codable, Identifiable, Hashable {
     @Relationship(deleteRule: .cascade)
     var ingredients: [Ingredient]
 
-    init(id: String, strMeal: String, strCategory: String? = nil, strInstructions: String? = nil, strMealThumb: String?, ingredients: [Ingredient] = []) {
+    var calories: Int?
+    var totalCookTime: Int?
+
+    init(id: String, strMeal: String, strCategory: String? = nil, strInstructions: String? = nil, strMealThumb: String?, ingredients: [Ingredient] = [], calories: Int?, totalCookTime: Int?) {
         self.id = id
         self.strMeal = strMeal
         self.strCategory = strCategory
         self.strInstructions = strInstructions
         self.strMealThumb = strMealThumb
         self.ingredients = ingredients
+        self.calories = calories
+        self.totalCookTime = totalCookTime
     }
 
     required init(from decoder: Decoder) throws {

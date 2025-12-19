@@ -127,7 +127,6 @@ struct RecipeShoppingListView: View {
     }
 
     func saveShoppingList() {
-        // TODO: save shopping list (Add the items: [Ingredients] Array to selected shopping list)
         if let selectedShoppingList {
             for item in itemsToAdd {
                 selectedShoppingList.items.append(ShoppingListItem(ingredient: item))

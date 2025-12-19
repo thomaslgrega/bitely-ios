@@ -10,7 +10,7 @@ import SwiftUI
 
 enum RecipesDestinations: Hashable {
     case showRecipe(Recipe)
-    case addRecipe(Recipe)
+    case editRecipe(Recipe)
 }
 
 struct SavedRecipesTabView: View {
@@ -30,14 +30,14 @@ struct SavedRecipesTabView: View {
                 .onDelete(perform: deleteSavedRecipe)
             }
             .toolbar {
-                NavigationLink("Add Recipe", value: RecipesDestinations.addRecipe(Recipe(id: UUID().uuidString, strMeal: "", strMealThumb: "")))
+                NavigationLink("Add Recipe", value: RecipesDestinations.editRecipe(Recipe(id: UUID().uuidString, strMeal: "", strMealThumb: "", calories: nil, totalCookTime: nil)))
             }
             .navigationDestination(for: RecipesDestinations.self) { destination in
                 switch destination {
-                case .addRecipe(let recipe):
+                case .editRecipe(let recipe):
                     EditRecipeView(recipe: recipe)
                 case .showRecipe(let recipe):
-                    RecipeInfoView(recipeId: recipe.id, recipe: recipe)
+                    RecipeInfoView(recipeId: recipe.id, allowEdit: true, recipe: recipe)
                 }
             }
         }

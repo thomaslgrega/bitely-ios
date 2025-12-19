@@ -65,7 +65,7 @@ struct MealPlanDayView: View {
             AddToMealPlanDaySheet(mealType: mealType, addRecipeToCalendar: addRecipeToCalendar)
         }
         .navigationDestination(item: $selectedRecipe) { recipe in
-            RecipeInfoView(recipeId: recipe.id)
+            RecipeInfoView(recipeId: recipe.id, allowEdit: true)
         }
     }
 

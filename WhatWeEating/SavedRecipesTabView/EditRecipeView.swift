@@ -28,12 +28,10 @@ struct EditRecipeView: View {
                 }
                 .focused($isKeyboardActive)
 
-                if recipe.ingredients.count < 20 {
-                    HStack {
-                        Image(systemName: "plus.circle")
-                            .foregroundStyle(.blue)
-                        Button("Add an ingredient", action: addNewIngredient)
-                    }
+                HStack {
+                    Image(systemName: "plus.circle")
+                        .foregroundStyle(.blue)
+                    Button("Add an ingredient", action: addNewIngredient)
                 }
             }
 
@@ -90,6 +88,6 @@ struct EditRecipeView: View {
     let ingredient2 = Ingredient(name: "Sugar", measurementRaw: "200g", measurementQty: 3, measurementUnit: MeasurementUnit.gram, isParsed: true)
 
     NavigationStack {
-        EditRecipeView(recipe: Recipe(id: "", strMeal: "", strMealThumb: "", ingredients: [ingredient1, ingredient2]))
+        EditRecipeView(recipe: Recipe(id: "", strMeal: "", strMealThumb: "", ingredients: [ingredient1, ingredient2], calories: nil, totalCookTime: nil))
     }
 }

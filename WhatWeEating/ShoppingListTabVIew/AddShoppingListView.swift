@@ -69,7 +69,6 @@ struct AddShoppingListView: View {
 
     func saveShoppingList() {
         //TODO: Add image
-        //TODO: Add check for shopping Lists with no name. Either a default name or stop users from creating
         if shoppingList.name == "" {
             shoppingList.name = "Shopping List"
         }
