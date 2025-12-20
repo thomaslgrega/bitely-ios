@@ -14,6 +14,7 @@ struct EditRecipeView: View {
     @Bindable var recipe: Recipe
 
     var body: some View {
+        // TODO: Fields for calories, prep time, image, category (beef, etc)
         Form {
             Section("Recipe Name") {
                 TextField("Recipe Name", text: $recipe.strMeal)
@@ -43,6 +44,7 @@ struct EditRecipeView: View {
         .navigationTitle("Add a New Recipe")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            // TODO: Toolbar and alert for discard (cancel or discard)
             Button {
                 saveRecipe()
             } label: {

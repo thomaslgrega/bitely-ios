@@ -51,6 +51,7 @@ struct RecipesTabView: View {
                     RecipeListView(selectedCategory: category)
                 }
             }
+            .navigationTitle("Find a recipe")
         }
     }
 }

@@ -46,6 +46,7 @@ struct RecipeListCardView: View {
                             await isBookmarked ? deleteRecipe() : bookmarkRecipe()
                         }
                     } label: {
+                        // TODO: Add alert to ask if they are sure they want to remove
                         Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
                             .foregroundStyle(Color.primaryMain)
                     }
