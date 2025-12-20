@@ -61,6 +61,7 @@ struct RecipeListCardView: View {
             if let imageURL = recipe.strMealThumb {
                 KFImage(URL(string: imageURL))
                     .resizable()
+                    .downsampling(size: CGSize(width: 250, height: 250))
                     .scaledToFill()
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .padding()
