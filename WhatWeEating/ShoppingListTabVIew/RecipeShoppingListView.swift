@@ -104,12 +104,12 @@ struct RecipeShoppingListView: View {
             } label: {
                 HStack {
                     Image(systemName: itemsToAdd.contains(item) ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(itemsToAdd.contains(item) ? .green : .primary)
+                        .foregroundStyle(itemsToAdd.contains(item) ? Color.primaryMain : .secondaryMain)
 
                     Text(item.name)
                         .bold()
 
-                    Text("(\(item.measurementRaw))")
+                    Text("(\(item.measurement))")
                 }
             }
         }

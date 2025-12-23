@@ -14,14 +14,17 @@ struct ShoppingListItemRowView: View {
         HStack {
             Image(systemName: item.purchased ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(item.purchased ? Color.primaryMain : Color.secondaryMain)
+
             Text(item.ingredient.name)
-                .strikethrough(item.purchased ? true : false)
-            Text("(\(item.ingredient.measurementRaw))")
+                .strikethrough(item.purchased)
+
+            Text("(\(item.ingredient.measurement))")
+                .strikethrough(item.purchased)
         }
     }
 }
 
 #Preview {
-    let item = ShoppingListItem(ingredient: Ingredient(name: "Milk", measurementRaw: "1 Gal"))
+    let item = ShoppingListItem(ingredient: Ingredient(name: "Milk", measurement: "1 Gal"))
     ShoppingListItemRowView(item: .constant(item))
 }

@@ -58,7 +58,7 @@ struct RecipeInfoView: View {
                         }
                     }
 
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Text("Ingredients")
                                 .font(.largeTitle)
@@ -75,13 +75,12 @@ struct RecipeInfoView: View {
 
                         ForEach(recipe.ingredients) { ingredient in
                             HStack {
-                                Text(ingredient.measurementRaw.trimmingCharacters(in: .whitespacesAndNewlines))
+                                Text(ingredient.measurement)
                                     .bold()
-                                    .font(.title3)
 
                                 Text(ingredient.name)
-                                    .font(.title3)
                             }
+                            .font(.title3)
                         }
 
                         Text("Instructions")
@@ -96,11 +95,10 @@ struct RecipeInfoView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if allowEdit {
-                    NavigationLink("Edit", value: recipe)
+                    NavigationLink("Edit") {
+                        EditRecipeView(recipe: recipe)
+                    }
                 }
-            }
-            .navigationDestination(for: Recipe.self) { recipe in
-                EditRecipeView(recipe: recipe)
             }
             .sheet(isPresented: $showShoppingListSheet) {
                 RecipeShoppingListView(items: recipe.ingredients)

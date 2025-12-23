@@ -20,7 +20,7 @@ struct ShoppingListInfoView: View {
                 } label: {
                     ShoppingListItemRowView(item: $item)
                 }
-                .foregroundStyle(item.purchased ? .tertiary : .primary)
+                .foregroundStyle(item.purchased ? Color.secondary400 : Color.secondaryMain)
                 .font(.title3)
                 .padding(.vertical)
             }
@@ -49,9 +49,9 @@ struct ShoppingListInfoView: View {
 
 #Preview {
     let shoppingList = [
-        ShoppingListItem(ingredient: Ingredient(name: "Milk", measurementRaw: "1 Gal")),
-        ShoppingListItem(ingredient: Ingredient(name: "Ice cream", measurementRaw: "1 Pt")),
-        ShoppingListItem(ingredient: Ingredient(name: "Coke", measurementRaw: "1 L")),
+        ShoppingListItem(ingredient: Ingredient(name: "Milk", measurement: "1 Gal")),
+        ShoppingListItem(ingredient: Ingredient(name: "Ice cream", measurement: "1 Pt")),
+        ShoppingListItem(ingredient: Ingredient(name: "Coke", measurement: "1 L")),
     ]
     let list = ShoppingList(name: "Target", items: shoppingList, image: "")
     ShoppingListInfoView(list: list)

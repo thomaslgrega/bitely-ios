@@ -100,8 +100,7 @@ class Recipe: Codable, Identifiable, Hashable {
 
             if name == "" { break }
 
-            // TODO: Add parsing measurements from TheMealDB into measurementQty and measurementUnit
-            ingredients.append(Ingredient(name: name, measurementRaw: measurement))
+            ingredients.append(Ingredient(name: name, measurement: measurement))
         }
 
         self.ingredients = ingredients

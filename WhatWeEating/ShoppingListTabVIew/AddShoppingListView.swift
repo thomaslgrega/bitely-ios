@@ -31,13 +31,11 @@ struct AddShoppingListView: View {
                         )
                     }
 
-                    if shoppingList.items.count < 20 {
-                        HStack {
-                            Image(systemName: "plus.circle")
-                                .foregroundStyle(.blue)
-                            Button("Add an ingredient", action: addItem)
-                        }
+                    HStack {
+                        Image(systemName: "plus.circle")
+                        Button("Add an ingredient", action: addItem)
                     }
+                    .foregroundStyle(Color.primaryMain)
                 }
             }
             .navigationTitle("Create a new Shopping List")
@@ -63,7 +61,7 @@ struct AddShoppingListView: View {
     }
 
     func addItem() {
-        let newIngredient = Ingredient(name: "", measurementRaw: "", isParsed: true)
+        let newIngredient = Ingredient(name: "", measurement: "")
         shoppingList.items.append(ShoppingListItem(ingredient: newIngredient))
     }
 
@@ -73,18 +71,7 @@ struct AddShoppingListView: View {
             shoppingList.name = "Shopping List"
         }
 
-        shoppingList.items = shoppingList.items.filter({ $0.ingredient.name != "" })
-        shoppingList.items = shoppingList.items.map { item in
-            if let qty = item.ingredient.measurementQty {
-                if let unit = item.ingredient.measurementUnit {
-                    item.ingredient.measurementRaw = "\(qty.trimTrailingZeros()) \(unit)"
-                } else {
-                    item.ingredient.measurementRaw = "\(qty)"
-                }
-            }
-
-            return item
-        }
+        shoppingList.items = shoppingList.items.filter { $0.ingredient.name != "" }
 
         modelContext.insert(shoppingList)
         onCreate(shoppingList)

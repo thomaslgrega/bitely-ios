@@ -8,61 +8,70 @@
 import SwiftUI
 
 struct EditRecipeView: View {
-    @FocusState private var isKeyboardActive: Bool
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     @Bindable var recipe: Recipe
 
     var body: some View {
         // TODO: Fields for calories, prep time, image, category (beef, etc)
-        Form {
-            Section("Recipe Name") {
-                TextField("Recipe Name", text: $recipe.strMeal)
-                    .focused($isKeyboardActive)
-            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 40) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Recipe name")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.secondary700)
 
-            Section("Ingredients") {
-                ForEach($recipe.ingredients) { $ingredient in
-                    IngredientRowView(ingredient: $ingredient, onDelete: {
-                        removeIngredient(ingredient)
-                    })
+                    TextField("Recipe Name", text: $recipe.strMeal)
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
+                        .textFieldStyle(.roundedBorder)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.secondary200, lineWidth: 1)
+                        )
                 }
-                .focused($isKeyboardActive)
 
-                HStack {
-                    Image(systemName: "plus.circle")
-                        .foregroundStyle(.blue)
-                    Button("Add an ingredient", action: addNewIngredient)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Ingredients")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.secondary700)
+
+                    ForEach($recipe.ingredients) { $ingredient in
+                        IngredientRowView(ingredient: $ingredient) {
+                            removeIngredient(ingredient)
+                        }
+                        .padding()
+                        .frame(height: 54)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.secondary200, lineWidth: 1)
+                        )
+                    }
+
+                    HStack {
+                        Image(systemName: "plus.circle")
+                            .foregroundStyle(Color.primaryMain)
+                        Button("Add an ingredient", action: addNewIngredient)
+                    }
                 }
-            }
 
-            Section("Instructions") {
-                TextField("Instructions", text: $recipe.strInstructions.orEmpty(), axis: .vertical)
-                    .focused($isKeyboardActive)
-            }
-        }
-        .navigationTitle("Add a New Recipe")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            // TODO: Toolbar and alert for discard (cancel or discard)
-            Button {
-                saveRecipe()
-            } label: {
-                Text("Save")
-            }
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
-                Button("Done") {
-                    isKeyboardActive = false
+            }
+            .padding()
+            .toolbar {
+                // TODO: Toolbar and alert for discard (cancel or discard)
+                Button {
+                    saveRecipe()
+                } label: {
+                    Text("Save")
                 }
             }
         }
     }
 
     func addNewIngredient() {
-        recipe.ingredients.append(Ingredient(name: "", measurementRaw: "", isParsed: true))
+        recipe.ingredients.append(Ingredient(name: "", measurement: ""))
     }
 
     func removeIngredient(_ ingredient: Ingredient) {
@@ -72,22 +81,16 @@ struct EditRecipeView: View {
     }
 
     func saveRecipe() {
-        for ingredient in recipe.ingredients {
-            if ingredient.isParsed {
-                if let qty = ingredient.measurementQty {
-                    ingredient.measurementRaw = "\(qty.trimTrailingZeros()) \(ingredient.measurementUnit?.displayName ?? "")"
-                }
-            }
-        }
-        
+        recipe.ingredients = recipe.ingredients.filter { $0.name.trimmingCharacters(in: .whitespaces) != "" }
+
         modelContext.insert(recipe)
         dismiss()
     }
 }
 
 #Preview {
-    let ingredient1 = Ingredient(name: "Tomato", measurementRaw: "2")
-    let ingredient2 = Ingredient(name: "Sugar", measurementRaw: "200g", measurementQty: 3, measurementUnit: MeasurementUnit.gram, isParsed: true)
+    let ingredient1 = Ingredient(name: "Tomato", measurement: "2")
+    let ingredient2 = Ingredient(name: "Sugar", measurement: "200g")
 
     NavigationStack {
         EditRecipeView(recipe: Recipe(id: "", strMeal: "", strMealThumb: "", ingredients: [ingredient1, ingredient2], calories: nil, totalCookTime: nil))

@@ -15,6 +15,7 @@ struct RecipeListCardView: View {
     @Query(sort: [SortDescriptor(\Recipe.strMeal)]) var savedRecipes: [Recipe]
     @State private var bookmarkingInProgress = false
     @State private var vm = RecipesTabViewVM()
+    @State private var showDeleteAlert = false
 
     var isBookmarked: Bool {
         savedRecipes.contains(where: { $0.id == recipe.id })
@@ -43,10 +44,9 @@ struct RecipeListCardView: View {
                 HStack {
                     Button {
                         Task {
-                            await isBookmarked ? deleteRecipe() : bookmarkRecipe()
+                            isBookmarked ? showDeleteAlert = true : await bookmarkRecipe()
                         }
                     } label: {
-                        // TODO: Add alert to ask if they are sure they want to remove
                         Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
                             .foregroundStyle(Color.primaryMain)
                     }
@@ -72,6 +72,10 @@ struct RecipeListCardView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .padding()
             }
+        }
+        .alert("Are you sure?", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive, action: deleteRecipe)
         }
         .background(Color.secondary100)
         .clipShape(RoundedRectangle(cornerRadius: 10))

@@ -8,49 +8,44 @@
 import SwiftUI
 
 struct IngredientRowView: View {
+    @State private var name = ""
+    @State private var measurement = ""
     @Binding var ingredient: Ingredient
     var onDelete: () -> Void
 
+    init(ingredient: Binding<Ingredient>, onDelete: @escaping () -> Void) {
+        self._ingredient = ingredient
+        self.onDelete = onDelete
+        self._name = State(initialValue: ingredient.wrappedValue.name.trimmingCharacters(in: .whitespaces))
+        self._measurement = State(initialValue: ingredient.wrappedValue.measurement.trimmingCharacters(in: .whitespaces))
+    }
+
     var body: some View {
         HStack {
-            if ingredient.isParsed {
-                TextField("Qty", value: $ingredient.measurementQty, format: .number.precision(.fractionLength(0...2)))
-                    .keyboardType(.decimalPad)
+            TextField("e.g., flour", text: $ingredient.name)
+                .textFieldStyle(.roundedBorder)
 
-                Picker("", selection: Binding(
-                    get: { ingredient.measurementUnit ?? MeasurementUnit.none },
-                    set: { ingredient.measurementUnit = $0 }
-                )) {
-                    ForEach(MeasurementUnitCategory.allCases, id: \.self) { category in
-                        Section(category.rawValue) {
-                            ForEach(category.units, id: \.self) { unit in
-                                Text(unit.displayName).tag(unit)
-                            }
-                        }
-                    }
-                }
-                .pickerStyle(.menu)
-
-                TextField("Ingredient Name", text: $ingredient.name, axis: .vertical)
-            } else {
-                Text(ingredient.measurementRaw)
-                Text(ingredient.name)
-            }
+            TextField("e.g., 2 cups", text: $ingredient.measurement)
+                .textFieldStyle(.roundedBorder)
 
             Spacer()
-            Button(role: .destructive) {
+
+            Button {
                 onDelete()
             } label: {
                 Image(systemName: "minus.circle")
             }
+            .foregroundStyle(Color.primaryMain)
             .buttonStyle(.borderless)
         }
     }
 }
 
 #Preview {
-    IngredientRowView(
-        ingredient: .constant(Ingredient(name: "Lemon Juice", measurementRaw: "1 cup", measurementQty: 1, measurementUnit: MeasurementUnit.cup, isParsed: true)),
-        onDelete: { }
-    )
+    List {
+        IngredientRowView(
+            ingredient: .constant(Ingredient(name: "Lemon Juice", measurement: "1 cup")),
+            onDelete: { }
+        )
+    }
 }

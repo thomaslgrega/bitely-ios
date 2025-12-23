@@ -20,7 +20,7 @@ struct ShoppingListTabView: View {
             ZStack {
                 ScrollView {
                     ForEach(shoppingLists) { list in
-                        CustomListCardView(mainText: list.name, trailingIcon: "trash") {
+                        CustomListCardView(mainText: list.name, trailingIcon: "minus.circle") {
                             selectedList = list
                         } iconOnTapAction: {
                             modelContext.delete(list)
@@ -73,19 +73,7 @@ struct ShoppingListTabView: View {
         ShoppingList(name: "Target"),
         ShoppingList(name: "Costco"),
         ShoppingList(name: "Walmart"),
-        ShoppingList(name: "Safeway"),
-        ShoppingList(name: "Target"),
-        ShoppingList(name: "Costco"),
-        ShoppingList(name: "Walmart"),
-        ShoppingList(name: "Safeway"),
-        ShoppingList(name: "Target"),
-        ShoppingList(name: "Costco"),
-        ShoppingList(name: "Walmart"),
-        ShoppingList(name: "Safeway"),
-        ShoppingList(name: "Target"),
-        ShoppingList(name: "Costco"),
-        ShoppingList(name: "Walmart"),
-        ShoppingList(name: "Safeway"),
+        ShoppingList(name: "Safeway")
     ]
 
     for list in lists {
