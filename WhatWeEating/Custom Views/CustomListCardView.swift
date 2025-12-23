@@ -44,5 +44,5 @@ struct CustomListCardView: View {
 }
 
 #Preview {
-    CustomListCardView(mainText: "French Toast", trailingIcon: "trash", cardOnTapAction: {}, iconOnTapAction: {})
+    CustomListCardView(mainText: "French Toast", trailingIcon: "minus.circle", cardOnTapAction: {}, iconOnTapAction: {})
 }

@@ -11,32 +11,70 @@ struct AddShoppingListView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
     @Bindable var shoppingList: ShoppingList
+    @State var itemsToAdd: [ShoppingListItem] = [ShoppingListItem(ingredient: Ingredient(name: "", measurement: ""))]
 
     var onCreate: (ShoppingList) -> Void
 
     var body: some View {
         NavigationStack {
-            Form {
+            ScrollView {
                 //TODO: Image field
 
-                Section("Name") {
-                    TextField("Costco, Target, etc.", text: $shoppingList.name)
-                }
+                VStack(alignment: .leading, spacing: 40) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Name")
+                            .foregroundStyle(Color.secondary700)
+                            .font(.subheadline)
 
-                Section("Ingredients") {
-                    ForEach($shoppingList.items) { $item in
-                        IngredientRowView(
-                            ingredient: $item.ingredient,
-                            onDelete: { removeItem(item) }
-                        )
+                        TextField("Costco, Target, etc.", text: $shoppingList.name)
+                            .padding()
+                            .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
+                            .textFieldStyle(.roundedBorder)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.secondary200, lineWidth: 1)
+                            )
                     }
 
-                    HStack {
-                        Image(systemName: "plus.circle")
-                        Button("Add an ingredient", action: addItem)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Ingredients")
+                            .foregroundStyle(Color.secondary700)
+                            .font(.subheadline)
+
+                        ForEach($shoppingList.items) { $item in
+                            IngredientRowView(ingredient: $item.ingredient) {
+                                removeItemFromShoppingList(item)
+                            }
+                            .padding()
+                            .frame(height: 54)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.secondary200, lineWidth: 1)
+                            )
+                        }
+
+                        ForEach($itemsToAdd) { $item in
+                            IngredientRowView(ingredient: $item.ingredient) {
+                                removeItemFromItemsToAdd(item)
+                            }
+                            .padding()
+                            .frame(height: 54)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.secondary200, lineWidth: 1)
+                            )
+                        }
+
+                        HStack {
+                            Image(systemName: "plus.circle")
+                            Button("Add an ingredient", action: addItem)
+                        }
+                        .foregroundStyle(Color.primaryMain)
                     }
-                    .foregroundStyle(Color.primaryMain)
                 }
+                .padding()
             }
             .navigationTitle("Create a new Shopping List")
             .navigationBarTitleDisplayMode(.inline)
@@ -56,13 +94,17 @@ struct AddShoppingListView: View {
         }
     }
 
-    func removeItem(_ item: ShoppingListItem) {
+    func removeItemFromShoppingList(_ item: ShoppingListItem) {
         shoppingList.items.removeAll { $0.id == item.id }
+    }
+
+    func removeItemFromItemsToAdd(_ item: ShoppingListItem) {
+        itemsToAdd.removeAll { $0.id == item.id }
     }
 
     func addItem() {
         let newIngredient = Ingredient(name: "", measurement: "")
-        shoppingList.items.append(ShoppingListItem(ingredient: newIngredient))
+        itemsToAdd.append(ShoppingListItem(ingredient: newIngredient))
     }
 
     func saveShoppingList() {
@@ -71,7 +113,12 @@ struct AddShoppingListView: View {
             shoppingList.name = "Shopping List"
         }
 
-        shoppingList.items = shoppingList.items.filter { $0.ingredient.name != "" }
+        shoppingList.items = shoppingList.items.filter { $0.ingredient.name.trimmingCharacters(in: .whitespaces) != "" }
+        itemsToAdd = itemsToAdd.filter { $0.ingredient.name.trimmingCharacters(in: .whitespaces) != "" }
+
+        for item in itemsToAdd {
+            shoppingList.items.append(item)
+        }
 
         modelContext.insert(shoppingList)
         onCreate(shoppingList)

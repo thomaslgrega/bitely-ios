@@ -42,7 +42,7 @@ struct MealPlanDayView: View {
                     } else {
                         VStack(alignment: .leading, spacing: 8) {
                             ForEach(mealPlanDay[type]) { recipe in
-                                CustomListCardView(mainText: recipe.name, trailingIcon: "trash") {
+                                CustomListCardView(mainText: recipe.name, trailingIcon: "minus.circle") {
                                     selectedRecipe = recipe
                                 } iconOnTapAction: {
                                     showDeleteAlert = true

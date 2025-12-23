@@ -12,14 +12,21 @@ struct ShoppingListInfoView: View {
     @Bindable var list: ShoppingList
     @State private var showEditShoppingListSheet = false
 
+    var sortedItems: [Binding<ShoppingListItem>] {
+        $list.items.sorted { (lhs: Binding<ShoppingListItem>, rhs: Binding<ShoppingListItem>) in
+            lhs.wrappedValue.ingredient.name < rhs.wrappedValue.ingredient.name
+        }
+    }
+
     var body: some View {
         List {
-            ForEach($list.items) { $item in
+            ForEach(sortedItems, id: \.wrappedValue.id) { $item in
                 Button {
                     item.purchased.toggle()
                 } label: {
                     ShoppingListItemRowView(item: $item)
                 }
+                .buttonStyle(.plain)
                 .foregroundStyle(item.purchased ? Color.secondary400 : Color.secondaryMain)
                 .font(.title3)
                 .padding(.vertical)
@@ -39,10 +46,10 @@ struct ShoppingListInfoView: View {
     }
 
     func deleteItem(at offsets: IndexSet) {
-        for index in offsets {
-            let item = list.items[index]
-            list.items.remove(at: index)
-            modelContext.delete(item)
+        let itemsToDelete = offsets.map { sortedItems[$0] }
+
+        for item in itemsToDelete {
+            list.items.removeAll { $0.id == item.id }
         }
     }
 }
