@@ -11,7 +11,7 @@ struct RecipesTabView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                ForEach(FoodCategories.allCases, id: \.self) { category in
+                ForEach(FoodCategory.allCases, id: \.self) { category in
                     NavigationLink(value: category) {
                         HStack {
                             Image(category.rawValue.lowercased())
@@ -47,7 +47,7 @@ struct RecipesTabView: View {
                     .padding(.horizontal)
                     .padding(.top, 8)
                 }
-                .navigationDestination(for: FoodCategories.self) { category in
+                .navigationDestination(for: FoodCategory.self) { category in
                     RecipeListView(selectedCategory: category)
                 }
             }

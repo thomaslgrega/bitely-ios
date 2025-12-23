@@ -11,7 +11,7 @@ import SwiftUI
 struct AddToMealPlanDaySheet: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
-    @Query(sort: [SortDescriptor(\Recipe.strMeal)]) var recipes: [Recipe]
+    @Query(sort: [SortDescriptor(\Recipe.name)]) var recipes: [Recipe]
     @State private var selectedRecipe: Recipe?
 
     let mealType: MealType
@@ -30,7 +30,7 @@ struct AddToMealPlanDaySheet: View {
                             Image(systemName: selectedRecipe == recipe ? "checkmark.circle.fill" : "circle")
                                 .foregroundStyle(selectedRecipe == recipe ? Color.primaryMain : Color.secondaryMain)
 
-                            Text(recipe.strMeal)
+                            Text(recipe.name)
                         }
                         .onTapGesture {
                             selectedRecipe = recipe

@@ -12,23 +12,110 @@ struct EditRecipeView: View {
     @Environment(\.dismiss) var dismiss
     @Bindable var recipe: Recipe
 
+    @State private var showRequiredNameError = false
+    @State private var showRequiredCategoryError = false
+
     var body: some View {
-        // TODO: Fields for calories, prep time, image, category (beef, etc)
+        // TODO: Field for image
         ScrollView {
             VStack(alignment: .leading, spacing: 40) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Recipe name")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.secondary700)
+                    HStack {
+                        Text("Recipe name")
+                            .foregroundStyle(Color.secondary700)
 
-                    TextField("Recipe Name", text: $recipe.strMeal)
+                        if showRequiredNameError {
+                            Spacer()
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle")
+                                Text("This field is required")
+                            }
+                            .foregroundStyle(.red)
+                        }
+
+                    }
+                    .font(.subheadline)
+
+                    TextField("Recipe Name", text: $recipe.name)
                         .padding()
                         .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
                         .textFieldStyle(.roundedBorder)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.secondary200, lineWidth: 1)
+                                .stroke(showRequiredNameError ? .red : .secondary200, lineWidth: 1)
                         )
+                }
+
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("Category")
+                            .foregroundStyle(Color.secondary700)
+
+                        if showRequiredCategoryError {
+                            Spacer()
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle")
+                                Text("This field is required")
+                            }
+                            .foregroundStyle(.red)
+                        }
+                    }
+                    .font(.subheadline)
+
+                    Picker("Category", selection: $recipe.category) {
+                        Text("Select a category")
+                            .tag(nil as FoodCategory?)
+                            .disabled(true)
+
+                        ForEach(FoodCategory.allCases, id: \.self) { category in
+                            Text(category.rawValue)
+                                .tag(Optional(category))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
+                    .textFieldStyle(.roundedBorder)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(showRequiredCategoryError ? .red : .secondary200, lineWidth: 1)
+                    )
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Calories")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.secondary700)
+
+                            TextField("Calories", text: .optionalInt($recipe.calories))
+                                .keyboardType(.numberPad)
+                                .padding()
+                                .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
+                                .textFieldStyle(.roundedBorder)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.secondary200, lineWidth: 1)
+                                )
+                        }
+
+                        VStack(alignment: .leading) {
+                            Text("Cooking time (in min)")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.secondary700)
+
+                            TextField("Minutes", text: .optionalInt($recipe.totalCookTime))
+                                .keyboardType(.numberPad)
+                                .padding()
+                                .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
+                                .textFieldStyle(.roundedBorder)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.secondary200, lineWidth: 1)
+                                )
+                        }
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -56,6 +143,22 @@ struct EditRecipeView: View {
                     }
                 }
 
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Instructions")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.secondary700)
+
+                    TextField("Instructions", text: $recipe.instructions.orEmpty(), axis: .vertical)
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
+                        .textFieldStyle(.roundedBorder)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.secondary200, lineWidth: 1)
+                        )
+                        .lineLimit(3...)
+                }
+
                 Spacer()
             }
             .padding()
@@ -81,6 +184,13 @@ struct EditRecipeView: View {
     }
 
     func saveRecipe() {
+        showRequiredNameError = recipe.name == ""
+        showRequiredCategoryError = recipe.category == nil
+
+        if showRequiredNameError || showRequiredCategoryError {
+            return
+        }
+
         recipe.ingredients = recipe.ingredients.filter { $0.name.trimmingCharacters(in: .whitespaces) != "" }
 
         modelContext.insert(recipe)
@@ -93,6 +203,6 @@ struct EditRecipeView: View {
     let ingredient2 = Ingredient(name: "Sugar", measurement: "200g")
 
     NavigationStack {
-        EditRecipeView(recipe: Recipe(id: "", strMeal: "", strMealThumb: "", ingredients: [ingredient1, ingredient2], calories: nil, totalCookTime: nil))
+        EditRecipeView(recipe: Recipe(id: "", name: "", thumbnailURL: "", ingredients: [ingredient1, ingredient2], calories: nil, totalCookTime: nil))
     }
 }

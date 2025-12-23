@@ -7,8 +7,21 @@
 
 import SwiftUI
 
-enum FoodCategories: String, CaseIterable, Hashable {
-    case Beef, Chicken, Dessert, Lamb, Miscellaneous, Pasta, Pork, Seafood, Side, Starter, Vegan, Vegetarian, Breakfast, Goat
+enum FoodCategory: String, CaseIterable, Hashable, Codable {
+    case beef = "Beef"
+    case chicken = "Chicken"
+    case dessert = "Dessert"
+    case lamb = "Lamb"
+    case miscellaneous = "Miscellaneous"
+    case pasta = "Pasta"
+    case pork = "Pork"
+    case seafood = "Seafood"
+    case side = "Side"
+    case starter = "Starter"
+    case vegan = "Vegan"
+    case vegetarian = "Vegetarian"
+    case breakfast = "Breakfast"
+    case goat = "Goat"
 }
 
 @Observable
@@ -17,7 +30,7 @@ class RecipesTabViewVM {
 
     var recipes = [Recipe]()
 
-    func fetchRecipesByCategory(category: FoodCategories) async {
+    func fetchRecipesByCategory(category: FoodCategory) async {
         guard let url = URL(string: baseURL + "filter.php?c=\(category.rawValue)") else {
             return
         }

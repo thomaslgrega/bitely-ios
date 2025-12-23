@@ -12,7 +12,7 @@ import SwiftUI
 struct RecipeListCardView: View {
     @Environment(\.modelContext) var modelContext
     let recipe: Recipe
-    @Query(sort: [SortDescriptor(\Recipe.strMeal)]) var savedRecipes: [Recipe]
+    @Query(sort: [SortDescriptor(\Recipe.name)]) var savedRecipes: [Recipe]
     @State private var bookmarkingInProgress = false
     @State private var vm = RecipesTabViewVM()
     @State private var showDeleteAlert = false
@@ -58,7 +58,7 @@ struct RecipeListCardView: View {
             }
             .padding([.top, .horizontal], 12)
 
-            if let imageURL = recipe.strMealThumb {
+            if let imageURL = recipe.thumbnailURL {
                 KFImage(URL(string: imageURL))
                     .resizable()
                     .downsampling(size: CGSize(width: 250, height: 250))
@@ -66,7 +66,7 @@ struct RecipeListCardView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .padding()
             } else {
-                Image(recipe.strCategory?.lowercased() ?? "photo")
+                Image(recipe.category?.rawValue.lowercased() ?? "photo")
                     .resizable()
                     .scaledToFill()
                     .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -107,6 +107,6 @@ struct RecipeListCardView: View {
 }
 
 #Preview {
-    RecipeListCardView(recipe: Recipe(id: "123", strMeal: "Spaghetti and Meatballs", strCategory: "Pasta", strMealThumb: nil, calories: nil, totalCookTime: nil))
+    RecipeListCardView(recipe: Recipe(id: "123", name: "Spaghetti and Meatballs", category: .pasta, thumbnailURL: nil, calories: nil, totalCookTime: nil))
 
 }

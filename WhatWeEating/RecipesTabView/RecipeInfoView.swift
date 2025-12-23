@@ -31,13 +31,13 @@ struct RecipeInfoView: View {
             ScrollView {
                 VStack(alignment: .leading) {
                     ZStack(alignment: .topTrailing) {
-                        if let imageURL = recipe.strMealThumb {
+                        if let imageURL = recipe.thumbnailURL {
                             KFImage(URL(string: imageURL))
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(maxWidth: .infinity)
                         } else {
-                            Image(systemName: "photo")
+                            Image(recipe.category?.rawValue.lowercased() ?? "miscellaneous")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(maxWidth: .infinity)
@@ -85,13 +85,13 @@ struct RecipeInfoView: View {
 
                         Text("Instructions")
                             .font(.largeTitle)
-                        Text(recipe.strInstructions ?? "")
+                        Text(recipe.instructions ?? "")
                             .font(.title3)
                     }
                     .padding()
                 }
             }
-            .navigationTitle(recipe.strMeal)
+            .navigationTitle(recipe.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if allowEdit {

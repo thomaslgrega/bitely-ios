@@ -60,10 +60,10 @@ class Recipe: Codable, Identifiable, Hashable {
     }
 
     var id: String
-    var strMeal: String
-    var strCategory: String?
-    var strInstructions: String?
-    var strMealThumb: String?
+    var name: String
+    var category: FoodCategory?
+    var instructions: String?
+    var thumbnailURL: String?
 
     @Relationship(deleteRule: .cascade)
     var ingredients: [Ingredient]
@@ -71,12 +71,12 @@ class Recipe: Codable, Identifiable, Hashable {
     var calories: Int?
     var totalCookTime: Int?
 
-    init(id: String, strMeal: String, strCategory: String? = nil, strInstructions: String? = nil, strMealThumb: String?, ingredients: [Ingredient] = [], calories: Int?, totalCookTime: Int?) {
+    init(id: String, name: String, category: FoodCategory? = nil, instructions: String? = nil, thumbnailURL: String? = nil, ingredients: [Ingredient] = [], calories: Int?, totalCookTime: Int?) {
         self.id = id
-        self.strMeal = strMeal
-        self.strCategory = strCategory
-        self.strInstructions = strInstructions
-        self.strMealThumb = strMealThumb
+        self.name = name
+        self.category = category
+        self.instructions = instructions
+        self.thumbnailURL = thumbnailURL
         self.ingredients = ingredients
         self.calories = calories
         self.totalCookTime = totalCookTime
@@ -85,10 +85,10 @@ class Recipe: Codable, Identifiable, Hashable {
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
-        strMeal = try container.decode(String.self, forKey: .strMeal)
-        strCategory = try container.decodeIfPresent(String.self, forKey: .strCategory)
-        strInstructions = try container.decodeIfPresent(String.self, forKey: .strInstructions)
-        strMealThumb = try container.decodeIfPresent(String.self, forKey: .strMealThumb)
+        name = try container.decode(String.self, forKey: .strMeal)
+        category = try container.decodeIfPresent(FoodCategory.self, forKey: .strCategory)
+        instructions = try container.decodeIfPresent(String.self, forKey: .strInstructions)
+        thumbnailURL = try container.decodeIfPresent(String.self, forKey: .strMealThumb)
 
         var ingredients = [Ingredient]()
         for i in 1...20 {
@@ -109,9 +109,9 @@ class Recipe: Codable, Identifiable, Hashable {
     func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
-        try container.encode(strMeal, forKey: .strMeal)
-        try container.encode(strCategory, forKey: .strCategory)
-        try container.encode(strInstructions, forKey: .strInstructions)
-        try container.encode(strMealThumb, forKey: .strMealThumb)
+        try container.encode(name, forKey: .strMeal)
+        try container.encode(category, forKey: .strCategory)
+        try container.encode(instructions, forKey: .strInstructions)
+        try container.encode(thumbnailURL, forKey: .strMealThumb)
     }
 }

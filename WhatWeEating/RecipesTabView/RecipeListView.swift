@@ -12,7 +12,7 @@ struct RecipeListView: View {
     @Environment(\.modelContext) var modelContext
     @State private var selectedRecipe: Recipe?
 
-    let selectedCategory: FoodCategories?
+    let selectedCategory: FoodCategory?
     @State var vm = RecipesTabViewVM()
 
     let columns = [
@@ -26,7 +26,7 @@ struct RecipeListView: View {
                 ForEach(vm.recipes) { recipe in
                     VStack(alignment: .leading) {
                         RecipeListCardView(recipe: recipe)
-                        Text(recipe.strMeal)
+                        Text(recipe.name)
                             .padding(.leading)
                             .lineLimit(1)
                             .font(.title3)
@@ -54,6 +54,6 @@ struct RecipeListView: View {
 }
 
 #Preview {
-    RecipeListView(selectedCategory: .Beef)
+    RecipeListView(selectedCategory: .beef)
 }
 

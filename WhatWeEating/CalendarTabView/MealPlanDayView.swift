@@ -42,12 +42,12 @@ struct MealPlanDayView: View {
                     } else {
                         VStack(alignment: .leading, spacing: 8) {
                             ForEach(mealPlanDay[type]) { recipe in
-                                CustomListCardView(mainText: recipe.strMeal, trailingIcon: "trash") {
+                                CustomListCardView(mainText: recipe.name, trailingIcon: "trash") {
                                     selectedRecipe = recipe
                                 } iconOnTapAction: {
                                     showDeleteAlert = true
                                 }
-                                .alert("Remove \(recipe.strMeal) from \(type.rawValue.lowercased())?", isPresented: $showDeleteAlert) {
+                                .alert("Remove \(recipe.name) from \(type.rawValue.lowercased())?", isPresented: $showDeleteAlert) {
                                     Button("Cancel", role: .cancel) { }
                                     Button("Delete", role: .destructive) {
                                         removeRecipeFromCalendar(recipe, type)

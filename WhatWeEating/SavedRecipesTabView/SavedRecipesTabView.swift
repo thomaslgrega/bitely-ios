@@ -15,7 +15,7 @@ enum RecipesDestinations: Hashable {
 
 struct SavedRecipesTabView: View {
     @Environment(\.modelContext) var modelContext
-    @Query(sort: [SortDescriptor(\Recipe.strMeal)]) var recipes: [Recipe]
+    @Query(sort: [SortDescriptor(\Recipe.name)]) var recipes: [Recipe]
     @State private var selectedRecipe: RecipesDestinations?
 
     var savedRecipesId: Set<String> {
@@ -36,7 +36,7 @@ struct SavedRecipesTabView: View {
                             VStack(alignment: .leading) {
                                 RecipeListCardView(recipe: recipe)
 
-                                Text(recipe.strMeal)
+                                Text(recipe.name)
                                     .padding(.leading)
                                     .lineLimit(1)
                                     .font(.title3)
@@ -63,7 +63,7 @@ struct SavedRecipesTabView: View {
                 HStack {
                     Spacer()
                     Button {
-                        selectedRecipe = .editRecipe(Recipe(id: UUID().uuidString, strMeal: "", strMealThumb: "", calories: nil, totalCookTime: nil))
+                        selectedRecipe = .editRecipe(Recipe(id: UUID().uuidString, name: "", calories: nil, totalCookTime: nil))
                     } label: {
                         Image(systemName: "plus")
                             .foregroundStyle(Color.secondary100)
