@@ -20,12 +20,12 @@ struct CalendarTabView: View {
 
     var body: some View {
         NavigationStack {
-            DatePickerView(selectedDate: $selectedDate)
-                .tint(Color.primaryMain)
-
-            Divider()
-
             ScrollView {
+                DatePickerView(selectedDate: $selectedDate)
+                    .tint(Color.primaryMain)
+
+                Divider()
+
                 if let mealPlanDay = selectedDateMealPlan {
                     MealPlanDayView(mealPlanDay: mealPlanDay)
                         .frame(maxWidth: .infinity, alignment: .leading)

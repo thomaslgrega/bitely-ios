@@ -9,6 +9,11 @@ import Kingfisher
 import SwiftData
 import SwiftUI
 
+enum RecipeTab {
+    case ingredients
+    case instructions
+}
+
 struct RecipeInfoView: View {
     @Environment(\.modelContext) var modelContext
     @Query var savedRecipes: [Recipe]
@@ -16,6 +21,8 @@ struct RecipeInfoView: View {
     let allowEdit: Bool
     @State var vm = RecipesTabViewVM()
     @State var recipe: Recipe?
+
+    @State private var selectedTab: RecipeTab = .ingredients
 
     var isSaved: Bool {
         savedRecipes.contains(where: { $0.id == recipeId })
@@ -28,7 +35,7 @@ struct RecipeInfoView: View {
     var body: some View {
         if let recipe {
             ScrollView {
-                VStack(alignment: .leading) {
+                VStack(alignment: .center, spacing: 20) {
                     ZStack(alignment: .topTrailing) {
                         if let imageURL = recipe.thumbnailURL {
                             KFImage(URL(string: imageURL))
@@ -57,40 +64,79 @@ struct RecipeInfoView: View {
                         }
                     }
 
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            Text("Ingredients")
-                                .font(.largeTitle)
-                            Spacer()
+                    Text(recipe.name)
+                        .font(.title)
+                        .foregroundStyle(Color.secondaryMain)
+
+                    HStack(spacing: 40) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "flame.fill")
+                                .foregroundStyle(Color.primaryMain)
+                            Text(recipe.calories.map { "\($0) cals"} ?? "N/A")
+                                .foregroundStyle(Color.secondaryMain)
+                        }
+
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock.fill")
+                                .foregroundStyle(Color.primaryMain)
+                            Text(recipe.totalCookTime.map { "\($0) min" } ?? "N/A")
+                                .foregroundStyle(Color.secondaryMain)
+                        }
+
+                        HStack(spacing: 4) {
                             NavigationLink {
                                 RecipeShoppingListView(items: recipe.ingredients)
                             } label: {
-                                Image(systemName: "basket")
-                                    .font(.title)
-                                    .foregroundStyle(Color.primaryMain)
+                                HStack(spacing: 4) {
+                                    Image(systemName: "basket.fill")
+                                        .foregroundStyle(Color.primaryMain)
+
+                                    Text("Add to")
+                                        .foregroundStyle(Color.primaryMain)
+                                }
                             }
+
                         }
-
-                        ForEach(recipe.ingredients) { ingredient in
-                            HStack {
-                                Text(ingredient.measurement)
-                                    .bold()
-
-                                Text(ingredient.name)
-                            }
-                            .font(.title3)
-                        }
-
-                        Text("Instructions")
-                            .font(.largeTitle)
-                        Text(recipe.instructions ?? "")
-                            .font(.title3)
                     }
-                    .padding()
+
+                    CustomSegmentedControl(
+                        selection: $selectedTab,
+                        options: [
+                            (.ingredients, "Ingredients"),
+                            (.instructions, "Instructions")
+                        ]
+                    )
+                    .padding(.vertical)
+
+                    ZStack {
+                        switch selectedTab {
+                        case .ingredients:
+                            VStack(alignment: .leading, spacing: 16) {
+                                ForEach(recipe.ingredients) { ingredient in
+                                    HStack {
+                                        Text(ingredient.measurement)
+                                            .bold()
+                                        Text(ingredient.name)
+                                    }
+                                    .font(.title3)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .transition(.move(edge: .leading))
+                        case .instructions:
+                            VStack(alignment: .leading) {
+                                Text(recipe.instructions ?? "")
+                                    .lineSpacing(8)
+                                    .font(.title3)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .transition(.move(edge: .trailing))
+                        }
+                    }
+                    .padding([.leading, .bottom])
+                    .animation(.snappy, value: selectedTab)
                 }
             }
-            .navigationTitle(recipe.name)
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if allowEdit {
                     NavigationLink("Edit") {
@@ -118,5 +164,14 @@ struct RecipeInfoView: View {
 }
 
 #Preview {
-    RecipeInfoView(recipeId: "12345", allowEdit: true)
+    let instructions = "Mix all ingredients until sugar is fully dissolved. Pour over ice and serve!"
+    let ingredients = [
+        Ingredient(name: "Lemon Juice", measurement: "1 cup"),
+        Ingredient(name: "Water", measurement: "1 cup"),
+        Ingredient(name: "Sugar", measurement: "2 tablespoons")
+    ]
+    let recipe = Recipe(id: UUID().uuidString, name: "Lemonade", category: .miscellaneous, instructions: instructions, ingredients: ingredients, calories: 100, totalCookTime: 5)
+    NavigationStack {
+        RecipeInfoView(recipeId: "12345", allowEdit: true, recipe: recipe)
+    }
 }

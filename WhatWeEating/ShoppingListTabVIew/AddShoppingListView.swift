@@ -11,7 +11,7 @@ struct AddShoppingListView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
     @Bindable var shoppingList: ShoppingList
-    @State var itemsToAdd: [ShoppingListItem] = [ShoppingListItem(ingredient: Ingredient(name: "", measurement: ""))]
+    @State private var itemsToAdd: [ShoppingListItem] = [ShoppingListItem(ingredient: Ingredient(name: "", measurement: ""))]
 
     var onCreate: (ShoppingList) -> Void
 

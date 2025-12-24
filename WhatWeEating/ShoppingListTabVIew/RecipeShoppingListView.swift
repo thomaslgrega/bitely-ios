@@ -19,10 +19,20 @@ struct RecipeShoppingListView: View {
     @State var items: [Ingredient]
     @State var itemsToAdd: [Ingredient] = []
     @State private var showShoppingListPicker = false
+    @State private var showRequiredWarning = false
 
     var body: some View {
         NavigationStack {
             ZStack(alignment: .topLeading) {
+                if showRequiredWarning {
+                    HStack(spacing: 3) {
+                        Image(systemName: "exclamationmark.triangle")
+                        Text("Choose a shopping list")
+                    }
+                    .padding(.horizontal)
+                    .foregroundStyle(.red)
+                    .font(.subheadline)
+                }
                 VStack(alignment: .leading, spacing: 0) {
                     Button {
                         withAnimation(.snappy) {
@@ -49,6 +59,7 @@ struct RecipeShoppingListView: View {
                                     withAnimation(.snappy) {
                                         selectedShoppingList = list
                                         showShoppingListPicker = false
+                                        showRequiredWarning = false
                                     }
                                 } label: {
                                     Text(list.name)
@@ -67,6 +78,7 @@ struct RecipeShoppingListView: View {
                             withAnimation(.snappy) {
                                 showAddNewShoppingListSheet = true
                                 showShoppingListPicker = false
+                                showRequiredWarning = false
                             }
                         } label: {
                             HStack {
@@ -82,6 +94,7 @@ struct RecipeShoppingListView: View {
                 .foregroundStyle(showShoppingListPicker ? Color.primaryMain : Color.secondary100)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .padding()
+                .padding(.top, 6)
                 .shadow(radius: showShoppingListPicker ? 2 : 0)
 
                 VStack(alignment: .leading) {
@@ -161,13 +174,16 @@ struct RecipeShoppingListView: View {
     }
 
     func saveShoppingList() {
-        if let selectedShoppingList {
-            for item in itemsToAdd {
-                selectedShoppingList.items.append(ShoppingListItem(ingredient: item))
-            }
-            modelContext.insert(selectedShoppingList)
-            dismiss()
+        guard let selectedShoppingList else {
+            showRequiredWarning = true
+            return
         }
+
+        for item in itemsToAdd {
+            selectedShoppingList.items.append(ShoppingListItem(ingredient: item))
+        }
+        modelContext.insert(selectedShoppingList)
+        dismiss()
     }
 }
 
