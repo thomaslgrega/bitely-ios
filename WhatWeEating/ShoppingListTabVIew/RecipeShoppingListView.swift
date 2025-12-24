@@ -18,38 +18,73 @@ struct RecipeShoppingListView: View {
     @State var showAddNewShoppingListSheet: Bool = false
     @State var items: [Ingredient]
     @State var itemsToAdd: [Ingredient] = []
+    @State private var showShoppingListPicker = false
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
-                    Picker("Select a shopping list", selection: $selectedShoppingList) {
-                        Text("Select a shopping list")
-                            .tag(nil as ShoppingList?)
-                            .disabled(true)
-
-                        ForEach(shoppingLists) { shoppingList in
-                            Text(shoppingList.name)
-                                .tag(shoppingList)
-                        }
-                    }
-
+            ZStack(alignment: .topLeading) {
+                VStack(alignment: .leading, spacing: 0) {
                     Button {
-                        showAddNewShoppingListSheet = true
+                        withAnimation(.snappy) {
+                            showShoppingListPicker.toggle()
+                        }
                     } label: {
                         HStack {
-                            Image(systemName: "plus")
-                            Text("Create a new shopping list")
+                            Text(selectedShoppingList?.name ?? "Select a shopping list")
+                                .lineLimit(1)
+                            Image(systemName: "chevron.down")
+                                .rotationEffect(.degrees(showShoppingListPicker ? 180 : 0))
                         }
                         .padding()
                     }
-                    .frame(maxWidth: .infinity, minHeight: 32)
-                    .background(Color.primaryMain)
-                    .foregroundStyle(Color.secondary100)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .font(.title3)
-                    .padding(.vertical)
 
+                    if showShoppingListPicker {
+                        ForEach(shoppingLists) { list in
+                            if list != selectedShoppingList {
+                                Divider()
+                                    .background(Color.secondary50)
+                                    .frame(width: 230)
+                                    .padding(.horizontal)
+                                Button {
+                                    withAnimation(.snappy) {
+                                        selectedShoppingList = list
+                                        showShoppingListPicker = false
+                                    }
+                                } label: {
+                                    Text(list.name)
+                                        .lineLimit(1)
+                                }
+                                .padding()
+                            }
+                        }
+
+                        Divider()
+                            .background(Color.secondary50)
+                            .frame(width: 230)
+                            .padding(.horizontal)
+
+                        Button {
+                            withAnimation(.snappy) {
+                                showAddNewShoppingListSheet = true
+                                showShoppingListPicker = false
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle")
+                                Text("Create a new shopping list")
+                            }
+                            .padding()
+                        }
+                    }
+                }
+                .zIndex(1000)
+                .background(showShoppingListPicker ? Color.secondary200 : Color.primaryMain)
+                .foregroundStyle(showShoppingListPicker ? Color.primaryMain : Color.secondary100)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding()
+                .shadow(radius: showShoppingListPicker ? 2 : 0)
+
+                VStack(alignment: .leading) {
                     Divider()
                         .frame(height: 1)
                         .overlay(.gray)
@@ -64,15 +99,17 @@ struct RecipeShoppingListView: View {
                     }
                     .font(.subheadline)
 
-                    ForEach(items) { item in
-                        Divider()
-                        itemRow(for: item)
-                            .foregroundStyle(.primary)
-                    }
+                    ScrollView {
+                        ForEach(items) { item in
+                            Divider()
+                            itemRow(for: item)
+                                .foregroundStyle(.primary)
+                        }
 
-                    Spacer()
+                        Spacer()
+                    }
                 }
-                .font(.title2)
+                .offset(y: 80)
                 .padding()
             }
             .navigationTitle("Choose Ingredients")
@@ -83,11 +120,6 @@ struct RecipeShoppingListView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Add") {
                         saveShoppingList()
@@ -110,6 +142,8 @@ struct RecipeShoppingListView: View {
                         .bold()
 
                     Text("(\(item.measurement))")
+
+                    Spacer()
                 }
             }
         }

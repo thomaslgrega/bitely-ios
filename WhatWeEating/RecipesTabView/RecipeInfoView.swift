@@ -16,7 +16,6 @@ struct RecipeInfoView: View {
     let allowEdit: Bool
     @State var vm = RecipesTabViewVM()
     @State var recipe: Recipe?
-    @State var showShoppingListSheet = false
 
     var isSaved: Bool {
         savedRecipes.contains(where: { $0.id == recipeId })
@@ -63,14 +62,13 @@ struct RecipeInfoView: View {
                             Text("Ingredients")
                                 .font(.largeTitle)
                             Spacer()
-                            Button {
-                                showShoppingListSheet = true
+                            NavigationLink {
+                                RecipeShoppingListView(items: recipe.ingredients)
                             } label: {
                                 Image(systemName: "basket")
                                     .font(.title)
                                     .foregroundStyle(Color.primaryMain)
                             }
-
                         }
 
                         ForEach(recipe.ingredients) { ingredient in
@@ -99,9 +97,6 @@ struct RecipeInfoView: View {
                         EditRecipeView(recipe: recipe)
                     }
                 }
-            }
-            .sheet(isPresented: $showShoppingListSheet) {
-                RecipeShoppingListView(items: recipe.ingredients)
             }
         } else {
             ProgressView()
