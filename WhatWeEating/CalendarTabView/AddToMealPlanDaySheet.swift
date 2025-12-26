@@ -12,7 +12,7 @@ struct AddToMealPlanDaySheet: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
     @Query(sort: [SortDescriptor(\Recipe.name)]) var recipes: [Recipe]
-    @State private var selectedRecipe: Recipe?
+    @State private var selectedRecipes: Set<Recipe> = []
 
     let mealType: MealType
     let addRecipeToCalendar: (Recipe, MealType) -> Void
@@ -27,13 +27,17 @@ struct AddToMealPlanDaySheet: View {
                 } else {
                     ForEach(recipes) { recipe in
                         HStack {
-                            Image(systemName: selectedRecipe == recipe ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(selectedRecipe == recipe ? Color.primaryMain : Color.secondaryMain)
+                            Image(systemName: selectedRecipes.contains(recipe) ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(selectedRecipes.contains(recipe) ? Color.primaryMain : Color.secondaryMain)
 
                             Text(recipe.name)
                         }
                         .onTapGesture {
-                            selectedRecipe = recipe
+                            if selectedRecipes.contains(recipe) {
+                                selectedRecipes.remove(recipe)
+                            } else {
+                                selectedRecipes.insert(recipe)
+                            }
                         }
                     }
                 }
@@ -52,13 +56,13 @@ struct AddToMealPlanDaySheet: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Add") {
-                        if let recipe = selectedRecipe {
+                        for recipe in selectedRecipes {
                             addRecipeToCalendar(recipe, mealType)
                         }
 
                         dismiss()
                     }
-                    .disabled(selectedRecipe == nil)
+                    .disabled(selectedRecipes.isEmpty)
                 }
             }
             .toolbarBackground(Color.secondary100, for: .navigationBar)
