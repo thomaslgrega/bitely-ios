@@ -5,6 +5,7 @@
 //  Created by Thomas Grega on 12/1/25.
 //
 
+import PhotosUI
 import SwiftUI
 
 struct EditRecipeView: View {
@@ -14,6 +15,9 @@ struct EditRecipeView: View {
 
     @State private var showRequiredNameError = false
     @State private var showRequiredCategoryError = false
+
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var selectedImage: UIImage?
 
     var body: some View {
         // TODO: Field for image
@@ -32,7 +36,6 @@ struct EditRecipeView: View {
                             }
                             .foregroundStyle(.red)
                         }
-
                     }
                     .font(.subheadline)
 
@@ -44,6 +47,62 @@ struct EditRecipeView: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(showRequiredNameError ? .red : .secondary200, lineWidth: 1)
                         )
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Image")
+                        .foregroundStyle(Color.secondary700)
+                        .font(.subheadline)
+
+                    PhotosPicker(
+                        selection: $selectedPhotoItem,
+                        matching: .images,
+                        photoLibrary: .shared()
+                    ) {
+                        if let image = selectedImage {
+                            ZStack(alignment: .bottomLeading) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(height: 200)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                                Button {
+                                    selectedPhotoItem = nil
+                                    selectedImage = nil
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .foregroundStyle(Color.secondary100)
+                                        .frame(width: 50, height: 50)
+                                        .background(Color.primaryMain)
+                                        .clipShape(Circle())
+                                        .padding()
+                                }
+                            }
+                        } else {
+                            VStack(alignment: .center, spacing: 12) {
+                                Image(systemName: "photo")
+                                Text("Add Photo")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                        }
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.secondary200, lineWidth: 1)
+                    )
+                    .onChange(of: selectedPhotoItem) { _, newItem in
+                        Task {
+                            if let data = try? await newItem?.loadTransferable(type: Data.self),
+                               let image = UIImage(data: data) {
+                                selectedImage = image
+                            }
+                        }
+                    }
                 }
 
                 VStack(alignment: .leading) {
@@ -170,6 +229,11 @@ struct EditRecipeView: View {
                     Text("Save")
                 }
             }
+            .onAppear {
+                if let data = recipe.imageData, let image = UIImage(data: data) {
+                    selectedImage = image
+                }
+            }
         }
     }
 
@@ -192,6 +256,12 @@ struct EditRecipeView: View {
         }
 
         recipe.ingredients = recipe.ingredients.filter { $0.name.trimmingCharacters(in: .whitespaces) != "" }
+
+        if let jpegData = selectedImage?.jpegData(compressionQuality: 0.8) {
+            recipe.imageData = jpegData
+        } else {
+            recipe.imageData = nil
+        }
 
         modelContext.insert(recipe)
         dismiss()

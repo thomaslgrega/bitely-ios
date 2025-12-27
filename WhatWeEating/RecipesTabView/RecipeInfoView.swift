@@ -37,17 +37,9 @@ struct RecipeInfoView: View {
             ScrollView {
                 VStack(alignment: .center, spacing: 20) {
                     ZStack(alignment: .topTrailing) {
-                        if let imageURL = recipe.thumbnailURL {
-                            KFImage(URL(string: imageURL))
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(maxWidth: .infinity)
-                        } else {
-                            Image(recipe.category?.rawValue.lowercased() ?? "miscellaneous")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(maxWidth: .infinity)
-                        }
+                        recipeImage
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: .infinity)
 
                         ZStack {
                             Circle()
@@ -148,6 +140,20 @@ struct RecipeInfoView: View {
                 .task {
                     recipe = await vm.fetchRecipeById(id: recipeId)
                 }
+        }
+    }
+
+    @ViewBuilder
+    private var recipeImage: some View {
+        if let data = recipe?.imageData, let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable()
+        } else if let imageURL = recipe?.thumbnailURL, let url = URL(string: imageURL) {
+            KFImage(url)
+                .resizable()
+        } else {
+            Image(recipe?.category?.rawValue.lowercased() ?? "miscellaneous")
+                .resizable()
         }
     }
 

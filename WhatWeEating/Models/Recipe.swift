@@ -64,6 +64,7 @@ class Recipe: Codable, Identifiable, Hashable {
     var category: FoodCategory?
     var instructions: String?
     var thumbnailURL: String?
+    var imageData: Data?
 
     @Relationship(deleteRule: .cascade)
     var ingredients: [Ingredient]
