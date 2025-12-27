@@ -10,7 +10,7 @@ import SwiftUI
 
 enum RecipesDestinations: Hashable {
     case showRecipe(Recipe)
-    case editRecipe(Recipe)
+    case addNewRecipe(Recipe)
 }
 
 struct SavedRecipesTabView: View {
@@ -52,7 +52,7 @@ struct SavedRecipesTabView: View {
                     .padding()
                     .navigationDestination(item: $selectedRecipe) { destination in
                         switch destination {
-                        case .editRecipe(let recipe):
+                        case .addNewRecipe(let recipe):
                             EditRecipeView(recipe: recipe)
                         case .showRecipe(let recipe):
                             RecipeInfoView(recipeId: recipe.id, allowEdit: true, recipe: recipe)
@@ -63,7 +63,7 @@ struct SavedRecipesTabView: View {
                 HStack {
                     Spacer()
                     Button {
-                        selectedRecipe = .editRecipe(Recipe(id: UUID().uuidString, name: "", calories: nil, totalCookTime: nil))
+                        selectedRecipe = .addNewRecipe(Recipe(id: UUID().uuidString, name: "", calories: nil, totalCookTime: nil))
                     } label: {
                         Image(systemName: "plus")
                             .foregroundStyle(Color.secondary100)

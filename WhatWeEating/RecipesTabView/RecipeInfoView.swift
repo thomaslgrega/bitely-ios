@@ -95,7 +95,6 @@ struct RecipeInfoView: View {
                                         .foregroundStyle(Color.primaryMain)
                                 }
                             }
-
                         }
                     }
 

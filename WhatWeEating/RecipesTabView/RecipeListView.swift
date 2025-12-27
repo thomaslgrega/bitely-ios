@@ -10,7 +10,6 @@ import SwiftUI
 
 struct RecipeListView: View {
     @Environment(\.modelContext) var modelContext
-    @State private var selectedRecipe: Recipe?
 
     let selectedCategory: FoodCategory?
     @State var vm = RecipesTabViewVM()
@@ -24,27 +23,27 @@ struct RecipeListView: View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(vm.recipes) { recipe in
-                    VStack(alignment: .leading) {
-                        RecipeListCardView(recipe: recipe)
-                        Text(recipe.name)
-                            .padding(.leading)
-                            .lineLimit(1)
-                            .font(.title3)
-                            .bold()
-                            .foregroundStyle(Color.secondaryMain)
+                    NavigationLink(value: recipe) {
+                        VStack(alignment: .leading) {
+                            RecipeListCardView(recipe: recipe)
+                            Text(recipe.name)
+                                .padding(.leading)
+                                .lineLimit(1)
+                                .font(.title3)
+                                .bold()
+                                .foregroundStyle(Color.secondaryMain)
+                        }
+                        .padding(.top)
                     }
-                    .padding(.top)
-                    .onTapGesture {
-                        selectedRecipe = recipe
-                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal)
         }
         .navigationTitle(selectedCategory?.rawValue ?? "")
-        .navigationDestination(item: $selectedRecipe, destination: { recipe in
+        .navigationDestination(for: Recipe.self) { recipe in
             RecipeInfoView(recipeId: recipe.id, allowEdit: false)
-        })
+        }
         .task {
             if let selectedCategory {
                 await vm.fetchRecipesByCategory(category: selectedCategory)

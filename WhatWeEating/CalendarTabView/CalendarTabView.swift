@@ -9,7 +9,7 @@ import SwiftData
 import SwiftUI
 
 struct CalendarTabView: View {
-    @Environment(\.modelContext) var modelContext
+    @Environment(\.modelContext) private var modelContext
     @State private var recipes = [String]()
     @State private var selectedDate = Date()
     @Query var mealPlanDays: [MealPlanDay]
