@@ -20,7 +20,6 @@ struct EditRecipeView: View {
     @State private var selectedImage: UIImage?
 
     var body: some View {
-        // TODO: Field for image
         ScrollView {
             VStack(alignment: .leading, spacing: 40) {
                 VStack(alignment: .leading, spacing: 4) {

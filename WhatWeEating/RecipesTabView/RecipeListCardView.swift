@@ -58,20 +58,12 @@ struct RecipeListCardView: View {
             }
             .padding([.top, .horizontal], 12)
 
-            if let imageURL = recipe.thumbnailURL {
-                KFImage(URL(string: imageURL))
-                    .resizable()
-                    .downsampling(size: CGSize(width: 250, height: 250))
-                    .scaledToFill()
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .padding()
-            } else {
-                Image(recipe.category?.rawValue.lowercased() ?? "photo")
-                    .resizable()
-                    .scaledToFill()
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .padding()
-            }
+            recipeImage
+                .frame(height: 140)
+                .frame(maxWidth: .infinity)
+                .clipped()
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding()
         }
         .alert("Are you sure?", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) {}
@@ -103,6 +95,21 @@ struct RecipeListCardView: View {
         }
 
         bookmarkingInProgress = false
+    }
+
+    @ViewBuilder
+    private var recipeImage: some View {
+        if let data = recipe.imageData, let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable()
+        } else if let imageURL = recipe.thumbnailURL, let url = URL(string: imageURL) {
+            KFImage(url)
+                .resizable()
+                .downsampling(size: CGSize(width: 250, height: 250))
+        } else {
+            Image(recipe.category?.rawValue.lowercased() ?? "miscellaneous")
+                .resizable()
+        }
     }
 }
 
