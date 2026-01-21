@@ -30,33 +30,37 @@ struct SavedRecipesTabView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
-                ScrollView {
-                    LazyVGrid(columns: columns, spacing: 12) {
-                        ForEach(recipes) { recipe in
-                            VStack(alignment: .leading) {
-                                RecipeListCardView(recipe: recipe)
+                if recipes.isEmpty {
+                    VStack {
+                        Text("You have no recipes saved. Browse recipes to find a recipe or press the plus button to create your own!")
+                            .font(.title2)
+                            .italic()
+                            .foregroundStyle(Color.secondary400)
 
-                                Text(recipe.name)
-                                    .padding(.leading)
-                                    .lineLimit(1)
-                                    .font(.title3)
-                                    .bold()
-                                    .foregroundStyle(Color.secondaryMain)
-                            }
-                            .padding(.top)
-                            .onTapGesture {
-                                selectedRecipe = .showRecipe(recipe)
-                            }
-                        }
+                        Spacer()
                     }
                     .padding()
-                    .navigationDestination(item: $selectedRecipe) { destination in
-                        switch destination {
-                        case .addNewRecipe(let recipe):
-                            EditRecipeView(recipe: recipe)
-                        case .showRecipe(let recipe):
-                            RecipeInfoView(recipeId: recipe.id, allowEdit: true, recipe: recipe)
+                } else {
+                    ScrollView {
+                        LazyVGrid(columns: columns, spacing: 12) {
+                            ForEach(recipes) { recipe in
+                                VStack(alignment: .leading) {
+                                    RecipeListCardView(recipe: recipe)
+
+                                    Text(recipe.name)
+                                        .padding(.leading)
+                                        .lineLimit(1)
+                                        .font(.title3)
+                                        .bold()
+                                        .foregroundStyle(Color.secondaryMain)
+                                }
+                                .padding(.top)
+                                .onTapGesture {
+                                    selectedRecipe = .showRecipe(recipe)
+                                }
+                            }
                         }
+                        .padding()
                     }
                 }
 
@@ -76,6 +80,14 @@ struct SavedRecipesTabView: View {
                 .padding(32)
             }
             .navigationTitle("Saved Recipes")
+            .navigationDestination(item: $selectedRecipe) { destination in
+                switch destination {
+                case .addNewRecipe(let recipe):
+                    EditRecipeView(recipe: recipe)
+                case .showRecipe(let recipe):
+                    RecipeInfoView(recipeId: recipe.id, allowEdit: true, recipe: recipe)
+                }
+            }
         }
     }
 

@@ -133,7 +133,6 @@ struct EditRecipeView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
-                    .textFieldStyle(.roundedBorder)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(showRequiredCategoryError ? .red : .secondary200, lineWidth: 1)
@@ -262,7 +261,9 @@ struct EditRecipeView: View {
             recipe.imageData = nil
         }
 
-        modelContext.insert(recipe)
+        if recipe.modelContext == nil {
+            modelContext.insert(recipe)
+        }
         dismiss()
     }
 }

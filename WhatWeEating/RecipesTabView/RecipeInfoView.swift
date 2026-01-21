@@ -59,6 +59,7 @@ struct RecipeInfoView: View {
                     Text(recipe.name)
                         .font(.title)
                         .foregroundStyle(Color.secondaryMain)
+                        .padding(.horizontal)
 
                     HStack(spacing: 40) {
                         HStack(spacing: 4) {

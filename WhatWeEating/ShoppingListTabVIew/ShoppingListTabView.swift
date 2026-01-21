@@ -18,26 +18,31 @@ struct ShoppingListTabView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                ScrollView {
-                    ForEach(shoppingLists) { list in
-                        CustomListCardView(mainText: list.name, trailingIcon: "minus.circle") {
-                            selectedList = list
-                        } iconOnTapAction: {
-                            modelContext.delete(list)
-                        }
-                    }
-                    .font(.title3)
+                if shoppingLists.isEmpty {
+                    VStack {
+                        Text("You have no shopping lists. Create a new one by tapping on the plus button!")
+                            .font(.title2)
+                            .italic()
+                            .foregroundStyle(Color.secondary400)
 
-                    Spacer()
-                }
-                .foregroundStyle(Color.secondaryMain)
-                .padding()
-                .navigationTitle("Shopping Lists")
-                .navigationDestination(item: $selectedList) { shoppingList in
-                    ShoppingListInfoView(list: shoppingList)
-                }
-                .sheet(isPresented: $showAddShoppingListSheet) {
-                    AddShoppingListView(shoppingList: ShoppingList(name: ""), onCreate: { _ in })
+                        Spacer()
+                    }
+                    .padding()
+                } else {
+                    ScrollView {
+                        ForEach(shoppingLists) { list in
+                            CustomListCardView(mainText: list.name, trailingIcon: "minus.circle") {
+                                selectedList = list
+                            } iconOnTapAction: {
+                                modelContext.delete(list)
+                            }
+                        }
+                        .font(.title3)
+
+                        Spacer()
+                    }
+                    .foregroundStyle(Color.secondaryMain)
+                    .padding()
                 }
 
                 VStack {
@@ -58,6 +63,13 @@ struct ShoppingListTabView: View {
                     }
                     .padding(32)
                 }
+            }
+            .navigationTitle("Shopping Lists")
+            .navigationDestination(item: $selectedList) { shoppingList in
+                ShoppingListInfoView(list: shoppingList)
+            }
+            .sheet(isPresented: $showAddShoppingListSheet) {
+                AddShoppingListView(shoppingList: ShoppingList(name: ""), onCreate: { _ in })
             }
         }
     }
