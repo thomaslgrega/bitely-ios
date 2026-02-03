@@ -18,10 +18,6 @@ struct SavedRecipesTabView: View {
     @Query(sort: [SortDescriptor(\Recipe.name)]) var recipes: [Recipe]
     @State private var selectedRecipe: RecipesDestinations?
 
-    var savedRecipesId: Set<String> {
-        Set(recipes.map { $0.id })
-    }
-
     let columns = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
@@ -45,7 +41,16 @@ struct SavedRecipesTabView: View {
                         LazyVGrid(columns: columns, spacing: 12) {
                             ForEach(recipes) { recipe in
                                 VStack(alignment: .leading) {
-                                    RecipeListCardView(recipe: recipe)
+                                    RecipeListCardView(recipe: RecipeSummary(
+                                        id: recipe.id.uuidString,
+                                        remoteId: recipe.remoteId,
+                                        name: recipe.name,
+                                        category: recipe.category,
+                                        thumbnailUrl: recipe.thumbnailURL,
+                                        imageData: recipe.imageData,
+                                        calories: recipe.calories,
+                                        totalCookTime: recipe.totalCookTime
+                                    ))
 
                                     Text(recipe.name)
                                         .padding(.leading)
@@ -67,7 +72,7 @@ struct SavedRecipesTabView: View {
                 HStack {
                     Spacer()
                     Button {
-                        selectedRecipe = .addNewRecipe(Recipe(id: UUID().uuidString, name: "", calories: nil, totalCookTime: nil))
+                        selectedRecipe = .addNewRecipe(Recipe(name: "", category: .beef))
                     } label: {
                         Image(systemName: "plus")
                             .foregroundStyle(Color.secondary100)
@@ -85,15 +90,9 @@ struct SavedRecipesTabView: View {
                 case .addNewRecipe(let recipe):
                     EditRecipeView(recipe: recipe)
                 case .showRecipe(let recipe):
-                    RecipeInfoView(recipeId: recipe.id, allowEdit: true, recipe: recipe)
+                    LocalRecipeInfoView(recipe: recipe, allowEdit: true)
                 }
             }
-        }
-    }
-
-    func deleteSavedRecipe(_ indexSet: IndexSet) {
-        for index in indexSet {
-            modelContext.delete(recipes[index])
         }
     }
 }

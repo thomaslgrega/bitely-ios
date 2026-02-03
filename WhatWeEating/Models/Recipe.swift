@@ -8,111 +8,68 @@
 import Foundation
 import SwiftData
 
-struct Response: Codable {
-    var meals: [Recipe]
+enum FoodCategory: String, CaseIterable, Hashable, Codable {
+    case beef = "Beef"
+    case chicken = "Chicken"
+    case dessert = "Dessert"
+    case lamb = "Lamb"
+    case miscellaneous = "Miscellaneous"
+    case pasta = "Pasta"
+    case pork = "Pork"
+    case seafood = "Seafood"
+    case side = "Side"
+    case starter = "Starter"
+    case vegan = "Vegan"
+    case vegetarian = "Vegetarian"
+    case breakfast = "Breakfast"
+    case goat = "Goat"
 }
 
 @Model
-class Recipe: Codable, Identifiable, Hashable {
-    enum CodingKeys: String, CodingKey {
-        case id = "idMeal"
-        case strMeal, strCategory, strInstructions, strMealThumb
-        case strIngredient1
-        case strIngredient2
-        case strIngredient3
-        case strIngredient4
-        case strIngredient5
-        case strIngredient6
-        case strIngredient7
-        case strIngredient8
-        case strIngredient9
-        case strIngredient10
-        case strIngredient11
-        case strIngredient12
-        case strIngredient13
-        case strIngredient14
-        case strIngredient15
-        case strIngredient16
-        case strIngredient17
-        case strIngredient18
-        case strIngredient19
-        case strIngredient20
-        case strMeasure1
-        case strMeasure2
-        case strMeasure3
-        case strMeasure4
-        case strMeasure5
-        case strMeasure6
-        case strMeasure7
-        case strMeasure8
-        case strMeasure9
-        case strMeasure10
-        case strMeasure11
-        case strMeasure12
-        case strMeasure13
-        case strMeasure14
-        case strMeasure15
-        case strMeasure16
-        case strMeasure17
-        case strMeasure18
-        case strMeasure19
-        case strMeasure20
-    }
-
-    var id: String
+final class Recipe {
+    @Attribute(.unique) var id: UUID
+    var remoteId: String?
     var name: String
-    var category: FoodCategory?
+    var categoryRaw: String
     var instructions: String?
     var thumbnailURL: String?
     var imageData: Data?
+    var calories: Int?
+    var totalCookTime: Int?
 
     @Relationship(deleteRule: .cascade)
     var ingredients: [Ingredient]
 
-    var calories: Int?
-    var totalCookTime: Int?
+    var category: FoodCategory {
+        get {
+            FoodCategory(rawValue: categoryRaw) ?? .miscellaneous
+        }
+        set {
+            categoryRaw = newValue.rawValue
+        }
+    }
 
-    init(id: String, name: String, category: FoodCategory? = nil, instructions: String? = nil, thumbnailURL: String? = nil, ingredients: [Ingredient] = [], calories: Int?, totalCookTime: Int?) {
+    init(
+        id: UUID = UUID(),
+        remoteId: String? = nil,
+        name: String,
+        category: FoodCategory,
+        instructions: String? = nil,
+        thumbnailURL: String? = nil,
+        ingredients: [Ingredient] = [],
+        calories: Int? = nil,
+        totalCookTime: Int? = nil
+    ) {
         self.id = id
+        self.remoteId = remoteId
         self.name = name
-        self.category = category
+        self.categoryRaw = category.rawValue
         self.instructions = instructions
         self.thumbnailURL = thumbnailURL
         self.ingredients = ingredients
         self.calories = calories
         self.totalCookTime = totalCookTime
     }
-
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(String.self, forKey: .id)
-        name = try container.decode(String.self, forKey: .strMeal)
-        category = try container.decodeIfPresent(FoodCategory.self, forKey: .strCategory)
-        instructions = try container.decodeIfPresent(String.self, forKey: .strInstructions)
-        thumbnailURL = try container.decodeIfPresent(String.self, forKey: .strMealThumb)
-
-        var ingredients = [Ingredient]()
-        for i in 1...20 {
-            let nameKey = CodingKeys(stringValue: "strIngredient\(i)")!
-            let measurementKey = CodingKeys(stringValue: "strMeasure\(i)")!
-
-            let name = try container.decodeIfPresent(String.self, forKey: nameKey) ?? ""
-            let measurement = try container.decodeIfPresent(String.self, forKey: measurementKey) ?? ""
-
-            if name == "" { break }
-
-            ingredients.append(Ingredient(name: name, measurement: measurement))
-        }
-
-        self.ingredients = ingredients
-    }
-
-    func encode(to encoder: any Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .strMeal)
-        try container.encode(category, forKey: .strCategory)
-        try container.encode(instructions, forKey: .strInstructions)
-        try container.encode(thumbnailURL, forKey: .strMealThumb)
-    }
 }
+
+

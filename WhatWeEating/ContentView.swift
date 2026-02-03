@@ -12,13 +12,34 @@ enum mainTabs {
     case shoppingList
     case searchRecipes
     case bookmarkedRecipes
+    case sharedRecipes
 }
 
 struct ContentView: View {
-    @State private var selectedTab: mainTabs = .calendar
+    @Environment(AuthStore.self) private var authStore
+
+    @State private var showAuth = false
+    @State private var selectedTab: mainTabs = .searchRecipes
 
     var body: some View {
+        VStack(spacing: 12) {
+            Text(authStore.isAuthenticated ? "Logged In" : "Guest")
+
+            Button("Open Login") { showAuth = true }
+
+            if authStore.isAuthenticated {
+                Button("Sign Out") { authStore.signOut() }
+            }
+        }
+        .sheet(isPresented: $showAuth) {
+            AuthSheet()
+        }
+
         TabView(selection: $selectedTab) {
+            Tab("Recipes", systemImage: "fork.knife", value: .searchRecipes) {
+                RecipesTabView()
+            }
+
             Tab("Calendar", systemImage: "calendar", value: .calendar) {
                 CalendarTabView()
             }
@@ -27,12 +48,12 @@ struct ContentView: View {
                 ShoppingListTabView()
             }
 
-            Tab("Recipes", systemImage: "fork.knife", value: .searchRecipes) {
-                RecipesTabView()
-            }
-
             Tab("Saved", systemImage: "bookmark", value: .bookmarkedRecipes) {
                 SavedRecipesTabView()
+            }
+
+            Tab("Shared", systemImage: "square.and.arrow.up", value: .sharedRecipes) {
+                SharedRecipesView()
             }
         }
         .tint(Color.primaryMain)

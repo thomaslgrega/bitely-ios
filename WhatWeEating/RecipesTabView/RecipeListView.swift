@@ -9,10 +9,11 @@ import SwiftData
 import SwiftUI
 
 struct RecipeListView: View {
-    @Environment(\.modelContext) var modelContext
+    @Environment(\.modelContext) private var modelContext
+    @Environment(RecipeService.self) private var recipeService
 
     let selectedCategory: FoodCategory?
-    @State var vm = RecipesTabViewVM()
+    @State private var recipes: [RecipeSummaryDTO] = []
 
     let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -22,10 +23,20 @@ struct RecipeListView: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(vm.recipes) { recipe in
+                ForEach(recipes) { recipe in
                     NavigationLink(value: recipe) {
                         VStack(alignment: .leading) {
-                            RecipeListCardView(recipe: recipe)
+                            RecipeListCardView(recipe: RecipeSummary(
+                                id: recipe.id,
+                                remoteId: recipe.id,
+                                name: recipe.name,
+                                category: recipe.category,
+                                thumbnailUrl: recipe.thumbnailUrl,
+                                imageData: nil,
+                                calories: recipe.calories,
+                                totalCookTime: recipe.totalCookTime
+                            ))
+
                             Text(recipe.name)
                                 .padding(.leading)
                                 .lineLimit(1)
@@ -41,12 +52,16 @@ struct RecipeListView: View {
             .padding(.horizontal)
         }
         .navigationTitle(selectedCategory?.rawValue ?? "")
-        .navigationDestination(for: Recipe.self) { recipe in
-            RecipeInfoView(recipeId: recipe.id, allowEdit: false)
+        .navigationDestination(for: RecipeSummaryDTO.self) { recipeSummary in
+            RemoteRecipeInfoView(recipeId: recipeSummary.id, allowEdit: false)
         }
         .task {
             if let selectedCategory {
-                await vm.fetchRecipesByCategory(category: selectedCategory)
+                do {
+                    recipes = try await recipeService.getRecipesByCategory(category: selectedCategory)
+                } catch {
+                    print("Failed to fetch recipes: ", error)
+                }
             }
         }
     }

@@ -10,19 +10,21 @@ import SwiftData
 import SwiftUI
 
 struct RecipeListCardView: View {
+    @Environment(RecipeService.self) private var recipeService
     @Environment(\.modelContext) var modelContext
-    let recipe: Recipe
-    @Query(sort: [SortDescriptor(\Recipe.name)]) var savedRecipes: [Recipe]
+
+    let recipe: RecipeSummary
+    @Query private var savedRecipes: [Recipe]
     @State private var bookmarkingInProgress = false
-    @State private var vm = RecipesTabViewVM()
     @State private var showDeleteAlert = false
 
     var isBookmarked: Bool {
-        savedRecipes.contains(where: { $0.id == recipe.id })
+        guard let rid = recipe.remoteId else { return true }
+        return savedRecipes.contains(where: { $0.remoteId == rid })
     }
 
     var savedRecipe: Recipe? {
-        savedRecipes.first(where: { $0.id == recipe.id })
+        savedRecipes.first(where: { $0.remoteId == recipe.id })
     }
 
     var body: some View {
@@ -67,7 +69,7 @@ struct RecipeListCardView: View {
         }
         .alert("Are you sure?", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) {}
-            Button("Delete", role: .destructive, action: deleteRecipe)
+            Button("Delete", role: .destructive, action: unbookmarkRecipe)
         }
         .background(Color.secondary100)
         .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -79,15 +81,33 @@ struct RecipeListCardView: View {
 
     func bookmarkRecipe() async {
         bookmarkingInProgress = true
-
-        if let fullRecipe = await vm.fetchRecipeById(id: recipe.id) {
-            modelContext.insert(fullRecipe)
+        defer {
+            bookmarkingInProgress = false
         }
 
-        bookmarkingInProgress = false
+        do {
+            let fullRecipe = try await recipeService.getRecipeById(id: recipe.id)
+            let swiftDataRecipe = Recipe(
+                remoteId: fullRecipe.id,
+                name: fullRecipe.name,
+                category: fullRecipe.category,
+                instructions: fullRecipe.instructions,
+                thumbnailURL: fullRecipe.thumbnailUrl,
+                calories: fullRecipe.calories,
+                totalCookTime: fullRecipe.totalCookTime
+            )
+
+            swiftDataRecipe.ingredients = fullRecipe.ingredients.map {
+                Ingredient(name: $0.name, measurement: $0.measurement)
+            }
+
+            modelContext.insert(swiftDataRecipe)
+        } catch {
+            print("Bookmark failed:", error)
+        }
     }
 
-    func deleteRecipe() {
+    func unbookmarkRecipe() {
         bookmarkingInProgress = true
 
         if let recipeToDelete = savedRecipe {
@@ -102,18 +122,20 @@ struct RecipeListCardView: View {
         if let data = recipe.imageData, let image = UIImage(data: data) {
             Image(uiImage: image)
                 .resizable()
-        } else if let imageURL = recipe.thumbnailURL, let url = URL(string: imageURL) {
+        } else if let imageURL = recipe.thumbnailUrl, let url = URL(string: imageURL) {
             KFImage(url)
                 .resizable()
                 .downsampling(size: CGSize(width: 250, height: 250))
         } else {
-            Image(recipe.category?.rawValue.lowercased() ?? "miscellaneous")
+            Image(recipe.category.rawValue.lowercased())
                 .resizable()
         }
     }
 }
 
 #Preview {
-    RecipeListCardView(recipe: Recipe(id: "123", name: "Spaghetti and Meatballs", category: .pasta, thumbnailURL: nil, calories: nil, totalCookTime: nil))
+    let recipe = Recipe(name: "Spaghetti and Meatballs", category: .pasta, thumbnailURL: nil, calories: nil, totalCookTime: nil)
+    let summary = RecipeSummary(id: recipe.id.uuidString, remoteId: recipe.remoteId, name: recipe.name, category: recipe.category, thumbnailUrl: recipe.thumbnailURL, imageData: recipe.imageData, calories: recipe.calories, totalCookTime: recipe.totalCookTime)
+    RecipeListCardView(recipe: summary)
 
 }
