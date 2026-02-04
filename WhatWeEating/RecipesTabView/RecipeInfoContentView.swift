@@ -18,6 +18,7 @@ struct RecipeInfoContentView: View {
     let isSaved: Bool
     let onToggleBookmark: () -> Void
 
+    @State private var showDeleteAlert = false
     @State private var selectedTab: RecipeTab = .ingredients
     
     var body: some View {
@@ -33,7 +34,9 @@ struct RecipeInfoContentView: View {
                             .frame(width: 50, height: 50)
                             .padding()
 
-                        Button(action: onToggleBookmark) {
+                        Button {
+                            showDeleteAlert = true
+                        } label: {
                             Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                                 .bold()
                                 .foregroundStyle(Color.primaryMain)
@@ -110,6 +113,10 @@ struct RecipeInfoContentView: View {
                 .padding([.leading, .bottom])
                 .animation(.snappy, value: selectedTab)
             }
+        }
+        .alert("Are you sure?", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive, action: onToggleBookmark)
         }
         .toolbar {
             if allowEdit {

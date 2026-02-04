@@ -24,7 +24,7 @@ struct RecipeListCardView: View {
     }
 
     var savedRecipe: Recipe? {
-        savedRecipes.first(where: { $0.remoteId == recipe.id })
+        savedRecipes.first(where: { $0.remoteId == recipe.id || $0.id.uuidString == recipe.id })
     }
 
     var body: some View {

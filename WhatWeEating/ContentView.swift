@@ -22,19 +22,6 @@ struct ContentView: View {
     @State private var selectedTab: mainTabs = .searchRecipes
 
     var body: some View {
-        VStack(spacing: 12) {
-            Text(authStore.isAuthenticated ? "Logged In" : "Guest")
-
-            Button("Open Login") { showAuth = true }
-
-            if authStore.isAuthenticated {
-                Button("Sign Out") { authStore.signOut() }
-            }
-        }
-        .sheet(isPresented: $showAuth) {
-            AuthSheet()
-        }
-
         TabView(selection: $selectedTab) {
             Tab("Recipes", systemImage: "fork.knife", value: .searchRecipes) {
                 RecipesTabView()

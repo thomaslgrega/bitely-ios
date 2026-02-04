@@ -26,27 +26,3 @@ struct RecipeSummary: Identifiable, Hashable {
         case totalCookTime = "total_cook_time"
     }
 }
-
-//extension RecipeSummary {
-//    init(recipe: Recipe) {
-//        self.id = recipe.id.uuidString
-//        self.name = recipe.name
-//        self.category = recipe.category
-//        self.thumbnailUrl = recipe.thumbnailURL
-//        self.imageData = recipe.imageData
-//        self.calories = recipe.calories
-//        self.totalCookTime = recipe.totalCookTime
-//    }
-//
-//    init(recipeDTO: RecipeSummaryDTO) {
-//        self.id = recipeDTO.id
-//        self.name = recipeDTO.name
-//        self.category = recipeDTO.category
-//        self.thumbnailUrl = recipeDTO.thumbnailUrl
-//        self.imageData = nil
-//        self.calories = recipeDTO.calories
-//        self.totalCookTime = recipeDTO.totalCookTime
-//    }
-//}
-//
-//
