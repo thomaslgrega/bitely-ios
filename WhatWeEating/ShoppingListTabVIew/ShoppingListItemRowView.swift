@@ -15,16 +15,16 @@ struct ShoppingListItemRowView: View {
             Image(systemName: item.purchased ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(item.purchased ? Color.primaryMain : Color.secondaryMain)
 
-            Text(item.ingredient.name)
+            Text(item.name)
                 .strikethrough(item.purchased)
 
-            Text("(\(item.ingredient.measurement))")
+            Text("(\(item.measurement))")
                 .strikethrough(item.purchased)
         }
     }
 }
 
 #Preview {
-    let item = ShoppingListItem(ingredient: Ingredient(name: "Milk", measurement: "1 Gal"))
+    let item = ShoppingListItem(name: "Milk", measurement: "1 Gal")
     ShoppingListItemRowView(item: .constant(item))
 }

@@ -14,7 +14,7 @@ struct ShoppingListInfoView: View {
 
     var sortedItems: [Binding<ShoppingListItem>] {
         $list.items.sorted { (lhs: Binding<ShoppingListItem>, rhs: Binding<ShoppingListItem>) in
-            lhs.wrappedValue.ingredient.name < rhs.wrappedValue.ingredient.name
+            lhs.wrappedValue.name < rhs.wrappedValue.name
         }
     }
 
@@ -56,10 +56,10 @@ struct ShoppingListInfoView: View {
 
 #Preview {
     let shoppingList = [
-        ShoppingListItem(ingredient: Ingredient(name: "Milk", measurement: "1 Gal")),
-        ShoppingListItem(ingredient: Ingredient(name: "Ice cream", measurement: "1 Pt")),
-        ShoppingListItem(ingredient: Ingredient(name: "Coke", measurement: "1 L")),
+        ShoppingListItem(name: "Milk", measurement: "1 Gal"),
+        ShoppingListItem(name: "Ice cream", measurement: "1 Pt"),
+        ShoppingListItem(name: "Coke", measurement: "1 L"),
     ]
-    let list = ShoppingList(name: "Target", items: shoppingList, image: "")
+    let list = ShoppingList(name: "Target", items: shoppingList)
     ShoppingListInfoView(list: list)
 }

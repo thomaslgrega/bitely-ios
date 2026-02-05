@@ -16,11 +16,8 @@ class ShoppingList {
     @Relationship(deleteRule: .cascade)
     var items: [ShoppingListItem]
 
-    var image: String?
-
-    init(name: String, items: [ShoppingListItem] = [], image: String? = nil) {
+    init(name: String, items: [ShoppingListItem] = []) {
         self.name = name
         self.items = items
-        self.image = image
     }
 }

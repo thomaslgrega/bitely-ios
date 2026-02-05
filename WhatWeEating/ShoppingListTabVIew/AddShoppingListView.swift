@@ -11,15 +11,13 @@ struct AddShoppingListView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
     @Bindable var shoppingList: ShoppingList
-    @State private var itemsToAdd: [ShoppingListItem] = [ShoppingListItem(ingredient: Ingredient(name: "", measurement: ""))]
+    @State private var itemsToAdd: [ShoppingListItem] = [ShoppingListItem(name: "", measurement: "")]
 
     var onCreate: (ShoppingList) -> Void
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                //TODO: Image field
-
                 VStack(alignment: .leading, spacing: 40) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Name")
@@ -42,7 +40,7 @@ struct AddShoppingListView: View {
                             .font(.subheadline)
 
                         ForEach($shoppingList.items) { $item in
-                            IngredientRowView(ingredient: $item.ingredient) {
+                            ShoppingListItemFormRow(shoppingListItem: $item) {
                                 removeItemFromShoppingList(item)
                             }
                             .padding()
@@ -55,7 +53,7 @@ struct AddShoppingListView: View {
                         }
 
                         ForEach($itemsToAdd) { $item in
-                            IngredientRowView(ingredient: $item.ingredient) {
+                            ShoppingListItemFormRow(shoppingListItem: $item) {
                                 removeItemFromItemsToAdd(item)
                             }
                             .padding()
@@ -103,18 +101,16 @@ struct AddShoppingListView: View {
     }
 
     func addItem() {
-        let newIngredient = Ingredient(name: "", measurement: "")
-        itemsToAdd.append(ShoppingListItem(ingredient: newIngredient))
+        itemsToAdd.append(ShoppingListItem(name: "", measurement: ""))
     }
 
     func saveShoppingList() {
-        //TODO: Add image
         if shoppingList.name == "" {
             shoppingList.name = "Shopping List"
         }
 
-        shoppingList.items = shoppingList.items.filter { $0.ingredient.name.trimmingCharacters(in: .whitespaces) != "" }
-        itemsToAdd = itemsToAdd.filter { $0.ingredient.name.trimmingCharacters(in: .whitespaces) != "" }
+        shoppingList.items = shoppingList.items.filter { $0.name.trimmingCharacters(in: .whitespaces) != "" }
+        itemsToAdd = itemsToAdd.filter { $0.name.trimmingCharacters(in: .whitespaces) != "" }
 
         for item in itemsToAdd {
             shoppingList.items.append(item)

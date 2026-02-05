@@ -178,9 +178,9 @@ struct RecipeShoppingListView: View {
         }
 
         for item in itemsToAdd {
-            selectedShoppingList.items.append(ShoppingListItem(ingredient: item))
+            selectedShoppingList.items.append(ShoppingListItem(name: item.name, measurement: item.measurement))
         }
-        modelContext.insert(selectedShoppingList)
+
         dismiss()
     }
 }
