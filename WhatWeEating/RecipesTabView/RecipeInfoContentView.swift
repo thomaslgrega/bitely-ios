@@ -13,12 +13,17 @@ enum RecipeTab {
 }
 
 struct RecipeInfoContentView: View {
+    @Environment(AuthStore.self) private var authStore
+    @Environment(RecipeService.self) private var recipeService
+
     let recipe: Recipe
     let allowEdit: Bool
     let isSaved: Bool
     let onToggleBookmark: () -> Void
 
     @State private var showDeleteAlert = false
+    @State private var showShareAlert = false
+    @State private var showAuthSheet = false
     @State private var selectedTab: RecipeTab = .ingredients
     
     var body: some View {
@@ -35,7 +40,7 @@ struct RecipeInfoContentView: View {
                             .padding()
 
                         Button {
-                            showDeleteAlert = true
+                            isSaved ? showDeleteAlert = true : onToggleBookmark()
                         } label: {
                             Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                                 .bold()
@@ -50,7 +55,7 @@ struct RecipeInfoContentView: View {
                     .foregroundStyle(Color.secondaryMain)
                     .padding(.horizontal)
 
-                HStack(spacing: 40) {
+                HStack(spacing: 24) {
                     HStack(spacing: 4) {
                         Image(systemName: "flame.fill")
                             .foregroundStyle(Color.primaryMain)
@@ -70,10 +75,23 @@ struct RecipeInfoContentView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "basket.fill")
-                                .foregroundStyle(Color.primaryMain)
                             Text("Add to")
-                                .foregroundStyle(Color.primaryMain)
                         }
+                        .foregroundStyle(Color.primaryMain)
+                    }
+
+                    Button {
+                        if authStore.isAuthenticated {
+                            showShareAlert = true
+                        } else {
+                            showAuthSheet = true
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "square.and.arrow.up")
+                            Text("Share")
+                        }
+                        .foregroundStyle(Color.primaryMain)
                     }
                 }
 
@@ -117,6 +135,30 @@ struct RecipeInfoContentView: View {
         .alert("Are you sure?", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive, action: onToggleBookmark)
+        }
+        .alert("Do you want to share this recipe?", isPresented: $showShareAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Share") {
+                Task {
+                    do {
+                        let ingredients = recipe.ingredients.map { CreateIngredientRequest(name: $0.name, measurement: $0.measurement) }
+                        _ = try await recipeService.createRecipe(recipe: CreateRecipeRequest(
+                            name: recipe.name,
+                            category: recipe.category,
+                            instructions: recipe.instructions,
+                            thumbnailUrl: recipe.thumbnailURL,
+                            ingredients: ingredients,
+                            calories: recipe.calories,
+                            totalCookTime: recipe.totalCookTime
+                        ))
+                    } catch {
+                        print("Failed to share recipe:", error)
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showAuthSheet) {
+            AuthSheet()
         }
         .toolbar {
             if allowEdit {

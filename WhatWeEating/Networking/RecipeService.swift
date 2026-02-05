@@ -30,4 +30,9 @@ final class RecipeService {
     func deleteSharedRecipe(id: String) async throws {
         try await api.requestNoResponse(path: "recipes/\(id)", method: "DELETE", requiresAuth: true)
     }
+
+    func createRecipe(recipe: CreateRecipeRequest) async throws -> RecipeDetailDTO {
+        let data = try JSONEncoder().encode(recipe)
+        return try await api.request(path: "recipes", method: "POST", body: data, requiresAuth: true)
+    }
 }
