@@ -16,18 +16,28 @@ struct SharedRecipesView: View {
     @State private var errorMessage: String?
     @State private var recipes: [RecipeSummaryDTO] = []
 
+    @State private var deleteInProgress = false
+
     var body: some View {
         NavigationStack {
             Group {
                 if !authStore.isAuthenticated {
                     VStack(spacing: 12) {
                         Text("Sign in to view your shared recipes.")
-                        Button("Sign In") { showAuthSheet = true }
+                            .foregroundStyle(Color.secondaryMain)
+
+                        Button("Sign In") {
+                            showAuthSheet = true
+                        }
                     }
                     .padding()
                 } else {
                     List(recipes) { recipe in
-                        SharedRecipeRow(recipe: recipe)
+                        NavigationLink(value: recipe) {
+                            SharedRecipeRow(recipe: recipe) {
+                                recipes.removeAll(where: { $0.id == recipe.id })
+                            }
+                        }
                     }
                     .overlay {
                         if isLoading { ProgressView() }
@@ -46,6 +56,9 @@ struct SharedRecipesView: View {
             }
             .sheet(isPresented: $showAuthSheet) {
                 AuthSheet()
+            }
+            .navigationDestination(for: RecipeSummaryDTO.self) { recipe in
+                RemoteRecipeInfoView(recipeId: recipe.id, allowEdit: false)
             }
             .task {
                 if authStore.isAuthenticated {
@@ -82,20 +95,6 @@ struct SharedRecipesView: View {
             recipes = try await recipeService.getSharedRecipes()
         } catch {
             errorMessage = "Failed to load shared recipes."
-        }
-    }
-}
-
-struct SharedRecipeRow: View {
-    let recipe: RecipeSummaryDTO
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(recipe.name)
-                .font(.headline)
-            Text(recipe.category.rawValue)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
         }
     }
 }

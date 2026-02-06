@@ -16,8 +16,6 @@ enum mainTabs {
 }
 
 struct ContentView: View {
-    @Environment(AuthStore.self) private var authStore
-
     @State private var showAuth = false
     @State private var selectedTab: mainTabs = .searchRecipes
 

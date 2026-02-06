@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct RecipesTabView: View {
+    @State private var showSettingsSheet = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -52,6 +54,17 @@ struct RecipesTabView: View {
                 }
             }
             .navigationTitle("Find a recipe")
+            .sheet(isPresented: $showSettingsSheet) {
+                SettingsView()
+            }
+            .toolbar {
+                Button {
+                    showSettingsSheet = true
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .foregroundStyle(Color.primaryMain)
+                }
+            }
         }
     }
 }

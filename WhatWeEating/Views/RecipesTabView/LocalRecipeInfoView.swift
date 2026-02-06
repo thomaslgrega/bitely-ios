@@ -35,5 +35,5 @@ struct LocalRecipeInfoView: View {
 }
 
 #Preview {
-    LocalRecipeInfoView(recipe: Recipe(name: "Lemonade", category: .miscellaneous), allowEdit: true)
+    LocalRecipeInfoView(recipe: Recipe(name: "Lemonade", category: .other), allowEdit: true)
 }

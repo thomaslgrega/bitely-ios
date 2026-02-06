@@ -26,5 +26,5 @@ struct RecipeImageView: View {
 }
 
 #Preview {
-    RecipeImageView(recipe: Recipe(name: "Lemonade", category: .miscellaneous))
+    RecipeImageView(recipe: Recipe(name: "Lemonade", category: .other))
 }

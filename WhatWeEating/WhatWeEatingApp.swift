@@ -30,6 +30,9 @@ struct WhatWeEatingApp: App {
                 .environment(authStore)
                 .environment(authService)
                 .environment(recipeService)
+                .task {
+                    await authService.bootstrap()
+                }
         }
         .modelContainer(for: [Recipe.self, ShoppingList.self, MealPlanDay.self])
     }

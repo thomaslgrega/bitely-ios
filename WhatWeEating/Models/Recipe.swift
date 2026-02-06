@@ -12,17 +12,13 @@ enum FoodCategory: String, CaseIterable, Hashable, Codable {
     case beef = "Beef"
     case chicken = "Chicken"
     case dessert = "Dessert"
-    case lamb = "Lamb"
-    case miscellaneous = "Miscellaneous"
+    case other = "Other"
     case pasta = "Pasta"
     case pork = "Pork"
     case seafood = "Seafood"
     case side = "Side"
-    case starter = "Starter"
-    case vegan = "Vegan"
     case vegetarian = "Vegetarian"
     case breakfast = "Breakfast"
-    case goat = "Goat"
 }
 
 @Model
@@ -42,7 +38,7 @@ final class Recipe {
 
     var category: FoodCategory {
         get {
-            FoodCategory(rawValue: categoryRaw) ?? .miscellaneous
+            FoodCategory(rawValue: categoryRaw) ?? .other
         }
         set {
             categoryRaw = newValue.rawValue

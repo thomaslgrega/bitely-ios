@@ -172,7 +172,7 @@ struct RecipeInfoContentView: View {
 
 #Preview {
     RecipeInfoContentView(
-        recipe: Recipe(name: "Lemonade", category: .miscellaneous),
+        recipe: Recipe(name: "Lemonade", category: .other),
         allowEdit: false,
         isSaved: true,
         onToggleBookmark: {}

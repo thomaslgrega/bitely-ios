@@ -20,7 +20,7 @@ struct RecipeListCardView: View {
 
     var isBookmarked: Bool {
         guard let rid = recipe.remoteId else { return true }
-        return savedRecipes.contains(where: { $0.remoteId == rid })
+        return savedRecipes.contains(where: { $0.remoteId == rid || $0.id.uuidString == recipe.id })
     }
 
     var savedRecipe: Recipe? {

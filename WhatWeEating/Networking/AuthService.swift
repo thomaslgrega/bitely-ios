@@ -29,6 +29,17 @@ final class AuthService {
         let res: AuthResponse = try await api.request(path: "auth/login", method: "POST", body: payload, requiresAuth: false)
         authStore.setSession(token: res.accessToken, user: res.user)
     }
+
+    func bootstrap() async {
+        guard authStore.isAuthenticated else { return }
+
+        do {
+            let me: User = try await api.request(path: "me", requiresAuth: true)
+            authStore.user = me
+        } catch {
+            authStore.signOut()
+        }
+    }
 }
 
 private struct RegisterRequest: Encodable {
