@@ -15,14 +15,17 @@ struct SharedRecipeRow: View {
 
     @State private var deleteInProgress = false
     @State private var showDeleteAlert = false
+    @State private var recipeSelected = false
 
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(recipe.name)
-                    .font(.headline)
+                    .font(.title2)
+                    .lineLimit(1)
+                    .foregroundStyle(Color.secondary700)
                 Text(recipe.category.rawValue)
-                    .font(.subheadline)
+                    .font(.headline)
                     .foregroundStyle(Color.secondary400)
             }
 
@@ -35,12 +38,21 @@ struct SharedRecipeRow: View {
                     ProgressView()
                 } else {
                     Image(systemName: "trash")
-                        .foregroundStyle(Color.primaryMain)
                         .font(.title3)
+                        .foregroundStyle(Color.primaryMain)
                 }
             }
             .disabled(deleteInProgress)
         }
+        .padding(.horizontal)
+        .padding(.vertical, 10)
+        .frame(minHeight: 50)
+        .background(Color.secondary100)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.secondary200, lineWidth: 1)
+        )
         .alert("Are you sure?", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
@@ -48,6 +60,12 @@ struct SharedRecipeRow: View {
                     await deleteRecipe()
                 }
             }
+        }
+        .onTapGesture {
+            recipeSelected = true
+        }
+        .navigationDestination(isPresented: $recipeSelected) {
+            RemoteRecipeInfoView(recipeId: recipe.id, allowEdit: true)
         }
     }
 

@@ -12,6 +12,7 @@ struct ShoppingListTabView: View {
     @Environment(\.modelContext) var modelContext
     @Query(sort: [SortDescriptor(\ShoppingList.name)]) var shoppingLists: [ShoppingList]
     @State private var selectedList: ShoppingList?
+    @State private var showSettingsSheet = false
 
     @State private var showAddShoppingListSheet = false
 
@@ -70,6 +71,17 @@ struct ShoppingListTabView: View {
             }
             .sheet(isPresented: $showAddShoppingListSheet) {
                 AddShoppingListView(shoppingList: ShoppingList(name: ""), onCreate: { _ in })
+            }
+            .sheet(isPresented: $showSettingsSheet) {
+                SettingsView()
+            }
+            .toolbar {
+                Button {
+                    showSettingsSheet = true
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .foregroundStyle(Color.primaryMain)
+                }
             }
         }
     }

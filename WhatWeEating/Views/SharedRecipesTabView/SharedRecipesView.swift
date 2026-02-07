@@ -12,6 +12,7 @@ struct SharedRecipesView: View {
     @Environment(RecipeService.self) private var recipeService
 
     @State private var showAuthSheet = false
+    @State private var showSettingsSheet = false
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var recipes: [RecipeSummaryDTO] = []
@@ -32,30 +33,26 @@ struct SharedRecipesView: View {
                     }
                     .padding()
                 } else {
-                    List(recipes) { recipe in
-                        NavigationLink(value: recipe) {
-                            SharedRecipeRow(recipe: recipe) {
-                                recipes.removeAll(where: { $0.id == recipe.id })
+                    ScrollView {
+                        VStack {
+                            ForEach(recipes) { recipe in
+                                SharedRecipeRow(recipe: recipe) {
+                                    recipes.removeAll(where: { $0.id == recipe.id })
+                                }
                             }
                         }
+                        .padding(.horizontal)
                     }
-                    .overlay {
-                        if isLoading { ProgressView() }
-                    }
+
+                    Spacer()
                 }
             }
             .navigationTitle("Shared")
-            .toolbar {
-                if authStore.isAuthenticated {
-                    Button("Refresh") {
-                        Task {
-                            await load()
-                        }
-                    }
-                }
-            }
             .sheet(isPresented: $showAuthSheet) {
                 AuthSheet()
+            }
+            .sheet(isPresented: $showSettingsSheet) {
+                SettingsView()
             }
             .navigationDestination(for: RecipeSummaryDTO.self) { recipe in
                 RemoteRecipeInfoView(recipeId: recipe.id, allowEdit: false)
@@ -81,6 +78,14 @@ struct SharedRecipesView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
+            .toolbar {
+                Button {
+                    showSettingsSheet = true
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .foregroundStyle(Color.primaryMain)
+                }
+            }
         }
     }
 
@@ -94,6 +99,7 @@ struct SharedRecipesView: View {
         do {
             recipes = try await recipeService.getSharedRecipes()
         } catch {
+            print(error)
             errorMessage = "Failed to load shared recipes."
         }
     }

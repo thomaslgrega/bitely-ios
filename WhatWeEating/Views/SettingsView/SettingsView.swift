@@ -11,6 +11,8 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthStore.self) private var authStore
 
+    @State private var showSignoutAlert = false
+
     var body: some View {
         NavigationStack {
             Group {
@@ -20,8 +22,7 @@ struct SettingsView: View {
                             .font(.title3)
                             .foregroundStyle(Color.secondaryMain)
                         Button("Sign Out") {
-                            authStore.signOut()
-                            dismiss()
+                            showSignoutAlert = true
                         }
                     }
                     .padding()
@@ -30,6 +31,13 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .alert("Do you want to signout?", isPresented: $showSignoutAlert) {
+                Button("Cancel", role: .cancel) {}
+                Button("Sign out", role: .destructive) {
+                    authStore.signOut()
+                    dismiss()
+                }
+            }
             .toolbar {
                 if authStore.isAuthenticated {
                     ToolbarItem(placement: .cancellationAction) {

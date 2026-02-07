@@ -17,6 +17,7 @@ struct SavedRecipesTabView: View {
     @Environment(\.modelContext) var modelContext
     @Query(sort: [SortDescriptor(\Recipe.name)]) var recipes: [Recipe]
     @State private var selectedRecipe: RecipesDestinations?
+    @State private var showSettingsSheet = false
 
     let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -91,6 +92,17 @@ struct SavedRecipesTabView: View {
                     EditRecipeView(recipe: recipe)
                 case .showRecipe(let recipe):
                     LocalRecipeInfoView(recipe: recipe, allowEdit: true)
+                }
+            }
+            .sheet(isPresented: $showSettingsSheet) {
+                SettingsView()
+            }
+            .toolbar {
+                Button {
+                    showSettingsSheet = true
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .foregroundStyle(Color.primaryMain)
                 }
             }
         }
