@@ -14,11 +14,10 @@ Bitely is an offline-first iOS recipe app built with **SwiftUI + SwiftData**, wi
 ---
 
 ## Demo
-
-- `Screenshots/saved-recipes.png`
-- `Screenshots/recipe-detail.png`
-- `Screenshots/shopping-list.png`
-- `Screenshots/meal-planning.png`
+<img src="Bitely/Screenshots/saved-recipes.png" width="240" />
+<img src="Bitely/Screenshots/recipe-detail.png" width="240" />
+<img src="Bitely/Screenshots/shopping-list.png" width="240" />
+<img src="Bitely/Screenshots/meal-planning.png" width="240" />
 
 ---
 
