@@ -1,0 +1,71 @@
+//
+//  CalendarTabView.swift
+//  Bitely
+//
+//  Created by Thomas Grega on 4/29/25.
+//
+
+import SwiftData
+import SwiftUI
+
+struct CalendarTabView: View {
+    @Environment(\.modelContext) private var modelContext
+    @State private var recipes = [String]()
+    @State private var selectedDate = Date()
+    @State private var showSettingsSheet = false
+    @Query var mealPlanDays: [MealPlanDay]
+
+    var selectedDateMealPlan: MealPlanDay? {
+        mealPlanDays.first(where: { $0.dayKey == selectedDate.dayKey })
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                DatePickerView(selectedDate: $selectedDate)
+                    .tint(Color.primaryMain)
+
+                Divider()
+
+                if let mealPlanDay = selectedDateMealPlan {
+                    MealPlanDayView(mealPlanDay: mealPlanDay)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                } else {
+                    ProgressView()
+                }
+            }
+            .onAppear {
+                loadMealPlanDay()
+            }
+            .onChange(of: selectedDate) { _, _ in
+                loadMealPlanDay()
+            }
+            .sheet(isPresented: $showSettingsSheet) {
+                SettingsView()
+            }
+            .toolbar {
+                Button {
+                    showSettingsSheet = true
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .foregroundStyle(Color.primaryMain)
+                }
+            }
+        }
+    }
+
+    func loadMealPlanDay() {
+        if selectedDateMealPlan == nil {
+            let newMealPlanDay = MealPlanDay(dayKey: selectedDate.dayKey)
+            modelContext.insert(newMealPlanDay)
+        }
+    }
+}
+
+#Preview {
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: MealPlanDay.self, configurations: config)
+    CalendarTabView()
+        .modelContainer(container)
+}
