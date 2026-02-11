@@ -9,10 +9,12 @@
 /* Begin PBXBuildFile section */
 		243EF42A2F032C0A0024D44A /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 243EF4292F032C0A0024D44A /* SwiftSoup */; };
 		246C05972DE65941004A8920 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 246C05962DE65941004A8920 /* Kingfisher */; };
+		24A86C312F3C1A180069FA1C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 24A86C302F3C1A180069FA1C /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2421D9E22DB71E1900267C57 /* Bitely.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bitely.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		24A86C302F3C1A180069FA1C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -52,6 +54,7 @@
 		2421D9D92DB71E1900267C57 = {
 			isa = PBXGroup;
 			children = (
+				24A86C302F3C1A180069FA1C /* README.md */,
 				2421D9E42DB71E1900267C57 /* Bitely */,
 				246DF16B2DF13B5400B0F7DC /* Frameworks */,
 				2421D9E32DB71E1900267C57 /* Products */,
@@ -143,6 +146,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				24A86C312F3C1A180069FA1C /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
