@@ -11,7 +11,6 @@ Bitely is an offline-first iOS recipe app built with **SwiftUI + SwiftData**, wi
 
 **Backend API repo:** [bitely-api](https://github.com/thomaslgrega/bitelyapi)
 
----
 
 ## Demo
 
@@ -22,7 +21,6 @@ Bitely is an offline-first iOS recipe app built with **SwiftUI + SwiftData**, wi
 [<img src="Bitely/Screenshots/meal-planning.png" width="220" />](Bitely/Screenshots/meal-planning.png)
 [<img src="Bitely/Screenshots/shared-recipes.png" width="220" />](Bitely/Screenshots/shared-recipes.png)
 
----
 
 ## Tech Stack
 
@@ -31,7 +29,6 @@ Bitely is an offline-first iOS recipe app built with **SwiftUI + SwiftData**, wi
 - async/await networking
 - DTO-based networking layer (separate API models vs SwiftData models)
 
----
 
 ## App Design
 
@@ -42,7 +39,6 @@ When signed in, users can also:
 - Share recipes to the backend
 - View / delete their shared recipes (server-side)
 
----
 
 ## Running Locally
 
@@ -55,7 +51,6 @@ The app connects to the API at:
 2. Select a simulator device
 3. Run ▶︎
 
----
 
 ## Roadmap
 
