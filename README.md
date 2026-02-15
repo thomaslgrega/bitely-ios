@@ -2,14 +2,17 @@
 
 Bitely is an offline-first iOS recipe app built with **SwiftUI + SwiftData**, with optional cloud sharing via a **Go + PostgreSQL** API.
 
+Most features work entirely offline. When signed in, users can share recipes to a hosted backend and manage a shared library.
+
 - Browse recipes by category
 - View recipe details (ingredients + instructions)
 - Save recipes locally for offline use (SwiftData)
 - Build a shopping list from ingredients
-- Plan meals for the day using a calendar view
-- Sign in to share recipes and manage your shared library
+- Plan meals using a calendar view
+- Sign in to share recipes and manage your shared recipes
 
 **Backend API repo:** [bitely-api](https://github.com/thomaslgrega/bitelyapi)
+**Backend hosting:** Go API on Render, PostgreSQL on Neon
 
 
 ## Demo
@@ -24,11 +27,18 @@ Bitely is an offline-first iOS recipe app built with **SwiftUI + SwiftData**, wi
 
 ## Tech Stack
 
+### **iOS**
 - SwiftUI
 - SwiftData (offline persistence)
 - async/await networking
 - DTO-based networking layer (separate API models vs SwiftData models)
 
+### **Backend**
+- Go REST API
+- PostgreSQL (Neon)
+- JWT Authentication
+- SQL migrations (managed in the backend repo)
+- Hosted on Render
 
 ## App Design
 
@@ -39,18 +49,26 @@ When signed in, users can also:
 - Share recipes to the backend
 - View / delete their shared recipes (server-side)
 
+## API Configuration
 
-## Running Locally
+The app can connect to either the hosted API (recommended for demos) or a local API.
 
-### Configure API base URL
-The app connects to the API at:
+### **Hosted API (recommended)**
+
+Set the base URL in `Networking/APIClient` to your deployed Render endpoint:
+- `https://bitelyapi.onrender.com`
+
+### **Local API**
 - Simulator: `http://localhost:8080`
 
-### Run
+
+## Running Locally (iOS)
 1. Open the project in Xcode
 2. Select a simulator device
-3. Run ▶︎
+3. Run ▶︎ (To use the hosted backend, set the API base URL to your Render endpoint before running.)
 
+## Running Locally (Backend)(optional)
+See the backend repo for setup and migrations: [bitely-api](https://github.com/thomaslgrega/bitelyapi)
 
 ## Roadmap
 
