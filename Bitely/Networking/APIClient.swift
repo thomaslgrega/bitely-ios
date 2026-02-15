@@ -13,7 +13,7 @@ struct APIError: Error {
 }
 
 final class APIClient {
-    let baseURL = URL(string: "http://localhost:8080")!
+    let baseURL = URL(string: "https://bitelyapi.onrender.com")!
     private let authStore: AuthStore
 
     init(authStore: AuthStore) {
