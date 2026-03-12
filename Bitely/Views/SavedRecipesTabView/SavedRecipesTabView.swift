@@ -89,7 +89,7 @@ struct SavedRecipesTabView: View {
             .navigationDestination(item: $selectedRecipe) { destination in
                 switch destination {
                 case .addNewRecipe(let recipe):
-                    EditRecipeView(recipe: recipe)
+                    EditRecipeView(recipe: recipe, editRemote: false)
                 case .showRecipe(let recipe):
                     LocalRecipeInfoView(recipe: recipe, allowEdit: true)
                 }

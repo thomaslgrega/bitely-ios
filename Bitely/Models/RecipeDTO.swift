@@ -22,7 +22,7 @@ struct RecipeSummaryDTO: Decodable, Identifiable, Hashable {
     }
 }
 
-struct RecipeDetailDTO: Decodable, Identifiable {
+struct RecipeDetailDTO: Codable, Identifiable {
     let id: String
     let userId: String
     let name: String
@@ -42,7 +42,7 @@ struct RecipeDetailDTO: Decodable, Identifiable {
     }
 }
 
-struct IngredientDTO: Decodable, Identifiable {
+struct IngredientDTO: Codable, Identifiable {
     let id: String
     let name: String
     let measurement: String

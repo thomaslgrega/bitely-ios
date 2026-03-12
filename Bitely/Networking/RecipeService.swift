@@ -35,4 +35,9 @@ final class RecipeService {
         let data = try JSONEncoder().encode(recipe)
         return try await api.request(path: "recipes", method: "POST", body: data, requiresAuth: true)
     }
+
+    func editRecipe(recipe: RecipeDetailDTO) async throws {
+        let data = try JSONEncoder().encode(recipe)
+        try await api.requestNoResponse(path: "recipes/\(recipe.id)", method: "PUT", body: data, requiresAuth: true)
+    }
 }

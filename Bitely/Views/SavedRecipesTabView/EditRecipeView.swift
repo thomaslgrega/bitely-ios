@@ -9,6 +9,8 @@ import PhotosUI
 import SwiftUI
 
 struct EditRecipeView: View {
+    @Environment(RecipeService.self) private var recipeService
+    @Environment(AuthStore.self) private var authStore
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     @Bindable var recipe: Recipe
@@ -18,6 +20,7 @@ struct EditRecipeView: View {
 
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
+    let editRemote: Bool
 
     var body: some View {
         ScrollView {
@@ -222,7 +225,9 @@ struct EditRecipeView: View {
             .toolbar {
                 // TODO: Toolbar and alert for discard (cancel or discard)
                 Button {
-                    saveRecipe()
+                    Task {
+                        await saveRecipe()
+                    }
                 } label: {
                     Text("Save")
                 }
@@ -245,12 +250,9 @@ struct EditRecipeView: View {
         }
     }
 
-    func saveRecipe() {
+    func saveRecipe() async {
         showRequiredNameError = recipe.name == ""
-
-        if showRequiredNameError {
-            return
-        }
+        if showRequiredNameError { return }
 
         recipe.ingredients = recipe.ingredients.filter { $0.name.trimmingCharacters(in: .whitespaces) != "" }
 
@@ -260,8 +262,30 @@ struct EditRecipeView: View {
             recipe.imageData = nil
         }
 
-        if recipe.modelContext == nil {
-            modelContext.insert(recipe)
+        if editRemote {
+            do {
+                guard let userId = authStore.user?.id else { return }
+                let ingredients = recipe.ingredients.map {
+                    IngredientDTO(id: $0.id.uuidString, name: $0.name, measurement: $0.measurement)
+                }
+                let _ = try await recipeService.editRecipe(recipe: RecipeDetailDTO(
+                    id: recipe.remoteId ?? UUID().uuidString,
+                    userId: userId,
+                    name: recipe.name,
+                    category: recipe.category,
+                    instructions: recipe.instructions,
+                    thumbnailUrl: recipe.thumbnailURL,
+                    ingredients: ingredients,
+                    calories: recipe.calories,
+                    totalCookTime: recipe.totalCookTime
+                ))
+            } catch {
+                print("Error saving recipe: \(error)")
+            }
+        } else {
+            if recipe.modelContext == nil {
+                modelContext.insert(recipe)
+            }
         }
         dismiss()
     }
@@ -272,6 +296,6 @@ struct EditRecipeView: View {
     let ingredient2 = Ingredient(name: "Sugar", measurement: "200g")
 
     NavigationStack {
-        EditRecipeView(recipe: Recipe(name: "", category: .beef, thumbnailURL: "", ingredients: [ingredient1, ingredient2], calories: nil, totalCookTime: nil))
+        EditRecipeView(recipe: Recipe(name: "", category: .beef, thumbnailURL: "", ingredients: [ingredient1, ingredient2], calories: nil, totalCookTime: nil), editRemote: true)
     }
 }

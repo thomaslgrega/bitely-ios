@@ -18,6 +18,7 @@ struct RecipeInfoContentView: View {
 
     let recipe: Recipe
     let allowEdit: Bool
+    let allowShare: Bool
     let isSaved: Bool
     let onToggleBookmark: () -> Void
 
@@ -80,18 +81,20 @@ struct RecipeInfoContentView: View {
                         .foregroundStyle(Color.primaryMain)
                     }
 
-                    Button {
-                        if authStore.isAuthenticated {
-                            showShareAlert = true
-                        } else {
-                            showAuthSheet = true
+                    if allowShare {
+                        Button {
+                            if authStore.isAuthenticated {
+                                showShareAlert = true
+                            } else {
+                                showAuthSheet = true
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "square.and.arrow.up")
+                                Text("Share")
+                            }
+                            .foregroundStyle(Color.primaryMain)
                         }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.and.arrow.up")
-                            Text("Share")
-                        }
-                        .foregroundStyle(Color.primaryMain)
                     }
                 }
 
@@ -165,7 +168,7 @@ struct RecipeInfoContentView: View {
         .toolbar {
             if allowEdit {
                 NavigationLink("Edit") {
-                    EditRecipeView(recipe: recipe)
+                    EditRecipeView(recipe: recipe, editRemote: !allowShare)
                 }
             }
         }
@@ -176,6 +179,7 @@ struct RecipeInfoContentView: View {
     RecipeInfoContentView(
         recipe: Recipe(name: "Lemonade", category: .other),
         allowEdit: false,
+        allowShare: true,
         isSaved: true,
         onToggleBookmark: {}
     )
