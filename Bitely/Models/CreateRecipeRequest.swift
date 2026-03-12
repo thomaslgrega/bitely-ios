@@ -15,6 +15,13 @@ struct CreateRecipeRequest: Encodable {
     let ingredients: [CreateIngredientRequest]
     let calories: Int?
     let totalCookTime: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case name, category, instructions
+        case thumbnailUrl = "thumbnail_url"
+        case ingredients, calories
+        case totalCookTime = "total_cook_time"
+    }
 }
 
 struct CreateIngredientRequest: Encodable {
