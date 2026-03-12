@@ -26,18 +26,16 @@ struct CalendarTabView: View {
                     .tint(Color.primaryMain)
 
                 Divider()
-                    .offset(y: -80)
 
                 if let mealPlanDay = selectedDateMealPlan {
                     MealPlanDayView(mealPlanDay: mealPlanDay)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
-                        .offset(y: -80)
                 } else {
                     ProgressView()
                 }
             }
-            .offset(y: -50)
+            .offset(y: -20)
             .onAppear {
                 loadMealPlanDay()
             }
