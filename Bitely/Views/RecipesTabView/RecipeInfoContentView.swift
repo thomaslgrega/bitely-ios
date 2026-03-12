@@ -142,7 +142,7 @@ struct RecipeInfoContentView: View {
                 Task {
                     do {
                         let ingredients = recipe.ingredients.map { CreateIngredientRequest(name: $0.name, measurement: $0.measurement) }
-                        _ = try await recipeService.createRecipe(recipe: CreateRecipeRequest(
+                        let remoteRecipe = try await recipeService.createRecipe(recipe: CreateRecipeRequest(
                             name: recipe.name,
                             category: recipe.category,
                             instructions: recipe.instructions,
@@ -151,6 +151,8 @@ struct RecipeInfoContentView: View {
                             calories: recipe.calories,
                             totalCookTime: recipe.totalCookTime
                         ))
+
+                        recipe.remoteId = remoteRecipe.id
                     } catch {
                         print("Failed to share recipe:", error)
                     }
