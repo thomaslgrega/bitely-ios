@@ -10,11 +10,17 @@
 		243EF42A2F032C0A0024D44A /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 243EF4292F032C0A0024D44A /* SwiftSoup */; };
 		246C05972DE65941004A8920 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 246C05962DE65941004A8920 /* Kingfisher */; };
 		24A86C312F3C1A180069FA1C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 24A86C302F3C1A180069FA1C /* README.md */; };
+		24AD65BD3038808500721110 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AD65BA3038808500721110 /* APIClientTests.swift */; };
+		24AD65BE3038808500721110 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AD65BB3038808500721110 /* AuthServiceTests.swift */; };
+		24AD65BF3038808500721110 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AD65B83038808500721110 /* MockURLProtocol.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2421D9E22DB71E1900267C57 /* Bitely.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bitely.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		24A86C302F3C1A180069FA1C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		24AD65B83038808500721110 /* MockURLProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
+		24AD65BA3038808500721110 /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
+		24AD65BB3038808500721110 /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -54,6 +60,7 @@
 		2421D9D92DB71E1900267C57 = {
 			isa = PBXGroup;
 			children = (
+				24AD65BC3038808500721110 /* BitelyTests */,
 				24A86C302F3C1A180069FA1C /* README.md */,
 				2421D9E42DB71E1900267C57 /* Bitely */,
 				246DF16B2DF13B5400B0F7DC /* Frameworks */,
@@ -74,6 +81,24 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		24AD65B93038808500721110 /* TestHelpers */ = {
+			isa = PBXGroup;
+			children = (
+				24AD65B83038808500721110 /* MockURLProtocol.swift */,
+			);
+			path = TestHelpers;
+			sourceTree = "<group>";
+		};
+		24AD65BC3038808500721110 /* BitelyTests */ = {
+			isa = PBXGroup;
+			children = (
+				24AD65B93038808500721110 /* TestHelpers */,
+				24AD65BA3038808500721110 /* APIClientTests.swift */,
+				24AD65BB3038808500721110 /* AuthServiceTests.swift */,
+			);
+			path = BitelyTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -157,6 +182,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				24AD65BD3038808500721110 /* APIClientTests.swift in Sources */,
+				24AD65BE3038808500721110 /* AuthServiceTests.swift in Sources */,
+				24AD65BF3038808500721110 /* MockURLProtocol.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
