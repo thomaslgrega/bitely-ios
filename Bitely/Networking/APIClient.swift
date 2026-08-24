@@ -12,12 +12,25 @@ struct APIError: Error {
     let body: String?
 }
 
+/// The seam APIClient sends requests through. URLSession in the app, a stub in tests.
+protocol HTTPTransport {
+    func send(_ request: URLRequest) async throws -> (Data, URLResponse)
+}
+
+extension URLSession: HTTPTransport {
+    func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        try await data(for: request)
+    }
+}
+
 final class APIClient {
     let baseURL = URL(string: "https://bitelyapi-docker.onrender.com")!
     private let authStore: AuthStore
+    private let transport: HTTPTransport
 
-    init(authStore: AuthStore) {
+    init(authStore: AuthStore, transport: HTTPTransport = URLSession.shared) {
         self.authStore = authStore
+        self.transport = transport
     }
 
     func request<T: Decodable>(path: String, method: String = "GET", query: [URLQueryItem] = [], body: Data? = nil, requiresAuth: Bool = false) async throws -> T {
@@ -40,7 +53,7 @@ final class APIClient {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        let (data, resp) = try await URLSession.shared.data(for: req)
+        let (data, resp) = try await transport.send(req)
 
         guard let http = resp as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
@@ -73,7 +86,7 @@ final class APIClient {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        let (data, resp) = try await URLSession.shared.data(for: req)
+        let (data, resp) = try await transport.send(req)
 
         guard let http = resp as? HTTPURLResponse else {
             throw URLError(.badServerResponse)

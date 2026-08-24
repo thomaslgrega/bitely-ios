@@ -1,0 +1,138 @@
+//
+//  RecipeServiceTests.swift
+//  BitelyTests
+//
+
+import Foundation
+import Testing
+@testable import Bitely
+
+@Suite("RecipeService")
+struct RecipeServiceTests {
+    private let detailPayload = #"""
+    {
+      "id": "r1",
+      "user_id": "u9",
+      "name": "Carbonara",
+      "category": "Pasta",
+      "instructions": "Boil water.",
+      "thumbnail_url": null,
+      "ingredients": [],
+      "calories": 780,
+      "total_cook_time": 25
+    }
+    """#
+
+    private func makeService(transport: StubTransport, signedIn: Bool = true) -> RecipeService {
+        let store = AuthStore(defaults: makeIsolatedDefaults())
+        if signedIn {
+            store.setSession(token: "t", user: User(id: "u9", email: nil, firstName: nil, lastName: nil))
+        }
+        return RecipeService(api: APIClient(authStore: store, transport: transport))
+    }
+
+    @Test("getRecipeById requests the recipe by path")
+    func getRecipeById() async throws {
+        let transport = StubTransport.json(detailPayload)
+        let service = makeService(transport: transport)
+
+        let recipe = try await service.getRecipeById(id: "r1")
+
+        #expect(transport.lastRequest?.url?.path == "/recipes/r1")
+        #expect(transport.lastRequest?.httpMethod == "GET")
+        #expect(recipe.name == "Carbonara")
+        #expect(recipe.totalCookTime == 25)
+    }
+
+    @Test("getRecipesByCategory sends the category as a query item", arguments: FoodCategory.allCases)
+    func getRecipesByCategory(category: FoodCategory) async throws {
+        let transport = StubTransport.json("[]")
+        let service = makeService(transport: transport)
+
+        _ = try await service.getRecipesByCategory(category: category)
+
+        let url = try #require(transport.lastRequest?.url)
+        let components = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        #expect(components.path == "/recipes")
+        #expect(components.queryItems == [URLQueryItem(name: "category", value: category.rawValue)])
+    }
+
+    @Test("getSharedRecipes authenticates against me/recipes")
+    func getSharedRecipes() async throws {
+        let transport = StubTransport.json("[]")
+        let service = makeService(transport: transport)
+
+        _ = try await service.getSharedRecipes()
+
+        #expect(transport.lastRequest?.url?.path == "/me/recipes")
+        #expect(transport.lastRequest?.value(forHTTPHeaderField: "Authorization") == "Bearer t")
+    }
+
+    @Test("getSharedRecipes fails when signed out")
+    func getSharedRecipesRequiresAuth() async throws {
+        let transport = StubTransport.json("[]")
+        let service = makeService(transport: transport, signedIn: false)
+
+        let error = await #expect(throws: APIError.self) {
+            _ = try await service.getSharedRecipes()
+        }
+
+        #expect(error?.statusCode == 401)
+    }
+
+    @Test("deleteSharedRecipe sends an authenticated DELETE")
+    func deleteSharedRecipe() async throws {
+        let transport = StubTransport.status(204)
+        let service = makeService(transport: transport)
+
+        try await service.deleteSharedRecipe(id: "r1")
+
+        #expect(transport.lastRequest?.httpMethod == "DELETE")
+        #expect(transport.lastRequest?.url?.path == "/recipes/r1")
+        #expect(transport.lastRequest?.value(forHTTPHeaderField: "Authorization") == "Bearer t")
+    }
+
+    @Test("createRecipe POSTs the encoded request body")
+    func createRecipe() async throws {
+        let transport = StubTransport.json(detailPayload, status: 201)
+        let service = makeService(transport: transport)
+        let request = CreateRecipeRequest(
+            name: "Carbonara",
+            category: .pasta,
+            instructions: "Boil water.",
+            thumbnailUrl: nil,
+            ingredients: [CreateIngredientRequest(name: "Spaghetti", measurement: "200 g")],
+            calories: 780,
+            totalCookTime: 25
+        )
+
+        let created = try await service.createRecipe(recipe: request)
+
+        let sent = try #require(transport.lastRequest)
+        #expect(sent.httpMethod == "POST")
+        #expect(sent.url?.path == "/recipes")
+
+        let body = try #require(sent.httpBody)
+        let object = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        #expect(object["total_cook_time"] as? Int == 25)
+        #expect(created.id == "r1")
+    }
+
+    @Test("editRecipe PUTs to the recipe's own path")
+    func editRecipe() async throws {
+        let transport = StubTransport.status(200)
+        let service = makeService(transport: transport)
+        let detail = try JSONDecoder().decode(RecipeDetailDTO.self, from: Data(detailPayload.utf8))
+
+        try await service.editRecipe(recipe: detail)
+
+        let sent = try #require(transport.lastRequest)
+        #expect(sent.httpMethod == "PUT")
+        #expect(sent.url?.path == "/recipes/r1")
+
+        let body = try #require(sent.httpBody)
+        let object = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        #expect(object["id"] as? String == "r1")
+        #expect(object["total_cook_time"] as? Int == 25)
+    }
+}
