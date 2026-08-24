@@ -232,13 +232,61 @@ struct WireFormatTests {
         #expect(decoded == category)
     }
 
-    @Test("an unknown category is a decoding failure, not a silent default")
-    func rejectsUnknownCategory() {
+    @Test("an unrecognized category decodes as Other rather than throwing")
+    func unknownCategoryDecodesAsOther() throws {
         let json = Data("\"Fusion\"".utf8)
 
-        #expect(throws: DecodingError.self) {
-            try JSONDecoder().decode(FoodCategory.self, from: json)
+        let decoded = try JSONDecoder().decode(FoodCategory.self, from: json)
+
+        #expect(decoded == .other)
+    }
+
+    @Test("a category still encodes its own raw value, so sharing round-trips",
+          arguments: FoodCategory.allCases)
+    func categoryEncodesRawValue(category: FoodCategory) throws {
+        let data = try JSONEncoder().encode(category)
+
+        #expect(String(decoding: data, as: UTF8.self) == "\"\(category.rawValue)\"")
+    }
+
+    @Test("one unrecognized category does not fail the rest of the response")
+    func unknownCategoryDoesNotFailSiblingRecipes() throws {
+        let json = Data(#"""
+        [
+          { "id": "r1", "name": "Roast Chicken", "category": "Chicken",
+            "thumbnail_url": null, "calories": null, "total_cook_time": null },
+          { "id": "r2", "name": "Fusion Bowl", "category": "Fusion",
+            "thumbnail_url": null, "calories": null, "total_cook_time": null },
+          { "id": "r3", "name": "Carbonara", "category": "Pasta",
+            "thumbnail_url": null, "calories": null, "total_cook_time": null }
+        ]
+        """#.utf8)
+
+        let summaries = try JSONDecoder().decode([RecipeSummaryDTO].self, from: json)
+
+        #expect(summaries.map(\.id) == ["r1", "r2", "r3"])
+        #expect(summaries.map(\.category) == [.chicken, .other, .pasta])
+    }
+
+    @Test("an unrecognized category on a recipe detail decodes as Other")
+    func unknownCategoryOnDetailDecodesAsOther() throws {
+        let json = Data(#"""
+        {
+          "id": "r1",
+          "user_id": "u9",
+          "name": "Fusion Bowl",
+          "category": "Fusion",
+          "instructions": null,
+          "thumbnail_url": null,
+          "ingredients": [],
+          "calories": null,
+          "total_cook_time": null
         }
+        """#.utf8)
+
+        let detail = try JSONDecoder().decode(RecipeDetailDTO.self, from: json)
+
+        #expect(detail.category == .other)
     }
 
     // MARK: - Helpers

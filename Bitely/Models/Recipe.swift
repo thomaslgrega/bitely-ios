@@ -21,6 +21,21 @@ enum FoodCategory: String, CaseIterable, Hashable, Codable {
     case breakfast = "Breakfast"
 }
 
+extension FoodCategory {
+    /// The category text the corpus carries, which is not constrained to these ten cases.
+    /// A build that has not been taught a category files it under `.other` rather than
+    /// rejecting it, so one such Recipe shows up under the general heading instead of
+    /// failing the whole response it arrived in.
+    init(apiValue: String) {
+        self = FoodCategory(rawValue: apiValue) ?? .other
+    }
+
+    /// Encoding stays the synthesized raw-value one, so sharing a Recipe still round-trips.
+    init(from decoder: any Decoder) throws {
+        self.init(apiValue: try decoder.singleValueContainer().decode(String.self))
+    }
+}
+
 @Model
 final class Recipe {
     @Attribute(.unique) var id: UUID
@@ -38,7 +53,7 @@ final class Recipe {
 
     var category: FoodCategory {
         get {
-            FoodCategory(rawValue: categoryRaw) ?? .other
+            FoodCategory(apiValue: categoryRaw)
         }
         set {
             categoryRaw = newValue.rawValue
