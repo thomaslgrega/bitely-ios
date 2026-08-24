@@ -63,14 +63,15 @@ enum IngredientMatcher {
 
     // MARK: - Stopwords
 
-    /// Transcribed from the `aliases` table of the `MeasurementUnit` enum in
-    /// `Ingredient.swift`, which is commented out but is this product's existing,
-    /// already-reviewed measurement vocabulary. Multi-word aliases (`fl oz`,
-    /// `to taste`) appear as their component tokens, because normalization has
-    /// already tokenized by the time stopwords are applied.
+    /// Transcribed from section 2.1 of `docs/ingredient-matching-algorithm.md`
+    /// in the API repo, which is where the list lives and what it should contain.
+    /// This is the Swift mirror of `MeasurementStopwords` in the Go package;
+    /// neither transcription is upstream of the other. Multi-word aliases
+    /// (`fl oz`, `to taste`) appear as their component tokens, because
+    /// normalization has already tokenized by the time stopwords are applied.
     ///
-    /// When that enum changes, this list changes, and the Go implementation
-    /// changes with it.
+    /// When this list changes, it changes in section 2.1 first, and both
+    /// transcriptions change with it in the same review cycle.
     static let measurementStopwords: Set<String> = [
         // Volume
         "tsp", "t", "teaspoon", "teaspoons",
