@@ -1,124 +1,178 @@
-import XCTest
+//
+//  APIClientTests.swift
+//  BitelyTests
+//
+
+import Foundation
+import Testing
 @testable import Bitely
 
-final class APIClientTests: XCTestCase {
-    struct EchoResponse: Decodable, Equatable {
+@Suite("APIClient")
+struct APIClientTests {
+    private struct Payload: Decodable, Equatable {
         let value: String
     }
 
-    override func setUp() {
-        super.setUp()
-        URLProtocol.registerClass(MockURLProtocol.self)
-        MockURLProtocol.requestHandler = nil
-        UserDefaults.standard.removeObject(forKey: "access_token")
+    private func makeClient(
+        transport: StubTransport,
+        token: String? = nil
+    ) -> (APIClient, AuthStore) {
+        let store = AuthStore(defaults: makeIsolatedDefaults())
+        if let token {
+            store.setSession(token: token, user: User(id: "u1", email: nil, firstName: nil, lastName: nil))
+        }
+        return (APIClient(authStore: store, transport: transport), store)
     }
 
-    override func tearDown() {
-        MockURLProtocol.requestHandler = nil
-        URLProtocol.unregisterClass(MockURLProtocol.self)
-        UserDefaults.standard.removeObject(forKey: "access_token")
-        super.tearDown()
+    @Test("builds the URL from the base URL, path and query items")
+    func buildsURL() async throws {
+        let transport = StubTransport.json(#"{"value":"ok"}"#)
+        let (client, _) = makeClient(transport: transport)
+
+        let _: Payload = try await client.request(
+            path: "recipes",
+            query: [URLQueryItem(name: "category", value: "Chicken")]
+        )
+
+        let url = try #require(transport.lastRequest?.url)
+        #expect(url.absoluteString == "\(client.baseURL.absoluteString)/recipes?category=Chicken")
     }
 
-    func testRequestIncludesAuthHeaderWhenRequired() async throws {
-        let store = AuthStore()
-        store.setSession(token: "jwt-123", user: User(id: "u1", email: "a@b.com", firstName: nil, lastName: nil))
-        let client = APIClient(authStore: store)
+    @Test("sends the method, JSON content type and body it was given")
+    func sendsMethodAndBody() async throws {
+        let transport = StubTransport.json(#"{"value":"ok"}"#)
+        let (client, _) = makeClient(transport: transport, token: "t")
+        let body = Data(#"{"name":"Soup"}"#.utf8)
 
-        MockURLProtocol.requestHandler = { request in
-            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer jwt-123")
-            XCTAssertEqual(request.httpMethod, "GET")
-            XCTAssertEqual(request.url?.path, "/me")
+        let _: Payload = try await client.request(
+            path: "recipes",
+            method: "POST",
+            body: body,
+            requiresAuth: true
+        )
 
-            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
-            let data = Data("{\"value\":\"ok\"}".utf8)
-            return (response, data)
-        }
-
-        let response: EchoResponse = try await client.request(path: "me", requiresAuth: true)
-        XCTAssertEqual(response, EchoResponse(value: "ok"))
+        let request = try #require(transport.lastRequest)
+        #expect(request.httpMethod == "POST")
+        #expect(request.value(forHTTPHeaderField: "Content-Type") == "application/json")
+        #expect(request.httpBody == body)
     }
 
-    func testRequestThrows401WhenAuthRequiredButTokenMissing() async {
-        let store = AuthStore()
-        let client = APIClient(authStore: store)
+    @Test("attaches a bearer token when the call requires auth")
+    func attachesBearerToken() async throws {
+        let transport = StubTransport.json(#"{"value":"ok"}"#)
+        let (client, _) = makeClient(transport: transport, token: "abc123")
 
-        do {
-            let _: EchoResponse = try await client.request(path: "me", requiresAuth: true)
-            XCTFail("Expected APIError")
-        } catch let error as APIError {
-            XCTAssertEqual(error.statusCode, 401)
-            XCTAssertEqual(error.body, "Missing access token")
-        } catch {
-            XCTFail("Unexpected error type: \(error)")
+        let _: Payload = try await client.request(path: "me/recipes", requiresAuth: true)
+
+        #expect(transport.lastRequest?.value(forHTTPHeaderField: "Authorization") == "Bearer abc123")
+    }
+
+    @Test("omits the Authorization header when the call does not require auth")
+    func omitsBearerTokenWhenNotRequired() async throws {
+        let transport = StubTransport.json(#"{"value":"ok"}"#)
+        let (client, _) = makeClient(transport: transport, token: "abc123")
+
+        let _: Payload = try await client.request(path: "recipes")
+
+        #expect(transport.lastRequest?.value(forHTTPHeaderField: "Authorization") == nil)
+    }
+
+    @Test("fails with 401 without touching the network when auth is required and no token is stored")
+    func failsWhenTokenMissing() async throws {
+        let transport = StubTransport.json(#"{"value":"ok"}"#)
+        let (client, _) = makeClient(transport: transport)
+
+        let error = await #expect(throws: APIError.self) {
+            let _: Payload = try await client.request(path: "me/recipes", requiresAuth: true)
+        }
+
+        #expect(error?.statusCode == 401)
+        #expect(transport.requests.isEmpty)
+    }
+
+    @Test("surfaces the status code and body of a non-2xx response")
+    func surfacesServerError() async throws {
+        let transport = StubTransport.json(#"{"error":"nope"}"#, status: 422)
+        let (client, _) = makeClient(transport: transport)
+
+        let error = await #expect(throws: APIError.self) {
+            let _: Payload = try await client.request(path: "recipes")
+        }
+
+        #expect(error?.statusCode == 422)
+        #expect(error?.body == #"{"error":"nope"}"#)
+    }
+
+    @Test("accepts the whole 2xx range", arguments: [200, 201, 204, 299])
+    func acceptsSuccessStatuses(status: Int) async throws {
+        let transport = StubTransport.json(#"{"value":"ok"}"#, status: status)
+        let (client, _) = makeClient(transport: transport)
+
+        let payload: Payload = try await client.request(path: "recipes")
+
+        #expect(payload == Payload(value: "ok"))
+    }
+
+    @Test("rejects a response that is not an HTTP response")
+    func rejectsNonHTTPResponse() async throws {
+        let transport = StubTransport.nonHTTPResponse()
+        let (client, _) = makeClient(transport: transport)
+
+        let error = await #expect(throws: URLError.self) {
+            let _: Payload = try await client.request(path: "recipes")
+        }
+
+        #expect(error?.code == .badServerResponse)
+    }
+
+    @Test("propagates a transport failure unchanged")
+    func propagatesTransportFailure() async throws {
+        let transport = StubTransport.failing(URLError(.notConnectedToInternet))
+        let (client, _) = makeClient(transport: transport)
+
+        let error = await #expect(throws: URLError.self) {
+            let _: Payload = try await client.request(path: "recipes")
+        }
+
+        #expect(error?.code == .notConnectedToInternet)
+    }
+
+    @Test("fails when the body cannot be decoded into the expected type")
+    func failsOnUndecodableBody() async throws {
+        let transport = StubTransport.json(#"{"unexpected":true}"#)
+        let (client, _) = makeClient(transport: transport)
+
+        await #expect(throws: DecodingError.self) {
+            let _: Payload = try await client.request(path: "recipes")
         }
     }
 
-    func testRequestThrowsAPIErrorForNon2xxAndIncludesBody() async {
-        let store = AuthStore()
-        let client = APIClient(authStore: store)
+    @Suite("requestNoResponse")
+    struct NoResponse {
+        @Test("succeeds on 2xx and ignores the body")
+        func succeedsOnSuccess() async throws {
+            let transport = StubTransport.status(204)
+            let store = AuthStore(defaults: makeIsolatedDefaults())
+            store.setSession(token: "t", user: User(id: "u1", email: nil, firstName: nil, lastName: nil))
+            let client = APIClient(authStore: store, transport: transport)
 
-        MockURLProtocol.requestHandler = { request in
-            let response = HTTPURLResponse(url: request.url!, statusCode: 500, httpVersion: nil, headerFields: nil)!
-            let data = Data("backend exploded".utf8)
-            return (response, data)
+            try await client.requestNoResponse(path: "recipes/1", method: "DELETE", requiresAuth: true)
+
+            #expect(transport.lastRequest?.httpMethod == "DELETE")
         }
 
-        do {
-            let _: EchoResponse = try await client.request(path: "recipes")
-            XCTFail("Expected APIError")
-        } catch let error as APIError {
-            XCTAssertEqual(error.statusCode, 500)
-            XCTAssertEqual(error.body, "backend exploded")
-        } catch {
-            XCTFail("Unexpected error type: \(error)")
-        }
-    }
+        @Test("throws APIError on a non-2xx response")
+        func throwsOnFailure() async throws {
+            let transport = StubTransport.json("gone", status: 404)
+            let store = AuthStore(defaults: makeIsolatedDefaults())
+            let client = APIClient(authStore: store, transport: transport)
 
-    func testRequestPassesQueryItems() async throws {
-        let store = AuthStore()
-        let client = APIClient(authStore: store)
+            let error = await #expect(throws: APIError.self) {
+                try await client.requestNoResponse(path: "recipes/1", method: "DELETE")
+            }
 
-        MockURLProtocol.requestHandler = { request in
-            let queryItems = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems
-            XCTAssertEqual(queryItems?.first(where: { $0.name == "category" })?.value, "Beef")
-
-            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
-            return (response, Data("{\"value\":\"ok\"}".utf8))
-        }
-
-        let _: EchoResponse = try await client.request(path: "recipes", query: [URLQueryItem(name: "category", value: "Beef")])
-    }
-
-    func testRequestNoResponseSucceedsOn2xx() async throws {
-        let store = AuthStore()
-        let client = APIClient(authStore: store)
-
-        MockURLProtocol.requestHandler = { request in
-            XCTAssertEqual(request.httpMethod, "DELETE")
-            let response = HTTPURLResponse(url: request.url!, statusCode: 204, httpVersion: nil, headerFields: nil)!
-            return (response, Data())
-        }
-
-        try await client.requestNoResponse(path: "recipes/1", method: "DELETE")
-    }
-
-    func testRequestThrowsDecodingErrorForInvalidPayload() async {
-        let store = AuthStore()
-        let client = APIClient(authStore: store)
-
-        MockURLProtocol.requestHandler = { request in
-            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
-            return (response, Data("{\"wrong\":\"shape\"}".utf8))
-        }
-
-        do {
-            let _: EchoResponse = try await client.request(path: "me")
-            XCTFail("Expected DecodingError")
-        } catch is DecodingError {
-            XCTAssertTrue(true)
-        } catch {
-            XCTFail("Unexpected error type: \(error)")
+            #expect(error?.statusCode == 404)
+            #expect(error?.body == "gone")
         }
     }
 }

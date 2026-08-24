@@ -14,24 +14,27 @@ final class AuthStore {
     var accessToken: String? = nil
     var user: User? = nil
 
+    @ObservationIgnored private let defaults: UserDefaults
+
     var isAuthenticated: Bool {
         accessToken != nil
     }
 
-    init() {
-        let token = UserDefaults.standard.string(forKey: Self.tokenKey)
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        let token = defaults.string(forKey: Self.tokenKey)
         self.accessToken = (token?.isEmpty == false) ? token : nil
     }
 
     func setSession(token: String, user: User) {
         accessToken = token
         self.user = user
-        UserDefaults.standard.set(token, forKey: Self.tokenKey)
+        defaults.set(token, forKey: Self.tokenKey)
     }
 
     func signOut() {
         accessToken = nil
         user = nil
-        UserDefaults.standard.removeObject(forKey: Self.tokenKey)
+        defaults.removeObject(forKey: Self.tokenKey)
     }
 }

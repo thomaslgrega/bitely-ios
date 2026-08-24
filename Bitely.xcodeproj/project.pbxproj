@@ -10,17 +10,22 @@
 		243EF42A2F032C0A0024D44A /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 243EF4292F032C0A0024D44A /* SwiftSoup */; };
 		246C05972DE65941004A8920 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 246C05962DE65941004A8920 /* Kingfisher */; };
 		24A86C312F3C1A180069FA1C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 24A86C302F3C1A180069FA1C /* README.md */; };
-		24AD65BD3038808500721110 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AD65BA3038808500721110 /* APIClientTests.swift */; };
-		24AD65BE3038808500721110 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AD65BB3038808500721110 /* AuthServiceTests.swift */; };
-		24AD65BF3038808500721110 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AD65B83038808500721110 /* MockURLProtocol.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		2405CFEE303C3C6C0055DC63 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2421D9DA2DB71E1900267C57 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2421D9E12DB71E1900267C57;
+			remoteInfo = Bitely;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		2405CFEA303C3C6C0055DC63 /* BitelyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BitelyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2421D9E22DB71E1900267C57 /* Bitely.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bitely.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		24A86C302F3C1A180069FA1C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		24AD65B83038808500721110 /* MockURLProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
-		24AD65BA3038808500721110 /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
-		24AD65BB3038808500721110 /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -34,6 +39,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		2405CFEB303C3C6C0055DC63 /* BitelyTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BitelyTests;
+			sourceTree = "<group>";
+		};
 		2421D9E42DB71E1900267C57 /* Bitely */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -45,6 +55,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		2405CFE7303C3C6C0055DC63 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2421D9DF2DB71E1900267C57 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -60,9 +77,9 @@
 		2421D9D92DB71E1900267C57 = {
 			isa = PBXGroup;
 			children = (
-				24AD65BC3038808500721110 /* BitelyTests */,
 				24A86C302F3C1A180069FA1C /* README.md */,
 				2421D9E42DB71E1900267C57 /* Bitely */,
+				2405CFEB303C3C6C0055DC63 /* BitelyTests */,
 				246DF16B2DF13B5400B0F7DC /* Frameworks */,
 				2421D9E32DB71E1900267C57 /* Products */,
 			);
@@ -72,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				2421D9E22DB71E1900267C57 /* Bitely.app */,
+				2405CFEA303C3C6C0055DC63 /* BitelyTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,27 +101,32 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		24AD65B93038808500721110 /* TestHelpers */ = {
-			isa = PBXGroup;
-			children = (
-				24AD65B83038808500721110 /* MockURLProtocol.swift */,
-			);
-			path = TestHelpers;
-			sourceTree = "<group>";
-		};
-		24AD65BC3038808500721110 /* BitelyTests */ = {
-			isa = PBXGroup;
-			children = (
-				24AD65B93038808500721110 /* TestHelpers */,
-				24AD65BA3038808500721110 /* APIClientTests.swift */,
-				24AD65BB3038808500721110 /* AuthServiceTests.swift */,
-			);
-			path = BitelyTests;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		2405CFE9303C3C6C0055DC63 /* BitelyTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2405CFF2303C3C6C0055DC63 /* Build configuration list for PBXNativeTarget "BitelyTests" */;
+			buildPhases = (
+				2405CFE6303C3C6C0055DC63 /* Sources */,
+				2405CFE7303C3C6C0055DC63 /* Frameworks */,
+				2405CFE8303C3C6C0055DC63 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2405CFEF303C3C6C0055DC63 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				2405CFEB303C3C6C0055DC63 /* BitelyTests */,
+			);
+			name = BitelyTests;
+			packageProductDependencies = (
+			);
+			productName = BitelyTests;
+			productReference = 2405CFEA303C3C6C0055DC63 /* BitelyTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		2421D9E12DB71E1900267C57 /* Bitely */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2421D9F02DB71E1A00267C57 /* Build configuration list for PBXNativeTarget "Bitely" */;
@@ -135,9 +158,13 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1620;
+				LastSwiftUpdateCheck = 2630;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+					2405CFE9303C3C6C0055DC63 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 2421D9E12DB71E1900267C57;
+					};
 					2421D9E12DB71E1900267C57 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -162,11 +189,19 @@
 			projectRoot = "";
 			targets = (
 				2421D9E12DB71E1900267C57 /* Bitely */,
+				2405CFE9303C3C6C0055DC63 /* BitelyTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2405CFE8303C3C6C0055DC63 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2421D9E02DB71E1900267C57 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -178,19 +213,73 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2405CFE6303C3C6C0055DC63 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2421D9DE2DB71E1900267C57 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				24AD65BD3038808500721110 /* APIClientTests.swift in Sources */,
-				24AD65BE3038808500721110 /* AuthServiceTests.swift in Sources */,
-				24AD65BF3038808500721110 /* MockURLProtocol.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		2405CFEF303C3C6C0055DC63 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2421D9E12DB71E1900267C57 /* Bitely */;
+			targetProxy = 2405CFEE303C3C6C0055DC63 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		2405CFF0303C3C6C0055DC63 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.thomaslgrega.BitelyTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Bitely.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Bitely";
+			};
+			name = Debug;
+		};
+		2405CFF1303C3C6C0055DC63 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.thomaslgrega.BitelyTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Bitely.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Bitely";
+			};
+			name = Release;
+		};
 		2421D9EE2DB71E1A00267C57 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -375,6 +464,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2405CFF2303C3C6C0055DC63 /* Build configuration list for PBXNativeTarget "BitelyTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2405CFF0303C3C6C0055DC63 /* Debug */,
+				2405CFF1303C3C6C0055DC63 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		2421D9DD2DB71E1900267C57 /* Build configuration list for PBXProject "Bitely" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
