@@ -26,6 +26,15 @@ struct PantrySearchView: View {
         Dictionary(recipes.map { ($0.id.uuidString, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
+    /// The ids each stored Recipe answers to, keyed the way its local Match is,
+    /// so the merge can recognize a Saved Recipe in the corpus half.
+    private var localIdentities: [String: [String]] {
+        Dictionary(
+            recipes.map { ($0.id.uuidString, $0.matchIdentities) },
+            uniquingKeysWith: { first, _ in first }
+        )
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             entryField
@@ -115,7 +124,7 @@ struct PantrySearchView: View {
             Task {
                 await search.search(
                     in: recipes.map(MatchableRecipe.init),
-                    localIdentities: Set(recipes.flatMap(\.matchIdentities)),
+                    localIdentities: localIdentities,
                     corpus: recipeService
                 )
             }
@@ -140,23 +149,15 @@ struct PantrySearchView: View {
         case .idle:
             message("Add the foods you have on hand and we'll find the recipes you can cook — yours and everyone else's.")
 
-        case .searching:
-            VStack {
-                ProgressView()
-                Spacer()
-            }
-            .frame(maxWidth: .infinity)
-            .padding()
-
         case .noMatches:
             VStack(alignment: .leading, spacing: 8) {
-                localOnlyNotice
+                corpusNotice
                 message("Nothing we can find uses what you have. Try adding another food.")
             }
 
         case .matches(let matches):
             VStack(alignment: .leading, spacing: 8) {
-                localOnlyNotice
+                corpusNotice
 
                 ScrollView {
                     LazyVStack(spacing: 12) {
@@ -194,9 +195,19 @@ struct PantrySearchView: View {
         }
     }
 
+    /// What the corpus half of the search is doing. The local Matches are on
+    /// show either way, so this qualifies the list rather than replacing it.
     @ViewBuilder
-    private var localOnlyNotice: some View {
-        if search.localOnly {
+    private var corpusNotice: some View {
+        if search.awaitingCorpus {
+            HStack(spacing: 8) {
+                ProgressView()
+                Text("Looking for shared recipes\u{2026}")
+            }
+            .font(.subheadline)
+            .foregroundStyle(Color.secondary700)
+            .padding(.horizontal)
+        } else if search.localOnly {
             Label(
                 "We couldn't reach shared recipes, so these are the ones on your device.",
                 systemImage: "wifi.slash"

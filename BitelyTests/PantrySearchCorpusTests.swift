@@ -34,14 +34,29 @@ private func corpusMatch(
 
 private let pancakes = recipe("local-1", "Pancakes", "flour", "eggs", "milk", "butter")
 
+/// The two ways the corpus can be lost: no network at all, and an API that
+/// answers badly. Both must narrow the results rather than fail the search.
+enum CorpusFailure: Sendable, CaseIterable {
+    case noNetwork
+    case serverError
+
+    var error: Error {
+        switch self {
+        case .noNetwork: URLError(.notConnectedToInternet)
+        case .serverError: APIError(statusCode: 500, body: nil)
+        }
+    }
+}
+
 @Suite("Pantry search — merging the corpus")
+@MainActor
 struct PantrySearchCorpusTests {
 
     /// Enters `items` and runs the search the interface runs.
     private func search(
         for items: [String],
         in recipes: [MatchableRecipe] = [],
-        localIdentities: Set<String> = [],
+        localIdentities: [String: [String]] = [:],
         corpus: StubCorpus
     ) async -> PantrySearch {
         let search = PantrySearch()
@@ -109,7 +124,7 @@ struct PantrySearchCorpusTests {
         let search = await search(
             for: ["eggs"],
             in: [saved],
-            localIdentities: ["corpus-1"],
+            localIdentities: ["local-1": ["corpus-1", "local-1"]],
             corpus: corpus
         )
 
@@ -128,11 +143,31 @@ struct PantrySearchCorpusTests {
         let search = await search(
             for: ["eggs"],
             in: [saved],
-            localIdentities: ["local-1"],
+            localIdentities: ["local-1": ["local-1"]],
             corpus: corpus
         )
 
         #expect(try #require(merged(search)).count == 1)
+    }
+
+    @Test("A Saved Recipe only the corpus matched still appears, from the corpus")
+    func savedRecipeTheLocalPassMissed() async throws {
+        // The user edited their copy, so the local pass covers nothing in it.
+        // Exactly once means once, not zero.
+        let saved = recipe("local-1", "Shakshuka", "harissa")
+        let corpus = StubCorpus.matching([
+            corpusMatch("corpus-1", "Shakshuka", has: ["eggs"], missing: ["tomatoes"])
+        ])
+        let search = await search(
+            for: ["eggs"],
+            in: [saved],
+            localIdentities: ["local-1": ["corpus-1", "local-1"]],
+            corpus: corpus
+        )
+
+        let matches = try #require(merged(search))
+        #expect(matches.count == 1)
+        #expect(matches[0].source == .corpus)
     }
 
     @Test("A Shared Recipe the user has not saved is not deduplicated away")
@@ -141,7 +176,7 @@ struct PantrySearchCorpusTests {
         let search = await search(
             for: ["eggs"],
             in: [pancakes],
-            localIdentities: ["local-1", "corpus-1"],
+            localIdentities: ["local-1": ["corpus-1", "local-1"]],
             corpus: corpus
         )
 
@@ -163,7 +198,7 @@ struct PantrySearchCorpusTests {
         let corpus = StubCorpus.matching([])
         let search = PantrySearch()
 
-        await search.search(in: [pancakes], localIdentities: [], corpus: corpus)
+        await search.search(in: [pancakes], corpus: corpus)
 
         #expect(search.state == .idle)
         #expect(corpus.lastPantryItems == nil)
@@ -171,21 +206,16 @@ struct PantrySearchCorpusTests {
 
     // MARK: - Losing the corpus
 
-    @Test("Losing the corpus narrows the results rather than failing the search")
-    func offlineKeepsLocalMatches() async throws {
-        let search = await search(for: ["eggs", "butter"], in: [pancakes], corpus: .unreachable())
+    @Test(
+        "Losing the corpus narrows the results rather than failing the search",
+        arguments: CorpusFailure.allCases
+    )
+    func losingTheCorpusKeepsLocalMatches(failure: CorpusFailure) async throws {
+        let corpus = StubCorpus.unreachable(failure.error)
+        let search = await search(for: ["eggs", "butter"], in: [pancakes], corpus: corpus)
 
         let matches = try #require(merged(search))
         #expect(matches.map(\.match.recipeName) == ["Pancakes"])
-        #expect(search.localOnly)
-    }
-
-    @Test("An API failure that is not a lost network degrades the same way")
-    func apiErrorKeepsLocalMatches() async throws {
-        let failure = StubCorpus.unreachable(APIError(statusCode: 500, body: nil))
-        let search = await search(for: ["eggs", "butter"], in: [pancakes], corpus: failure)
-
-        #expect(try #require(merged(search)).count == 1)
         #expect(search.localOnly)
     }
 
@@ -210,7 +240,7 @@ struct PantrySearchCorpusTests {
         let search = await search(for: ["eggs"], in: [pancakes], corpus: .unreachable())
         #expect(search.localOnly)
 
-        await search.search(in: [pancakes], localIdentities: [], corpus: StubCorpus.matching([]))
+        await search.search(in: [pancakes], corpus: StubCorpus.matching([]))
 
         #expect(!search.localOnly)
     }

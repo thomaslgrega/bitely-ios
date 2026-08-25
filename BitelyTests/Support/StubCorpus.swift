@@ -19,7 +19,6 @@ final class StubCorpus: CorpusMatching, @unchecked Sendable {
         self.result = result
     }
 
-    /// Answers every search with `matches`.
     static func matching(_ matches: [RecipeMatch]) -> StubCorpus {
         StubCorpus(.success(matches))
     }

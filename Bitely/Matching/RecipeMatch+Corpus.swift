@@ -1,10 +1,7 @@
 //
 //  The bridge from the wire to the matcher: a Match the corpus scored, read as
-//  the same value the local pass produces.
-//
-//  Both sides ran the algorithm in `docs/ingredient-matching-algorithm.md` in
-//  the API repo, so the two are directly comparable and the merged list can be
-//  ranked as one.
+//  the same value the local pass produces. `PantryMatch` explains why the two
+//  are comparable at all.
 //
 
 import Foundation

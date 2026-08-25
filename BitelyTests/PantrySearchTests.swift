@@ -16,6 +16,7 @@ private func recipe(_ id: String, _ name: String, _ ingredients: String...) -> M
 }
 
 /// The ranked Matches on show, or `nil` when the search is showing something else.
+@MainActor
 private func rankedMatches(of search: PantrySearch) -> [RecipeMatch]? {
     guard case .matches(let matches) = search.state else { return nil }
     return matches.map(\.match)
@@ -32,6 +33,7 @@ private let cassoulet = recipe(
 // MARK: - Entering Pantry Items
 
 @Suite("Pantry search — entering Pantry Items")
+@MainActor
 struct PantryItemEntryTests {
 
     @Test("A committed draft becomes a Pantry Item and clears the field")
@@ -133,6 +135,7 @@ struct PantryItemEntryTests {
 // MARK: - Searching
 
 @Suite("Pantry search — Matches")
+@MainActor
 struct PantrySearchMatchTests {
 
     /// Enters `items` and searches `recipes`, which is what the interface does.

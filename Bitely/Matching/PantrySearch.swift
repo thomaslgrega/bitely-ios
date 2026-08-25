@@ -27,14 +27,15 @@ protocol CorpusMatching {
 enum PantrySearchState: Equatable {
     /// No search has been run against the Pantry as it currently stands.
     case idle
-    /// The corpus has been asked and has not answered yet.
-    case searching
-    /// Matches from both sides, merged and ranked best fit first.
+    /// Matches, merged and ranked best fit first.
     case matches([PantryMatch])
-    /// A search ran and the Pantry covered nothing either side could offer.
+    /// A search ran and the Pantry covered nothing on offer.
     case noMatches
 }
 
+/// Isolated to the main actor because SwiftUI observes `state` directly and the
+/// corpus half of a search answers on another thread.
+@MainActor
 @Observable
 final class PantrySearch {
 
@@ -51,6 +52,15 @@ final class PantrySearch {
     /// are this device's Recipes alone. The interface says so: a user given a
     /// short list with no explanation concludes the feature is bad.
     private(set) var localOnly = false
+
+    /// Whether the corpus has been asked and has not answered yet. The local
+    /// Matches are already on show by then.
+    private(set) var awaitingCorpus = false
+
+    /// Bumped by every search and by every change to the Pantry. An answer
+    /// carrying a stale number is dropped, which covers both a Pantry the user
+    /// has since edited and an earlier search overtaking a later one.
+    private var generation = 0
 
     /// Whether the draft names a food yet.
     var canCommit: Bool { !trimmedDraft.isEmpty }
@@ -87,18 +97,21 @@ final class PantrySearch {
     /// error the matcher raises is the blank Pantry the interface already
     /// prevents, and it leaves the results as they were.
     ///
-    /// Losing the corpus narrows the results to this device rather than failing
-    /// the search, and sets `localOnly`. The local pass has already run by then,
-    /// so there is nothing to retry and nothing to report as an error.
+    /// The local Matches go up as soon as they are scored, before the corpus is
+    /// asked. That half needs no network, so a corpus that is slow or never
+    /// answers costs the user the Shared Recipes rather than the whole screen.
+    /// Losing it outright narrows the results and sets `localOnly`; there is
+    /// nothing to retry and nothing to report as an error.
     ///
-    /// An answer that arrives for a Pantry the user has since changed is
-    /// dropped.
+    /// An answer for a Pantry the user has since changed, or for a search a
+    /// later one has overtaken, is dropped.
     ///
-    /// - Parameter localIdentities: the ids the local store answers to, so a
-    ///   Saved Recipe is not offered twice. See `Recipe.matchIdentities`.
+    /// - Parameter localIdentities: the ids each Recipe answers to, keyed by the
+    ///   id its local Match carries, so a Saved Recipe is offered exactly once.
+    ///   See `Recipe.matchIdentities`.
     func search(
         in recipes: [MatchableRecipe],
-        localIdentities: Set<String> = [],
+        localIdentities: [String: [String]] = [:],
         corpus: any CorpusMatching
     ) async {
         guard let localMatches = try? IngredientMatcher.match(
@@ -106,8 +119,12 @@ final class PantrySearch {
             recipes: recipes
         ) else { return }
 
-        let searched = pantryItems
-        state = .searching
+        generation += 1
+        let searched = generation
+
+        localOnly = false
+        awaitingCorpus = true
+        show(local: localMatches, corpus: [], localIdentities: localIdentities)
 
         var corpusMatches: [RecipeMatch] = []
         var reachedCorpus = true
@@ -117,20 +134,11 @@ final class PantrySearch {
             reachedCorpus = false
         }
 
-        // The user can edit the Pantry while the corpus is answering, and
-        // `retireMatches` has already put the search back to idle for them.
-        // Matches describe the Pantry they were found for, so this answer is
-        // dropped rather than shown beside Pantry Items nobody searched.
-        guard pantryItems == searched else { return }
-
-        let merged = PantryMatch.merge(
-            local: localMatches,
-            corpus: corpusMatches,
-            localIdentities: localIdentities
-        )
+        guard searched == generation else { return }
 
         localOnly = !reachedCorpus
-        state = merged.isEmpty ? .noMatches : .matches(merged)
+        awaitingCorpus = false
+        show(local: localMatches, corpus: corpusMatches, localIdentities: localIdentities)
     }
 
     // MARK: - Details
@@ -150,7 +158,22 @@ final class PantrySearch {
     /// claim a Coverage nobody computed — so the search goes back to idle and
     /// the user runs it again.
     private func retireMatches() {
+        generation += 1
         state = .idle
         localOnly = false
+        awaitingCorpus = false
+    }
+
+    private func show(
+        local: [RecipeMatch],
+        corpus: [RecipeMatch],
+        localIdentities: [String: [String]]
+    ) {
+        let merged = PantryMatch.merge(
+            local: local,
+            corpus: corpus,
+            localIdentities: localIdentities
+        )
+        state = merged.isEmpty ? .noMatches : .matches(merged)
     }
 }

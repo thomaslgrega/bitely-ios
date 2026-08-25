@@ -17,7 +17,6 @@ enum MatchSource: Hashable, Sendable {
     case corpus
 }
 
-/// One Match in the merged list.
 struct PantryMatch: Hashable, Sendable, Identifiable {
     let match: RecipeMatch
     let source: MatchSource
@@ -30,16 +29,24 @@ extension PantryMatch {
     ///
     /// A Saved Recipe matches on both sides — it is in the corpus and on the
     /// device — and is kept once, as the local copy, which carries the user's
-    /// own image data. `localIdentities` names the ids the device already
-    /// answers to; the corpus Matches under them are the duplicates.
+    /// own image data.
+    ///
+    /// - Parameter localIdentities: the ids each Recipe answers to, keyed by the
+    ///   id its local Match carries. Only the Recipes the local pass matched can
+    ///   stand in for a corpus Match: deduplicating against the whole store
+    ///   instead would drop a Saved Recipe the corpus matched and the local copy
+    ///   did not, and the user's edits to their own copy would make the Recipe
+    ///   vanish rather than appear once.
     static func merge(
         local: [RecipeMatch],
         corpus: [RecipeMatch],
-        localIdentities: Set<String>
+        localIdentities: [String: [String]]
     ) -> [PantryMatch] {
+        let alreadyShown = Set(local.flatMap { localIdentities[$0.recipeID] ?? [] })
+
         let localMatches = local.map { PantryMatch(match: $0, source: .local) }
         let corpusMatches = corpus
-            .filter { !localIdentities.contains($0.recipeID) }
+            .filter { !alreadyShown.contains($0.recipeID) }
             .map { PantryMatch(match: $0, source: .corpus) }
 
         return (localMatches + corpusMatches).sorted {
