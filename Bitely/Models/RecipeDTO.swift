@@ -1,10 +1,3 @@
-//
-//  RecipeDTO.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 1/30/26.
-//
-
 import Foundation
 
 struct RecipeSummaryDTO: Decodable, Identifiable, Hashable {

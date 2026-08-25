@@ -1,10 +1,3 @@
-//
-//  SavedRecipesTabView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 11/28/25.
-//
-
 import SwiftData
 import SwiftUI
 

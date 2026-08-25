@@ -1,10 +1,3 @@
-//
-//  CustomSegmentedControl.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/24/25.
-//
-
 import SwiftUI
 
 struct CustomSegmentedControl<SelectionValue: Hashable>: View {

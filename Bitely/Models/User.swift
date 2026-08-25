@@ -1,10 +1,3 @@
-//
-//  User.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 1/28/26.
-//
-
 import Foundation
 
 struct User: Decodable {

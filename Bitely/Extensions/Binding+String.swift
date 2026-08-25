@@ -1,10 +1,3 @@
-//
-//  Binding.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/12/25.
-//
-
 import SwiftUI
 
 extension Binding where Value == String? {    

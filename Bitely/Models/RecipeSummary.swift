@@ -1,10 +1,3 @@
-//
-//  BackendRecipe.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 1/29/26.
-//
-
 import Foundation
 
 struct RecipeSummary: Identifiable, Hashable {

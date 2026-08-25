@@ -1,10 +1,3 @@
-//
-//  ShoppingListItem.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/9/25.
-//
-
 import Foundation
 import SwiftData
 

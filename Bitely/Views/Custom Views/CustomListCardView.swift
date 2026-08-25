@@ -1,10 +1,3 @@
-//
-//  CustomListCardView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/17/25.
-//
-
 import SwiftUI
 
 struct CustomListCardView: View {

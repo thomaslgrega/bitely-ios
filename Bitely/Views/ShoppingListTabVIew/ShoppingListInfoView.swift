@@ -1,10 +1,3 @@
-//
-//  ShoppingListInfoView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/10/25.
-//
-
 import SwiftUI
 
 struct ShoppingListInfoView: View {

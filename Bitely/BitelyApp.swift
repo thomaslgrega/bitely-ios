@@ -1,10 +1,3 @@
-//
-//  BitelyApp.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 4/21/25.
-//
-
 import SwiftUI
 import SwiftData
 

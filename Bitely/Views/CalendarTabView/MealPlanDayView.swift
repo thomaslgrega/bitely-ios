@@ -1,10 +1,3 @@
-//
-//  MealPlanDayView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/17/25.
-//
-
 import SwiftUI
 
 struct MealPlanDayView: View {

@@ -1,10 +1,3 @@
-//
-//  addToShoppingListView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/8/25.
-//
-
 import SwiftUI
 import SwiftData
 
