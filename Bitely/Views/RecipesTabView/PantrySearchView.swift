@@ -1,25 +1,27 @@
 //
-//  Enter the foods you have on hand, get back the Recipes on this device you
-//  could cook with them, best fit first.
+//  Enter the foods you have on hand, get back the Recipes you could cook with
+//  them, best fit first.
 //
-//  Everything the screen needs is local: the Recipes come from the SwiftData
-//  store — Private Recipes and Saved Recipes alike — and the matching runs on
-//  the device, so the flow works in airplane mode.
+//  Two searches feed one list: the SwiftData store — Private Recipes and Saved
+//  Recipes alike — matched on the device, and the corpus of Shared Recipes
+//  matched by the API. The local half needs no network, so losing the corpus
+//  narrows the list rather than emptying it, and the screen says so.
 //
 
 import SwiftData
 import SwiftUI
 
 struct PantrySearchView: View {
-    /// Every Recipe in the local store, which today is exactly the user's
-    /// Private Recipes and their Saved Recipes. Corpus Recipes arrive over the
-    /// network and are not held here.
+    /// Every Recipe in the local store, which is exactly the user's Private
+    /// Recipes and their Saved Recipes.
     @Query(sort: [SortDescriptor(\Recipe.name)]) private var recipes: [Recipe]
+
+    @Environment(RecipeService.self) private var recipeService
 
     @State private var search = PantrySearch()
     @FocusState private var draftFocused: Bool
 
-    /// The stored Recipe behind each Match, so tapping one opens it in full.
+    /// The stored Recipe behind each local Match, so tapping one opens it in full.
     private var recipesByID: [String: Recipe] {
         Dictionary(recipes.map { ($0.id.uuidString, $0) }, uniquingKeysWith: { first, _ in first })
     }
@@ -41,6 +43,9 @@ struct PantrySearchView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: Recipe.self) { recipe in
             LocalRecipeInfoView(recipe: recipe, allowEdit: true)
+        }
+        .navigationDestination(for: CorpusRecipeID.self) { corpus in
+            RemoteRecipeInfoView(recipeId: corpus.value, allowEdit: false)
         }
     }
 
@@ -107,7 +112,13 @@ struct PantrySearchView: View {
     private var searchButton: some View {
         Button {
             draftFocused = false
-            search.search(in: recipes.map(MatchableRecipe.init))
+            Task {
+                await search.search(
+                    in: recipes.map(MatchableRecipe.init),
+                    localIdentities: Set(recipes.flatMap(\.matchIdentities)),
+                    corpus: recipeService
+                )
+            }
         } label: {
             Text("Find recipes")
                 .bold()
@@ -127,29 +138,72 @@ struct PantrySearchView: View {
     private var foundRecipes: some View {
         switch search.state {
         case .idle:
-            message("Add the foods you have on hand and we'll find the recipes on this device you can cook.")
+            message("Add the foods you have on hand and we'll find the recipes you can cook — yours and everyone else's.")
+
+        case .searching:
+            VStack {
+                ProgressView()
+                Spacer()
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
 
         case .noMatches:
-            message("None of your recipes use what you have. Try adding another food, or save a few more recipes.")
+            VStack(alignment: .leading, spacing: 8) {
+                localOnlyNotice
+                message("Nothing we can find uses what you have. Try adding another food.")
+            }
 
         case .matches(let matches):
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(matches, id: \.recipeID) { match in
-                        // A Match the store cannot name is still a Match, so it
-                        // is shown; it just has no Recipe to open.
-                        if let recipe = recipesByID[match.recipeID] {
-                            NavigationLink(value: recipe) {
-                                PantryMatchRow(match: match)
-                            }
-                            .buttonStyle(.plain)
-                        } else {
-                            PantryMatchRow(match: match)
+            VStack(alignment: .leading, spacing: 8) {
+                localOnlyNotice
+
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(matches) { match in
+                            matchLink(match)
                         }
                     }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
             }
+        }
+    }
+
+    /// A Match leads to the Recipe it came from: the stored copy for a local
+    /// Match, the corpus Recipe for a Shared one. A local Match the store cannot
+    /// name is still a Match, so it is shown; it just has nothing to open.
+    @ViewBuilder
+    private func matchLink(_ match: PantryMatch) -> some View {
+        switch match.source {
+        case .local:
+            if let recipe = recipesByID[match.id] {
+                NavigationLink(value: recipe) {
+                    PantryMatchRow(match: match.match)
+                }
+                .buttonStyle(.plain)
+            } else {
+                PantryMatchRow(match: match.match)
+            }
+
+        case .corpus:
+            NavigationLink(value: CorpusRecipeID(value: match.id)) {
+                PantryMatchRow(match: match.match)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder
+    private var localOnlyNotice: some View {
+        if search.localOnly {
+            Label(
+                "We couldn't reach shared recipes, so these are the ones on your device.",
+                systemImage: "wifi.slash"
+            )
+            .font(.subheadline)
+            .foregroundStyle(Color.secondary700)
+            .padding(.horizontal)
         }
     }
 
@@ -164,6 +218,12 @@ struct PantrySearchView: View {
         }
         .padding()
     }
+}
+
+/// A corpus Recipe as a navigation value. It is a type of its own rather than a
+/// bare `String` so it cannot collide with another route this stack pushes.
+struct CorpusRecipeID: Hashable {
+    let value: String
 }
 
 /// One Match: the Recipe, its Coverage as the integer pair the matcher keeps,

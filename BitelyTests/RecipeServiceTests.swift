@@ -130,4 +130,67 @@ struct RecipeServiceTests {
         #expect(object["id"] as? String == "r1")
         #expect(object["total_cook_time"] as? Int == 25)
     }
+
+    private let matchPayload = #"""
+    [
+      {
+        "id": "r1",
+        "name": "Shakshuka",
+        "category": "Breakfast",
+        "thumbnail_url": null,
+        "matched_ingredients": ["eggs", "tomatoes"],
+        "missing_ingredients": ["harissa"],
+        "coverage": 0.6666666666666666
+      }
+    ]
+    """#
+
+    @Test("matchCorpus POSTs the Pantry Items to the match endpoint")
+    func matchCorpusPostsPantryItems() async throws {
+        let transport = StubTransport.json(matchPayload)
+        let service = makeService(transport: transport)
+
+        _ = try await service.matchCorpus(pantryItems: ["2 Cups of FLOUR", "eggs"])
+
+        let sent = try #require(transport.lastRequest)
+        #expect(sent.httpMethod == "POST")
+        #expect(sent.url?.path == "/recipes/match")
+
+        let body = try #require(sent.httpBody)
+        let items = try #require(try JSONSerialization.jsonObject(with: body) as? [String])
+        #expect(items == ["2 Cups of FLOUR", "eggs"])
+    }
+
+    @Test("matchCorpus needs no session, because the corpus is publicly readable")
+    func matchCorpusIsUnauthenticated() async throws {
+        let transport = StubTransport.json(matchPayload)
+        let service = makeService(transport: transport, signedIn: false)
+
+        let matches = try await service.matchCorpus(pantryItems: ["eggs"])
+
+        #expect(transport.lastRequest?.value(forHTTPHeaderField: "Authorization") == nil)
+        #expect(matches.count == 1)
+    }
+
+    @Test("A corpus Match derives its Coverage from the two Ingredient lists")
+    func matchCorpusDerivesCoverage() async throws {
+        let transport = StubTransport.json(matchPayload)
+        let service = makeService(transport: transport)
+
+        let match = try #require(try await service.matchCorpus(pantryItems: ["eggs"]).first)
+
+        #expect(match.recipeID == "r1")
+        #expect(match.recipeName == "Shakshuka")
+        #expect(match.matchedCount == 2)
+        #expect(match.totalCount == 3)
+        #expect(match.missingIngredients == ["harissa"])
+    }
+
+    @Test("A corpus that matches nothing is an empty list, not a failure")
+    func matchCorpusEmptyList() async throws {
+        let transport = StubTransport.json("[]")
+        let service = makeService(transport: transport)
+
+        #expect(try await service.matchCorpus(pantryItems: ["saffron"]).isEmpty)
+    }
 }

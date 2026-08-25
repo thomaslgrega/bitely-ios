@@ -22,3 +22,12 @@ extension MatchableRecipe {
         )
     }
 }
+
+extension Recipe {
+    /// The ids a corpus Match may carry for this Recipe: the corpus id a Saved
+    /// Recipe kept, and the Recipe's own id. Both, because that is the pair
+    /// `RecipeListCardView` already recognizes a Saved Recipe by.
+    var matchIdentities: [String] {
+        [remoteId, id.uuidString].compactMap { $0 }
+    }
+}

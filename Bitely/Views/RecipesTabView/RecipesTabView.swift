@@ -3,8 +3,9 @@ import SwiftUI
 struct RecipesTabView: View {
     @State private var showSettingsSheet = false
 
-    /// The way in to searching local Recipes by the foods on hand. It leads the
-    /// categories because it is the only entry point here that works offline.
+    /// The way in to searching Recipes by the foods on hand. It leads the
+    /// categories because it is the only entry point here that still does
+    /// something offline.
     private var pantrySearchLink: some View {
         NavigationLink {
             PantrySearchView()
@@ -21,7 +22,7 @@ struct RecipesTabView: View {
                         .font(.title2)
                         .bold()
 
-                    Text("Search your saved recipes by the foods on hand")
+                    Text("Search your recipes and shared ones by the foods on hand")
                         .foregroundStyle(Color.primary100)
                         .font(.subheadline)
                         .multilineTextAlignment(.leading)

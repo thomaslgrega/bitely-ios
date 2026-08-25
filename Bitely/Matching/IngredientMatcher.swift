@@ -276,7 +276,9 @@ enum IngredientMatcher {
     /// `string` does. Swift's `<` on `String` compares by Unicode canonical
     /// equivalence and would order names differing only in accent composition
     /// differently from the Go implementation.
-    private static func ranksBefore(_ lhs: RecipeMatch, _ rhs: RecipeMatch) -> Bool {
+    /// Merging the corpus list into the local one sorts by this too, which is
+    /// what makes the merged list one ordering rather than two.
+    static func ranksBefore(_ lhs: RecipeMatch, _ rhs: RecipeMatch) -> Bool {
         // Cross-multiply rather than divide, so both implementations agree exactly.
         let lhsCoverage = lhs.matchedCount * rhs.totalCount
         let rhsCoverage = rhs.matchedCount * lhs.totalCount

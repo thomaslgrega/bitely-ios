@@ -40,3 +40,22 @@ struct IngredientDTO: Codable, Identifiable {
     let name: String
     let measurement: String
 }
+
+/// One Match as the corpus reports it.
+///
+/// The wire also carries a `coverage` float and the recipe-card fields; neither
+/// is decoded. Coverage is re-derived from the two Ingredient lists because
+/// ranking compares the counts as integers, and a Match opens through
+/// `RemoteRecipeInfoView`, which fetches the Recipe in full.
+struct RecipeMatchDTO: Decodable, Identifiable, Hashable {
+    let id: String
+    let name: String
+    let matchedIngredients: [String]
+    let missingIngredients: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case matchedIngredients = "matched_ingredients"
+        case missingIngredients = "missing_ingredients"
+    }
+}
