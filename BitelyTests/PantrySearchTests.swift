@@ -18,6 +18,12 @@ private func recipe(_ id: String, _ name: String, _ ingredients: String...) -> M
     MatchableRecipe(id: id, name: name, ingredientNames: ingredients)
 }
 
+/// The ranked Matches on show, or `nil` when the search is showing something else.
+private func rankedMatches(of search: PantrySearch) -> [RecipeMatch]? {
+    guard case .matches(let matches) = search.state else { return nil }
+    return matches
+}
+
 private let pancakes = recipe("1", "Pancakes", "flour", "eggs", "milk", "butter")
 private let omelette = recipe("2", "Omelette", "eggs", "butter")
 private let cassoulet = recipe(
@@ -94,6 +100,16 @@ struct PantryItemEntryTests {
         #expect(search.pantryItems == ["butter"])
     }
 
+    @Test("Removing a Pantry Item ignores casing, as entering one does")
+    func removeIgnoresCasing() {
+        let search = PantrySearch()
+        search.draft = "Eggs"
+        search.commitDraft()
+        search.remove("eggs")
+
+        #expect(search.pantryItems.isEmpty)
+    }
+
     @Test("Searching needs at least one Pantry Item")
     func canSearchNeedsAnItem() {
         let search = PantrySearch()
@@ -103,12 +119,24 @@ struct PantryItemEntryTests {
         search.commitDraft()
         #expect(search.canSearch)
     }
+
+    @Test("A blank draft is not committable")
+    func canCommitNeedsAFood() {
+        let search = PantrySearch()
+        #expect(!search.canCommit)
+
+        search.draft = "   "
+        #expect(!search.canCommit)
+
+        search.draft = " eggs "
+        #expect(search.canCommit)
+    }
 }
 
 // MARK: - Searching
 
-@Suite("Pantry search — results")
-struct PantrySearchResultsTests {
+@Suite("Pantry search — Matches")
+struct PantrySearchMatchTests {
 
     /// Enters `items` and searches `recipes`, which is what the interface does.
     private func search(
@@ -140,7 +168,7 @@ struct PantrySearchResultsTests {
     @Test("A Match reports the Coverage and the Missing Ingredients")
     func reportsCoverageAndMissing() throws {
         let search = search(for: ["eggs", "butter"], in: [pancakes])
-        let matches = try #require(search.matches)
+        let matches = try #require(rankedMatches(of: search))
         let match = try #require(matches.first)
 
         #expect(match.recipeName == "Pancakes")
@@ -152,7 +180,7 @@ struct PantrySearchResultsTests {
     @Test("An incomplete Match still appears, ranked below a fuller one")
     func incompleteMatchesRankBelow() throws {
         let search = search(for: ["eggs", "butter"], in: [pancakes, omelette])
-        let matches = try #require(search.matches)
+        let matches = try #require(rankedMatches(of: search))
 
         #expect(matches.map(\.recipeName) == ["Omelette", "Pancakes"])
         #expect(matches[1].missingIngredients == ["flour", "milk"])
@@ -167,7 +195,7 @@ struct PantrySearchResultsTests {
             ],
             in: [cassoulet, pancakes]
         )
-        let matches = try #require(search.matches)
+        let matches = try #require(rankedMatches(of: search))
 
         #expect(matches.map(\.recipeName) == ["Cassoulet", "Pancakes"])
         #expect(matches[0].missingIngredients.count == 3)
@@ -180,24 +208,24 @@ struct PantrySearchResultsTests {
     )
     func naturalEntryMatches(item: String) throws {
         let search = search(for: [item], in: [pancakes])
-        let matches = try #require(search.matches)
+        let matches = try #require(rankedMatches(of: search))
 
         #expect(matches.count == 1)
         #expect(matches[0].missingIngredients == ["eggs", "milk", "butter"])
     }
 
-    @Test("A Pantry that covers nothing is an empty result, not an error")
+    @Test("A Pantry that covers nothing is an empty state, not an error")
     func noMatchesIsEmptyState() {
         let search = search(for: ["saffron"], in: [pancakes, omelette])
 
         #expect(search.state == .noMatches)
-        #expect(search.matches == nil)
+        #expect(rankedMatches(of: search) == nil)
     }
 
-    @Test("Searching again replaces the previous results")
-    func searchingAgainReplacesResults() throws {
+    @Test("Searching again replaces the previous Matches")
+    func searchingAgainReplacesMatches() throws {
         let search = search(for: ["eggs"], in: [pancakes, omelette])
-        #expect(try #require(search.matches).count == 2)
+        #expect(try #require(rankedMatches(of: search)).count == 2)
 
         search.remove("eggs")
         search.draft = "saffron"
@@ -205,6 +233,25 @@ struct PantrySearchResultsTests {
         search.search(in: [pancakes, omelette])
 
         #expect(search.state == .noMatches)
+    }
+
+    @Test("Entering another Pantry Item retires Matches found without it")
+    func addingAnItemClearsMatches() {
+        let search = search(for: ["eggs"], in: [pancakes, omelette])
+
+        search.draft = "flour"
+        search.commitDraft()
+
+        #expect(search.state == .idle)
+    }
+
+    @Test("Removing a Pantry Item retires Matches found with it")
+    func removingAnItemClearsMatches() {
+        let search = search(for: ["eggs", "flour"], in: [pancakes, omelette])
+
+        search.remove("flour")
+
+        #expect(search.state == .idle)
     }
 
     @Test("Pantry Items are search input only — a new search starts empty")

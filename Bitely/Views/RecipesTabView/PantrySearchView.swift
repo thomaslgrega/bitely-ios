@@ -14,12 +14,15 @@ import SwiftData
 import SwiftUI
 
 struct PantrySearchView: View {
+    /// Every Recipe in the local store, which today is exactly the user's
+    /// Private Recipes and their Saved Recipes. Corpus Recipes arrive over the
+    /// network and are not held here.
     @Query(sort: [SortDescriptor(\Recipe.name)]) private var recipes: [Recipe]
 
     @State private var search = PantrySearch()
     @FocusState private var draftFocused: Bool
 
-    /// The stored Recipe behind each Match, so tapping a result can open it.
+    /// The stored Recipe behind each Match, so tapping one opens it in full.
     private var recipesByID: [String: Recipe] {
         Dictionary(recipes.map { ($0.id.uuidString, $0) }, uniquingKeysWith: { first, _ in first })
     }
@@ -34,7 +37,7 @@ struct PantrySearchView: View {
 
             searchButton
 
-            results
+            foundRecipes
         }
         .padding(.top)
         .navigationTitle("Cook what you have")
@@ -66,7 +69,7 @@ struct PantrySearchView: View {
                     .font(.title2)
                     .foregroundStyle(Color.primaryMain)
             }
-            .disabled(search.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(!search.canCommit)
         }
         .padding()
         .background(Color.secondary100)
@@ -121,10 +124,10 @@ struct PantrySearchView: View {
         .padding(.horizontal)
     }
 
-    // MARK: - Results
+    // MARK: - Matches
 
     @ViewBuilder
-    private var results: some View {
+    private var foundRecipes: some View {
         switch search.state {
         case .idle:
             message("Add the foods you have on hand and we'll find the recipes on this device you can cook.")
@@ -136,11 +139,15 @@ struct PantrySearchView: View {
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(matches, id: \.recipeID) { match in
+                        // A Match the store cannot name is still a Match, so it
+                        // is shown; it just has no Recipe to open.
                         if let recipe = recipesByID[match.recipeID] {
                             NavigationLink(value: recipe) {
                                 PantryMatchRow(match: match)
                             }
                             .buttonStyle(.plain)
+                        } else {
+                            PantryMatchRow(match: match)
                         }
                     }
                 }

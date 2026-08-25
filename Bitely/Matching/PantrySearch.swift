@@ -15,9 +15,9 @@
 
 import Foundation
 
-/// What the results area is showing.
+/// What the search has to show.
 enum PantrySearchState: Equatable {
-    /// No search has been run yet.
+    /// No search has been run against the Pantry as it currently stands.
     case idle
     /// Matches, already ranked best fit first.
     case matches([RecipeMatch])
@@ -37,11 +37,8 @@ final class PantrySearch {
 
     private(set) var state: PantrySearchState = .idle
 
-    /// The ranked Matches, or `nil` when the state is not showing any.
-    var matches: [RecipeMatch]? {
-        guard case .matches(let matches) = state else { return nil }
-        return matches
-    }
+    /// Whether the draft names a food yet.
+    var canCommit: Bool { !trimmedDraft.isEmpty }
 
     /// Searching a Pantry with nothing in it is malformed rather than empty
     /// (ADR-0003), so the interface asks for a food first.
@@ -50,18 +47,22 @@ final class PantrySearch {
     /// Turns the draft into a Pantry Item. A blank names no food, and a food
     /// already entered adds nothing, so both leave the list alone.
     func commitDraft() {
-        let item = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !item.isEmpty else { return }
+        let item = trimmedDraft
+        guard canCommit else { return }
 
         draft = ""
-        guard !pantryItems.contains(where: { $0.caseInsensitiveCompare(item) == .orderedSame })
-        else { return }
+        guard !pantryItems.contains(where: { matchesItem($0, item) }) else { return }
 
         pantryItems.append(item)
+        retireMatches()
     }
 
+    /// Drops a Pantry Item, by the same equality that kept it out as a
+    /// duplicate: a food entered as `Eggs` is the one a chip reading `Eggs`
+    /// removes, whatever case the caller passes.
     func remove(_ item: String) {
-        pantryItems.removeAll { $0 == item }
+        pantryItems.removeAll { matchesItem($0, item) }
+        retireMatches()
     }
 
     /// Matches the entered Pantry Items against `recipes` and keeps the result.
@@ -76,5 +77,25 @@ final class PantrySearch {
         ) else { return }
 
         state = matches.isEmpty ? .noMatches : .matches(matches)
+    }
+
+    // MARK: - Details
+
+    private var trimmedDraft: String {
+        draft.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Pantry Items name the same food when they differ only by case: the user
+    /// typed a food, not a spelling.
+    private func matchesItem(_ lhs: String, _ rhs: String) -> Bool {
+        lhs.caseInsensitiveCompare(rhs) == .orderedSame
+    }
+
+    /// Matches describe the Pantry they were found for. Once that Pantry
+    /// changes they are stale — showing them beside the new Pantry Items would
+    /// claim a Coverage nobody computed — so the search goes back to idle and
+    /// the user runs it again.
+    private func retireMatches() {
+        state = .idle
     }
 }
