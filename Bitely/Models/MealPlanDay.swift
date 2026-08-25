@@ -1,10 +1,3 @@
-//
-//  MealPlanDay.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/13/25.
-//
-
 import Foundation
 import SwiftData
 

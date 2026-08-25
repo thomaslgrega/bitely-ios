@@ -1,10 +1,3 @@
-//
-//  AuthSheet.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 1/28/26.
-//
-
 import SwiftUI
 
 struct AuthSheet: View {

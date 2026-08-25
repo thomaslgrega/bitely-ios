@@ -1,10 +1,3 @@
-//
-//  RecipeListViewCard.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/18/25.
-//
-
 import Kingfisher
 import SwiftData
 import SwiftUI

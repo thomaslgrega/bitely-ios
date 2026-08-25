@@ -1,10 +1,3 @@
-//
-//  RecipeImageView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 2/2/26.
-//
-
 import Kingfisher
 import SwiftUI
 

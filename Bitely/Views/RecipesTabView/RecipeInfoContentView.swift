@@ -1,10 +1,3 @@
-//
-//  RecipeInfoContentView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 2/2/26.
-//
-
 import SwiftUI
 
 enum RecipeTab {

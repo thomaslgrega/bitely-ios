@@ -1,10 +1,3 @@
-//
-//  AddToMealPlanDaySheet.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/17/25.
-//
-
 import SwiftData
 import SwiftUI
 

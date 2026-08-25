@@ -1,10 +1,3 @@
-//
-//  CalendarView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 4/29/25.
-//
-
 import SwiftUI
 
 struct DatePickerView: View {

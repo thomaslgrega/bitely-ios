@@ -1,10 +1,3 @@
-//
-//  SharedRecipeRow.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 2/4/26.
-//
-
 import SwiftUI
 
 

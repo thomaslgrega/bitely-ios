@@ -1,10 +1,3 @@
-//
-//  SharedRecipesView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 1/29/26.
-//
-
 import SwiftUI
 
 struct SharedRecipesView: View {

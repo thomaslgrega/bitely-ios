@@ -1,10 +1,3 @@
-//
-//  CalendarTabView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 4/29/25.
-//
-
 import SwiftData
 import SwiftUI
 

@@ -1,10 +1,3 @@
-//
-//  Double.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/12/25.
-//
-
 import Foundation
 
 extension Double {

@@ -1,10 +1,3 @@
-//
-//  File.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 5/20/25.
-//
-
 import Foundation
 import SwiftData
 

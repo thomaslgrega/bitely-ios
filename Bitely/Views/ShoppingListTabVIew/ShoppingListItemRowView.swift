@@ -1,10 +1,3 @@
-//
-//  ShoppingListItemRowView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 12/12/25.
-//
-
 import SwiftUI
 
 struct ShoppingListItemRowView: View {

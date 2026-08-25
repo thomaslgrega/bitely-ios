@@ -1,10 +1,3 @@
-//
-//  SettingsView.swift
-//  Bitely
-//
-//  Created by Thomas Grega on 2/5/26.
-//
-
 import SwiftUI
 
 struct SettingsView: View {
