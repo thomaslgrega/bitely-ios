@@ -1,14 +1,17 @@
 # Recipes redesign — handoff
 
 Written 2026-08-25, at the end of the exploration session. This is the state a
-planning or grilling session should start from.
+planning or grilling session should start from. The work sits on
+`redesign/recipes-editorial-feed`; the first commit there holds all five
+explorations and six switchable faces, and the second trims it to the choice
+below.
 
 ## The decision
 
 **Direction: Editorial Feed, set in Fraunces.** Chosen from five explorations
 after comparing them side by side in the simulator.
 
-Editorial Feed is `Bitely/Views/DesignExplorations/EditorialFeedRecipesView.swift`.
+Editorial Feed is `Bitely/Views/RecipesRedesign/EditorialFeedRecipesView.swift`.
 Its shape, top to bottom:
 
 - Greeting bar — avatar, "Welcome, <name>", search button, settings button.
@@ -34,34 +37,29 @@ Plus one soft tint per `FoodCategory` (`Redesign.tint(for:)`), which the mock
 thumbnails use as their background — the inspiration shoots products on flat
 color blocks, and that is what the tints stand in for.
 
-Headings are Fraunces; body copy stays the system sans. Fraunces Regular and
-SemiBold are bundled in `Bitely/Resources/Fonts/` and registered in
-`Bitely/Info.plist` under `UIAppFonts`, along with four alternates kept for
-comparison (Playfair Display, DM Serif Display, Instrument Serif, Bricolage
-Grotesque). All ship under the SIL OFL; `Resources/Fonts/OFL.txt` covers them.
-
-`Redesign.serif(_:_:)` resolves through `RedesignType.shared.typeface`, which
-defaults to Fraunces. Committing to one face means that indirection and the
-other seven font files can go.
+Headings are Fraunces, body copy the system sans. Fraunces Regular and SemiBold
+are bundled in `Bitely/Resources/Fonts/` under the SIL OFL (`OFL.txt` alongside
+them) and registered in `Bitely/Info.plist` under `UIAppFonts`. `Redesign.serif`
+picks the cut. The four alternates that lost — Playfair Display, DM Serif
+Display, Instrument Serif, Bricolage Grotesque — are gone from the working tree
+and recoverable from this branch's first commit.
 
 ## What exists, and what it is not
 
-Everything lives in `Bitely/Views/DesignExplorations/` and **nothing is wired
-into the shipping app**. `ContentView` still shows the current `RecipesTabView`.
+Everything lives in `Bitely/Views/RecipesRedesign/` and **nothing is wired into
+the shipping app**. `ContentView` still shows the current `RecipesTabView`.
 
-- `EditorialFeedRecipesView.swift` — the chosen direction.
-- `CrimsonHeaderRecipesView`, `MidnightKitchenRecipesView`,
-  `MagazineIndexRecipesView`, `PantryFirstRecipesView` — the four not chosen.
-- `RecipesRedesignGalleryView.swift` — the comparison harness: a list, a
-  side-by-side strip, and the typeface bar.
-- `RedesignMockData.swift` — `MockRecipe`, sample data, palette, thumbnail,
-  save button. `MockRecipeStore` is an `@Observable` stand-in for bookmarks and
-  the pantry.
-- `RedesignDestinations.swift` — the shared pushed screens (category list,
-  pantry search, recipe detail, settings) and a `FlowRow` layout.
+- `EditorialFeedRecipesView.swift` — the tab itself.
+- `RedesignMockData.swift` — palette and `Redesign.serif`, `MockRecipe` and its
+  sample data, the thumbnail and save button. `MockRecipeStore` is an
+  `@Observable` stand-in for bookmarks and the pantry.
+- `RedesignDestinations.swift` — the pushed screens (category list, pantry
+  search, recipe detail, settings) and a `FlowRow` layout.
 
 These are mock views: no SwiftData, no `RecipeService`, no network, no tests.
-They demonstrate layout, not behaviour.
+They demonstrate layout, not behaviour. The four directions not chosen, and the
+gallery that compared them, are in this branch's first commit if a decision
+needs revisiting.
 
 ## What the real tab does today
 
@@ -105,5 +103,6 @@ confirmation alert.
 ## Verified
 
 Build and the full test suite pass on iPhone 17 (`xcodebuild test`, all
-existing tests green). Every exploration was screenshotted running in the
-simulator. All work is uncommitted.
+existing tests green), both before and after the trim. Every exploration was
+screenshotted running in the simulator, and Editorial Feed was screenshotted
+again after the cleanup to confirm Fraunces still loads.

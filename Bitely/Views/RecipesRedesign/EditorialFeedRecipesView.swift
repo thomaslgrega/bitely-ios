@@ -1,9 +1,12 @@
 //
-//  Exploration 1 — Editorial Feed.
+//  Editorial Feed — the chosen direction for the RecipesTabView redesign.
 //
 //  The inspiration's home screen almost verbatim: a greeting bar, one dark
-//  promo card that carries the pantry search, category chips, and a two-column
-//  grid of Recipes with a save control floating on each image.
+//  promo card that carries the pantry search, category chips that filter the
+//  grid in place, and a two-column grid with a save control on each image.
+//
+//  Still mock data. docs/design/recipes-redesign-handoff.md holds the questions
+//  that wiring this to the real services has to answer first.
 //
 
 import SwiftUI

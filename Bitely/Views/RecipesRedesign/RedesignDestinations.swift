@@ -1,7 +1,6 @@
 //
-//  The screens every exploration pushes to: a category's Recipes, the pantry
-//  search, a Recipe, and settings. They are shared so the five explorations
-//  differ in the tab itself rather than in what sits behind it.
+//  The screens the tab pushes to: a category's Recipes, the pantry search, a
+//  Recipe, and settings. Sketched only as far as the tab needs to be judged.
 //
 
 import SwiftUI
@@ -30,7 +29,7 @@ struct MockCategoryListView: View {
     }
 }
 
-/// The card the shared destinations use; the explorations each draw their own.
+/// The card the pushed screens use; the tab itself draws its own.
 struct MockRecipeCard: View {
     let recipe: MockRecipe
     var store: MockRecipeStore

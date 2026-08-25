@@ -1,8 +1,8 @@
 //
-//  Mock data and shared pieces for the RecipesTabView redesign explorations.
+//  Mock data and shared pieces for the RecipesTabView redesign.
 //
-//  Nothing here touches SwiftData, the network or the real stores, so every
-//  exploration runs in a preview and in the gallery with no environment set up.
+//  Nothing here touches SwiftData, the network or the real stores, so the
+//  redesign runs in a preview with no environment set up.
 //
 
 import SwiftUI
@@ -17,7 +17,11 @@ enum Redesign {
     static let inkSoft = Color(hex: "#6B655C")
     static let hairline = Color(hex: "#E8E0D6")
 
-    // The heading font lives in RedesignTypeface.swift, where the face is switchable.
+    /// Headings are Fraunces, bundled in Resources/Fonts under the SIL OFL and
+    /// registered in Info.plist; body copy stays the system sans.
+    static func serif(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        .custom(weight == .regular ? "Fraunces-Regular" : "Fraunces-SemiBold", size: size)
+    }
 
     static func tint(for category: FoodCategory) -> Color {
         switch category {
@@ -108,8 +112,8 @@ extension MockRecipe {
 
 // MARK: - Shared presentation state
 
-/// The bookmark set and the pantry draft, held per exploration so the gallery's
-/// five screens do not share a selection.
+/// The bookmark set and the pantry draft, standing in for the SwiftData store
+/// and the pantry search's state.
 @Observable
 final class MockRecipeStore {
     var savedIds: Set<UUID> = [MockRecipe.all[2].id, MockRecipe.all[6].id]
@@ -152,9 +156,6 @@ struct MockThumbnail: View {
 struct SaveButton: View {
     let recipe: MockRecipe
     var store: MockRecipeStore
-    var style: Style = .light
-
-    enum Style { case light, dark }
 
     var body: some View {
         Button {
@@ -162,9 +163,9 @@ struct SaveButton: View {
         } label: {
             Image(systemName: store.isSaved(recipe) ? "heart.fill" : "heart")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(store.isSaved(recipe) ? Redesign.red : (style == .light ? Redesign.ink : Redesign.cream))
+                .foregroundStyle(store.isSaved(recipe) ? Redesign.red : Redesign.ink)
                 .frame(width: 34, height: 34)
-                .background(Circle().fill(style == .light ? Redesign.cream : Color.white.opacity(0.18)))
+                .background(Circle().fill(Redesign.cream))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(store.isSaved(recipe) ? "Remove bookmark" : "Bookmark recipe")
@@ -174,7 +175,6 @@ struct SaveButton: View {
 struct MetaLabel: View {
     let systemImage: String
     let text: String
-    var color: Color = Redesign.inkSoft
 
     var body: some View {
         HStack(spacing: 4) {
@@ -182,6 +182,6 @@ struct MetaLabel: View {
             Text(text)
         }
         .font(.system(size: 12, weight: .medium))
-        .foregroundStyle(color)
+        .foregroundStyle(Redesign.inkSoft)
     }
 }
