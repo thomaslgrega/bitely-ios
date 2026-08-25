@@ -1,7 +1,4 @@
 //
-//  PantrySearch.swift
-//  Bitely
-//
 //  One search over the Recipes held on this device: the Pantry Items the user
 //  has typed so far, and the Matches they produced.
 //

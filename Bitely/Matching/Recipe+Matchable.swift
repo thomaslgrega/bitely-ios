@@ -1,7 +1,4 @@
 //
-//  Recipe+Matchable.swift
-//  Bitely
-//
 //  The bridge from the local store to the matcher: a stored Recipe reduced to
 //  the identity, name and Ingredient names matching needs.
 //
