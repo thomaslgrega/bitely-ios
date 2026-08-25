@@ -1,7 +1,4 @@
 //
-//  IngredientMatcher.swift
-//  Bitely
-//
 //  A Swift port of the ingredient matching algorithm, so Private Recipes held on
 //  the device can be matched without a network round trip.
 //
