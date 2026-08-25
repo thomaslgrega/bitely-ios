@@ -34,3 +34,13 @@ final class RecipeService {
         try await api.requestNoResponse(path: "recipes/\(recipe.id)", method: "PUT", body: data, requiresAuth: true)
     }
 }
+
+extension RecipeService: CorpusMatching {
+    /// The Pantry Items go up as the user typed them, and the endpoint needs no
+    /// session: the corpus is publicly readable.
+    func matchCorpus(pantryItems: [String]) async throws -> [RecipeMatch] {
+        let data = try JSONEncoder().encode(pantryItems)
+        let matches: [RecipeMatchDTO] = try await api.request(path: "recipes/match", method: "POST", body: data)
+        return matches.map(RecipeMatch.init)
+    }
+}

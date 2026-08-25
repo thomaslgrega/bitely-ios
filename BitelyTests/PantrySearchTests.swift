@@ -1,8 +1,8 @@
 //
-//  The Pantry Item entry list and the search it runs over local Recipes.
-//  Ranking and normalization themselves belong to `IngredientMatcherTests`;
-//  what is asserted here is that the search hands the matcher what the user
-//  typed and reports what comes back.
+//  The Pantry Item entry list and the local half of the search. Ranking and
+//  normalization themselves belong to `IngredientMatcherTests`, and merging the
+//  corpus in to `PantrySearchCorpusTests`; what is asserted here is that the
+//  search hands the matcher what the user typed and reports what comes back.
 //
 
 import Foundation
@@ -16,9 +16,10 @@ private func recipe(_ id: String, _ name: String, _ ingredients: String...) -> M
 }
 
 /// The ranked Matches on show, or `nil` when the search is showing something else.
+@MainActor
 private func rankedMatches(of search: PantrySearch) -> [RecipeMatch]? {
     guard case .matches(let matches) = search.state else { return nil }
-    return matches
+    return matches.map(\.match)
 }
 
 private let pancakes = recipe("1", "Pancakes", "flour", "eggs", "milk", "butter")
@@ -32,6 +33,7 @@ private let cassoulet = recipe(
 // MARK: - Entering Pantry Items
 
 @Suite("Pantry search — entering Pantry Items")
+@MainActor
 struct PantryItemEntryTests {
 
     @Test("A committed draft becomes a Pantry Item and clears the field")
@@ -133,19 +135,21 @@ struct PantryItemEntryTests {
 // MARK: - Searching
 
 @Suite("Pantry search — Matches")
+@MainActor
 struct PantrySearchMatchTests {
 
     /// Enters `items` and searches `recipes`, which is what the interface does.
+    /// The corpus is stubbed out to nothing, so only the local pass is on show.
     private func search(
         for items: [String],
         in recipes: [MatchableRecipe]
-    ) -> PantrySearch {
+    ) async -> PantrySearch {
         let search = PantrySearch()
         for item in items {
             search.draft = item
             search.commitDraft()
         }
-        search.search(in: recipes)
+        await search.search(in: recipes, corpus: StubCorpus.matching([]))
         return search
     }
 
@@ -155,16 +159,16 @@ struct PantrySearchMatchTests {
     }
 
     @Test("Searching with no Pantry Items entered does not run a search")
-    func emptyPantryDoesNotSearch() {
+    func emptyPantryDoesNotSearch() async {
         let search = PantrySearch()
-        search.search(in: [pancakes])
+        await search.search(in: [pancakes], corpus: StubCorpus.matching([]))
 
         #expect(search.state == .idle)
     }
 
     @Test("A Match reports the Coverage and the Missing Ingredients")
-    func reportsCoverageAndMissing() throws {
-        let search = search(for: ["eggs", "butter"], in: [pancakes])
+    func reportsCoverageAndMissing() async throws {
+        let search = await search(for: ["eggs", "butter"], in: [pancakes])
         let matches = try #require(rankedMatches(of: search))
         let match = try #require(matches.first)
 
@@ -175,8 +179,8 @@ struct PantrySearchMatchTests {
     }
 
     @Test("An incomplete Match still appears, ranked below a fuller one")
-    func incompleteMatchesRankBelow() throws {
-        let search = search(for: ["eggs", "butter"], in: [pancakes, omelette])
+    func incompleteMatchesRankBelow() async throws {
+        let search = await search(for: ["eggs", "butter"], in: [pancakes, omelette])
         let matches = try #require(rankedMatches(of: search))
 
         #expect(matches.map(\.recipeName) == ["Omelette", "Pancakes"])
@@ -184,8 +188,8 @@ struct PantrySearchMatchTests {
     }
 
     @Test("A twelve-Ingredient Recipe missing three outranks a four-Ingredient Recipe missing three")
-    func coverageOutranksMissingCount() throws {
-        let search = search(
+    func coverageOutranksMissingCount() async throws {
+        let search = await search(
             for: [
                 "duck legs", "pork belly", "sausage", "haricot beans", "carrot",
                 "onion", "garlic", "tomato paste", "thyme", "eggs",
@@ -203,8 +207,8 @@ struct PantrySearchMatchTests {
         "A food entered naturally still matches",
         arguments: ["2 cups of Flour", "FLOUR", "  flour, sifted  ", "500g flour"]
     )
-    func naturalEntryMatches(item: String) throws {
-        let search = search(for: [item], in: [pancakes])
+    func naturalEntryMatches(item: String) async throws {
+        let search = await search(for: [item], in: [pancakes])
         let matches = try #require(rankedMatches(of: search))
 
         #expect(matches.count == 1)
@@ -212,29 +216,29 @@ struct PantrySearchMatchTests {
     }
 
     @Test("A Pantry that covers nothing is an empty state, not an error")
-    func noMatchesIsEmptyState() {
-        let search = search(for: ["saffron"], in: [pancakes, omelette])
+    func noMatchesIsEmptyState() async {
+        let search = await search(for: ["saffron"], in: [pancakes, omelette])
 
         #expect(search.state == .noMatches)
         #expect(rankedMatches(of: search) == nil)
     }
 
     @Test("Searching again replaces the previous Matches")
-    func searchingAgainReplacesMatches() throws {
-        let search = search(for: ["eggs"], in: [pancakes, omelette])
+    func searchingAgainReplacesMatches() async throws {
+        let search = await search(for: ["eggs"], in: [pancakes, omelette])
         #expect(try #require(rankedMatches(of: search)).count == 2)
 
         search.remove("eggs")
         search.draft = "saffron"
         search.commitDraft()
-        search.search(in: [pancakes, omelette])
+        await search.search(in: [pancakes, omelette], corpus: StubCorpus.matching([]))
 
         #expect(search.state == .noMatches)
     }
 
     @Test("Entering another Pantry Item retires Matches found without it")
-    func addingAnItemClearsMatches() {
-        let search = search(for: ["eggs"], in: [pancakes, omelette])
+    func addingAnItemClearsMatches() async {
+        let search = await search(for: ["eggs"], in: [pancakes, omelette])
 
         search.draft = "flour"
         search.commitDraft()
@@ -243,8 +247,8 @@ struct PantrySearchMatchTests {
     }
 
     @Test("Removing a Pantry Item retires Matches found with it")
-    func removingAnItemClearsMatches() {
-        let search = search(for: ["eggs", "flour"], in: [pancakes, omelette])
+    func removingAnItemClearsMatches() async {
+        let search = await search(for: ["eggs", "flour"], in: [pancakes, omelette])
 
         search.remove("flour")
 
@@ -252,11 +256,11 @@ struct PantrySearchMatchTests {
     }
 
     @Test("Pantry Items are search input only — a new search starts empty")
-    func pantryItemsAreEphemeral() {
+    func pantryItemsAreEphemeral() async {
         let first = PantrySearch()
         first.draft = "eggs"
         first.commitDraft()
-        first.search(in: [pancakes])
+        await first.search(in: [pancakes], corpus: StubCorpus.matching([]))
 
         let second = PantrySearch()
         #expect(second.pantryItems.isEmpty)
