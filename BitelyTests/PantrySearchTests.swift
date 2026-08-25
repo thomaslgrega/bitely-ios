@@ -1,7 +1,4 @@
 //
-//  PantrySearchTests.swift
-//  BitelyTests
-//
 //  The Pantry Item entry list and the search it runs over local Recipes.
 //  Ranking and normalization themselves belong to `IngredientMatcherTests`;
 //  what is asserted here is that the search hands the matcher what the user

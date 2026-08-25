@@ -1,7 +1,4 @@
 //
-//  WireFormatTests.swift
-//  BitelyTests
-//
 //  The API speaks snake_case and the app speaks camelCase. Every mismatch between the
 //  two is silent: a wrong CodingKey drops a field instead of failing. These tests pin
 //  the wire format down. See commit 804c8d6, where `total_cook_time` went missing.

@@ -1,7 +1,4 @@
 //
-//  PantrySearchView.swift
-//  Bitely
-//
 //  Enter the foods you have on hand, get back the Recipes on this device you
 //  could cook with them, best fit first.
 //

@@ -1,7 +1,4 @@
 //
-//  IngredientMatcherTests.swift
-//  BitelyTests
-//
 //  Fixtures transcribed from section 6 of `docs/ingredient-matching-algorithm.md`
 //  in the API repo (thomaslgrega/bitelyapi). That document is the source of
 //  truth; every row here is an assertion it makes.
