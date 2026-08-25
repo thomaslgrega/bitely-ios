@@ -1,8 +1,3 @@
-//
-//  AuthTests.swift
-//  BitelyTests
-//
-
 import Foundation
 import Testing
 @testable import Bitely

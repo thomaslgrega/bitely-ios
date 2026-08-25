@@ -1,8 +1,3 @@
-//
-//  StubTransport.swift
-//  BitelyTests
-//
-
 import Foundation
 @testable import Bitely
 
