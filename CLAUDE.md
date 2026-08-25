@@ -35,6 +35,25 @@ copy.
 
 Commit only when the user asks for it in that turn. Otherwise leave the work uncommitted for them to review.
 
+## Comments
+
+A comment earns its line by carrying what the code cannot: a constraint the
+compiler does not express, an alternative tried and rejected, the spec paragraph
+that forces this shape. Needing a comment to explain *what* the code does is a
+sign it wants a better name or a smaller function.
+
+Before writing one, ask what a reader loses if it is not there. If nothing, it
+was restating the code.
+
+- **One line is the default.** Running long usually means padded wording or a
+  function doing too much. Fix that rather than relocating the prose into a new
+  doc.
+- **Present tense, describing the code as it stands.** Git holds the history, so
+  renames, old bugs and commit SHAs stay out.
+- **Architectural decisions land in an ADR first**, then get cited by number.
+  Anything shared with the API is cited from the backend repo, never paraphrased.
+- **New files start at the `import`.** Skip Xcode's generated header block.
+
 ## TDD
 
 Every change goes red → green, and the red step is not optional. Skipping straight to implementation is the one failure mode this rule exists to stop.
