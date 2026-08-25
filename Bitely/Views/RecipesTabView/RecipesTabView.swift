@@ -79,9 +79,12 @@ struct RecipesTabView: View {
                     .padding(.horizontal)
                     .padding(.top, 8)
                 }
-                .navigationDestination(for: FoodCategory.self) { category in
-                    RecipeListView(selectedCategory: category)
-                }
+            }
+            // On the ScrollView, not the ForEach: a modifier on a ForEach is
+            // applied to every view it makes, which declared this destination
+            // once per category.
+            .navigationDestination(for: FoodCategory.self) { category in
+                RecipeListView(selectedCategory: category)
             }
             .navigationTitle("Find a recipe")
             .sheet(isPresented: $showSettingsSheet) {
