@@ -131,6 +131,7 @@ final class PantrySearch {
         do {
             corpusMatches = try await corpus.matchCorpus(pantryItems: pantryItems)
         } catch {
+            print("Corpus match failed:", error)
             reachedCorpus = false
         }
 

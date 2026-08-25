@@ -50,12 +50,6 @@ struct PantrySearchView: View {
         .padding(.top)
         .navigationTitle("Cook what you have")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(for: Recipe.self) { recipe in
-            LocalRecipeInfoView(recipe: recipe, allowEdit: true)
-        }
-        .navigationDestination(for: CorpusRecipeID.self) { corpus in
-            RemoteRecipeInfoView(recipeId: corpus.value, allowEdit: false)
-        }
     }
 
     // MARK: - Entering Pantry Items
@@ -174,12 +168,19 @@ struct PantrySearchView: View {
     /// A Match leads to the Recipe it came from: the stored copy for a local
     /// Match, the corpus Recipe for a Shared one. A local Match the store cannot
     /// name is still a Match, so it is shown; it just has nothing to open.
+    ///
+    /// The destination is pushed directly rather than registered by value type,
+    /// as the rest of the app pushes a Recipe. Two type-based destinations
+    /// declared in a view that is itself pushed collide with the stack's
+    /// existing registrations.
     @ViewBuilder
     private func matchLink(_ match: PantryMatch) -> some View {
         switch match.source {
         case .local:
             if let recipe = recipesByID[match.id] {
-                NavigationLink(value: recipe) {
+                NavigationLink {
+                    LocalRecipeInfoView(recipe: recipe, allowEdit: true)
+                } label: {
                     PantryMatchRow(match: match.match)
                 }
                 .buttonStyle(.plain)
@@ -188,7 +189,9 @@ struct PantrySearchView: View {
             }
 
         case .corpus:
-            NavigationLink(value: CorpusRecipeID(value: match.id)) {
+            NavigationLink {
+                RemoteRecipeInfoView(recipeId: match.id, allowEdit: false)
+            } label: {
                 PantryMatchRow(match: match.match)
             }
             .buttonStyle(.plain)
@@ -229,12 +232,6 @@ struct PantrySearchView: View {
         }
         .padding()
     }
-}
-
-/// A corpus Recipe as a navigation value. It is a type of its own rather than a
-/// bare `String` so it cannot collide with another route this stack pushes.
-struct CorpusRecipeID: Hashable {
-    let value: String
 }
 
 /// One Match: the Recipe, its Coverage as the integer pair the matcher keeps,
