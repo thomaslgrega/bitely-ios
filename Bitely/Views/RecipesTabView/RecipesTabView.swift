@@ -10,9 +10,45 @@ import SwiftUI
 struct RecipesTabView: View {
     @State private var showSettingsSheet = false
 
+    /// The way in to searching local Recipes by the foods on hand. It leads the
+    /// categories because it is the only entry point here that works offline.
+    private var pantrySearchLink: some View {
+        NavigationLink {
+            PantrySearchView()
+        } label: {
+            HStack {
+                Image(systemName: "basket.fill")
+                    .font(.largeTitle)
+                    .foregroundStyle(Color.secondary50)
+                    .padding()
+
+                VStack(alignment: .leading) {
+                    Text("Cook what you have")
+                        .foregroundStyle(Color.secondary50)
+                        .font(.title2)
+                        .bold()
+
+                    Text("Search your saved recipes by the foods on hand")
+                        .foregroundStyle(Color.primary100)
+                        .font(.subheadline)
+                        .multilineTextAlignment(.leading)
+                }
+
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.primaryMain)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .padding(.horizontal)
+            .padding(.top, 8)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
+                pantrySearchLink
+
                 ForEach(FoodCategory.allCases, id: \.self) { category in
                     NavigationLink(value: category) {
                         HStack {
