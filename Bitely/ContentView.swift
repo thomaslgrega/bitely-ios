@@ -4,12 +4,10 @@ enum mainTabs {
     case calendar
     case shoppingList
     case searchRecipes
-    case bookmarkedRecipes
-    case sharedRecipes
+    case cookbook
 }
 
 struct ContentView: View {
-    @State private var showAuth = false
     @State private var selectedTab: mainTabs = .searchRecipes
 
     var body: some View {
@@ -26,12 +24,8 @@ struct ContentView: View {
                 ShoppingListTabView()
             }
 
-            Tab("Saved", systemImage: "bookmark", value: .bookmarkedRecipes) {
-                SavedRecipesTabView()
-            }
-
-            Tab("Shared", systemImage: "square.and.arrow.up", value: .sharedRecipes) {
-                SharedRecipesView()
+            Tab("Cookbook", systemImage: "book.closed", value: .cookbook) {
+                CookbookView()
             }
         }
         .tint(Color.primaryMain)

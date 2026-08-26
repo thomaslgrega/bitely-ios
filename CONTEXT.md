@@ -12,8 +12,11 @@ Ingredient, Pantry Item, Match and Coverage are defined by the API and live in
 **Cookbook**:
 Everything on this device: the user's Private Recipes, the Shared Recipes they
 authored, and the Saved Recipes they kept from other people. Split by
-authorship, not by where a Recipe is stored.
-_Avoid_: Library, collection, my recipes
+authorship, not by where a Recipe is stored: **My Recipes** holds the Private
+Recipes and the Shared Recipes this user authored, **Saved** holds the ones kept
+from other people.
+_Avoid_: Library, collection, "my recipes" as a name for the whole Cookbook —
+it names one of the two segments
 
 ### Discovery
 

@@ -1,9 +1,11 @@
 import PhotosUI
 import SwiftUI
 
+/// Editing is local and available on every Recipe in the Cookbook, whoever authored it.
+/// Adding salt to a Saved Recipe writes to the local copy and never reaches the API —
+/// which is why gating sharing costs the user nothing. docs/design/app-flow.md, Cookbook.
 struct EditRecipeView: View {
-    @Environment(RecipeService.self) private var recipeService
-    @Environment(AuthStore.self) private var authStore
+    @Environment(Cookbook.self) private var cookbook
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     @Bindable var recipe: Recipe
@@ -13,7 +15,6 @@ struct EditRecipeView: View {
 
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
-    let editRemote: Bool
 
     var body: some View {
         ScrollView {
@@ -217,13 +218,7 @@ struct EditRecipeView: View {
             .padding()
             .toolbar {
                 // TODO: Toolbar and alert for discard (cancel or discard)
-                Button {
-                    Task {
-                        await saveRecipe()
-                    }
-                } label: {
-                    Text("Save")
-                }
+                Button("Save", action: saveRecipe)
             }
             .onAppear {
                 if let data = recipe.imageData, let image = UIImage(data: data) {
@@ -243,7 +238,7 @@ struct EditRecipeView: View {
         }
     }
 
-    func saveRecipe() async {
+    func saveRecipe() {
         showRequiredNameError = recipe.name == ""
         if showRequiredNameError { return }
 
@@ -255,31 +250,7 @@ struct EditRecipeView: View {
             recipe.imageData = nil
         }
 
-        if editRemote {
-            do {
-                guard let userId = authStore.user?.id else { return }
-                let ingredients = recipe.ingredients.map {
-                    IngredientDTO(id: $0.id.uuidString, name: $0.name, measurement: $0.measurement)
-                }
-                let _ = try await recipeService.editRecipe(recipe: RecipeDetailDTO(
-                    id: recipe.remoteId ?? UUID().uuidString,
-                    userId: userId,
-                    name: recipe.name,
-                    category: recipe.category,
-                    instructions: recipe.instructions,
-                    thumbnailUrl: recipe.thumbnailURL,
-                    ingredients: ingredients,
-                    calories: recipe.calories,
-                    totalCookTime: recipe.totalCookTime
-                ))
-            } catch {
-                print("Error saving recipe: \(error)")
-            }
-        } else {
-            if recipe.modelContext == nil {
-                modelContext.insert(recipe)
-            }
-        }
+        cookbook.commit(recipe, into: modelContext)
         dismiss()
     }
 }
@@ -289,6 +260,7 @@ struct EditRecipeView: View {
     let ingredient2 = Ingredient(name: "Sugar", measurement: "200g")
 
     NavigationStack {
-        EditRecipeView(recipe: Recipe(name: "", category: .beef, thumbnailURL: "", ingredients: [ingredient1, ingredient2], calories: nil, totalCookTime: nil), editRemote: true)
+        EditRecipeView(recipe: Recipe(name: "", category: .beef, thumbnailURL: "", ingredients: [ingredient1, ingredient2], calories: nil, totalCookTime: nil))
     }
+    .previewStores()
 }
