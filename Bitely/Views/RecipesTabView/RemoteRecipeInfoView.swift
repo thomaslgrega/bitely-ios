@@ -25,7 +25,6 @@ struct RemoteRecipeInfoView: View {
                 RecipeInfoContentView(
                     recipe: recipe,
                     allowEdit: allowEdit,
-                    allowShare: false,
                     isSaved: isSaved,
                     onToggleBookmark: { isSaved ? deleteSavedCopy() : bookmarkRemoteRecipe() })
             } else {

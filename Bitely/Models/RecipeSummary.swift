@@ -36,3 +36,20 @@ extension RecipeSummary {
         )
     }
 }
+
+extension RecipeSummary {
+    /// A Recipe the device holds: it has a local id of its own, and a photo the user
+    /// attached outranks whatever thumbnail the corpus carried.
+    init(_ recipe: Recipe) {
+        self.init(
+            id: recipe.id.uuidString,
+            remoteId: recipe.remoteId,
+            name: recipe.name,
+            category: recipe.category,
+            thumbnailUrl: recipe.thumbnailURL,
+            imageData: recipe.imageData,
+            calories: recipe.calories,
+            totalCookTime: recipe.totalCookTime
+        )
+    }
+}

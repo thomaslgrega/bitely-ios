@@ -8,10 +8,10 @@ enum RecipeTab {
 struct RecipeInfoContentView: View {
     @Environment(AuthStore.self) private var authStore
     @Environment(RecipeService.self) private var recipeService
+    @Environment(Cookbook.self) private var cookbook
 
     let recipe: Recipe
     let allowEdit: Bool
-    let allowShare: Bool
     let isSaved: Bool
     let onToggleBookmark: () -> Void
 
@@ -19,7 +19,11 @@ struct RecipeInfoContentView: View {
     @State private var showShareAlert = false
     @State private var showAuthSheet = false
     @State private var selectedTab: RecipeTab = .ingredients
-    
+
+    private var shareControl: ShareControl {
+        ShareControl(recipe: recipe, isAuthenticated: authStore.isAuthenticated)
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .center, spacing: 20) {
@@ -74,14 +78,8 @@ struct RecipeInfoContentView: View {
                         .foregroundStyle(Color.primaryMain)
                     }
 
-                    if allowShare {
-                        Button {
-                            if authStore.isAuthenticated {
-                                showShareAlert = true
-                            } else {
-                                showAuthSheet = true
-                            }
-                        } label: {
+                    if shareControl.isOffered {
+                        Button(action: share) {
                             HStack(spacing: 4) {
                                 Image(systemName: "square.and.arrow.up")
                                 Text("Share")
@@ -149,6 +147,7 @@ struct RecipeInfoContentView: View {
                         ))
 
                         recipe.remoteId = remoteRecipe.id
+                        cookbook.recordAuthorship(of: remoteRecipe.id)
                     } catch {
                         print("Failed to share recipe:", error)
                     }
@@ -161,9 +160,18 @@ struct RecipeInfoContentView: View {
         .toolbar {
             if allowEdit {
                 NavigationLink("Edit") {
-                    EditRecipeView(recipe: recipe, editRemote: !allowShare)
+                    EditRecipeView(recipe: recipe)
                 }
             }
+        }
+    }
+
+    /// Signed out this presents auth rather than the confirmation, so the account is asked
+    /// for at the moment of sharing rather than on the way into the Cookbook.
+    private func share() {
+        switch shareControl.tap {
+        case .confirmShare: showShareAlert = true
+        case .presentAuth: showAuthSheet = true
         }
     }
 }
@@ -172,7 +180,6 @@ struct RecipeInfoContentView: View {
     RecipeInfoContentView(
         recipe: Recipe(name: "Lemonade", category: .other),
         allowEdit: false,
-        allowShare: true,
         isSaved: true,
         onToggleBookmark: {}
     )

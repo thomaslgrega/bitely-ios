@@ -18,7 +18,6 @@ struct LocalRecipeInfoView: View {
         RecipeInfoContentView(
             recipe: recipe,
             allowEdit: allowEdit,
-            allowShare: true,
             isSaved: isSaved,
             onToggleBookmark: {
                 modelContext.delete(recipe)
