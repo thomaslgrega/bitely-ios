@@ -153,7 +153,7 @@ struct MockThumbnail: View {
     }
 }
 
-struct SaveButton: View {
+struct MockSaveButton: View {
     let recipe: MockRecipe
     var store: MockRecipeStore
 
@@ -172,7 +172,7 @@ struct SaveButton: View {
     }
 }
 
-struct MetaLabel: View {
+struct MockMetaLabel: View {
     let systemImage: String
     let text: String
 

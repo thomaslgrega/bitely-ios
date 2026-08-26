@@ -7,17 +7,17 @@ struct CustomSegmentedControl<SelectionValue: Hashable>: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                ForEach(Array(options.enumerated()), id: \.element.value) { index, option in
+                ForEach(options, id: \.value) { option in
                     Button {
                         withAnimation(.snappy) {
                             selection = option.value
                         }
                     } label: {
                         Text(option.label)
-                            .font(.headline)
-                            .foregroundStyle(selection == option.value ? Color.primaryMain : Color.secondaryMain)
+                            .textStyle(.label)
+                            .foregroundStyle(selection == option.value ? Color.accent : Color.contentSecondary)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
+                            .padding(.vertical, Spacing.m)
                     }
                 }
             }
@@ -27,13 +27,34 @@ struct CustomSegmentedControl<SelectionValue: Hashable>: View {
                 let selectedIndex = options.firstIndex(where: { $0.value == selection }) ?? 0
 
                 Rectangle()
-                    .fill(Color.primaryMain)
+                    .fill(Color.accent)
                     .frame(width: segmentWidth, height: 3)
                     .offset(x: segmentWidth * CGFloat(selectedIndex))
             }
             .frame(height: 3)
         }
-        .background(Color.secondary100)
-        .clipShape(UnevenRoundedRectangle(topLeadingRadius: 10, topTrailingRadius: 10))
+        .background(Color.surfaceRaised)
+        .clipShape(
+            UnevenRoundedRectangle(
+                topLeadingRadius: Radius.control,
+                topTrailingRadius: Radius.control,
+                style: .continuous
+            )
+        )
     }
 }
+
+private struct CustomSegmentedControlPreview: View {
+    @State private var selection = 0
+
+    var body: some View {
+        CustomSegmentedControl(
+            selection: $selection,
+            options: [(0, "Written"), (1, "Saved")]
+        )
+        .padding()
+        .background(Color.surface)
+    }
+}
+
+#Preview { CustomSegmentedControlPreview() }
