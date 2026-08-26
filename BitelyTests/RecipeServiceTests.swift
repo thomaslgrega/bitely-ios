@@ -39,6 +39,19 @@ struct RecipeServiceTests {
         #expect(recipe.totalCookTime == 25)
     }
 
+    @Test("getFeed asks for recipes with no query at all")
+    func getFeed() async throws {
+        let transport = StubTransport.json("[]")
+        let service = makeService(transport: transport)
+
+        _ = try await service.getFeed()
+
+        let url = try #require(transport.lastRequest?.url)
+        let components = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        #expect(components.path == "/recipes")
+        #expect(components.queryItems == nil)
+    }
+
     @Test("getRecipesByCategory sends the category as a query item", arguments: FoodCategory.allCases)
     func getRecipesByCategory(category: FoodCategory) async throws {
         let transport = StubTransport.json("[]")

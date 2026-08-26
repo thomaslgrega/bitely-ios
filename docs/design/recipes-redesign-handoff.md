@@ -1,7 +1,9 @@
 # Recipes redesign — handoff
 
-Written 2026-08-25, at the end of the exploration session. This is the state a
-planning or grilling session should start from. The work sits on
+Written 2026-08-25, at the end of the exploration session, and kept as the
+record of how the direction was chosen. [app-flow.md](./app-flow.md) supersedes
+it: the open questions below are answered there, and the shipping screens are no
+longer the ones described here. The work sits on
 `redesign/recipes-editorial-feed`; the first commit there holds all five
 explorations and six switchable faces, and the second trims it to the choice
 below.

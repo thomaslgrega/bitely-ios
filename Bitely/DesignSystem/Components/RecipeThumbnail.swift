@@ -75,9 +75,12 @@ struct RecipeThumbnail: View {
         }
     }
 
+    /// Drawn into a `Color.clear`, which has no size of its own: a filling image reports
+    /// the size it scaled up to, and a grid column sized to that is wider than the screen.
     private func warmed(_ photo: some View) -> some View {
-        photo
-            .aspectRatio(contentMode: .fill)
+        Color.clear
+            .overlay { photo.aspectRatio(contentMode: .fill) }
+            .clipped()
             .overlay(Color.surface.opacity(0.12))
     }
 
