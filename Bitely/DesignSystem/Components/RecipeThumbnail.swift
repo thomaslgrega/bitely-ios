@@ -53,9 +53,13 @@ struct RecipeThumbnail: View {
         )
     }
 
+    /// `contentShape` is what keeps a tap inside the thumbnail. A filling photo is wider
+    /// than the square it fills, and clipping hides that overhang without making it
+    /// untappable — in a grid it lies over the neighbouring column and takes its taps.
     var body: some View {
         picture
             .clipShape(shape)
+            .contentShape(shape)
             .overlay(shape.strokeBorder(Color.border, lineWidth: 1))
     }
 
