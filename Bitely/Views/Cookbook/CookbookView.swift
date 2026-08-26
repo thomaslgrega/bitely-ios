@@ -4,6 +4,9 @@ import SwiftUI
 enum CookbookDestination: Hashable {
     case recipe(Recipe)
     case newRecipe(Recipe)
+    /// A Shared Recipe this user wrote elsewhere: the device has only its summary, so the
+    /// detail screen fetches it the same way Discover does.
+    case sharedRecipe(String)
 }
 
 /// Everything on the device, split by authorship — docs/design/app-flow.md, Cookbook.
@@ -15,8 +18,8 @@ struct CookbookView: View {
 
     @State private var destination: CookbookDestination?
 
-    private var visibleRecipes: [Recipe] {
-        cookbook.recipes(in: cookbook.segment, from: recipes)
+    private var entries: [CookbookEntry] {
+        cookbook.entries(in: cookbook.segment, from: recipes)
     }
 
     var body: some View {
@@ -42,14 +45,14 @@ struct CookbookView: View {
                 switch destination {
                 case .newRecipe(let recipe): EditRecipeView(recipe: recipe)
                 case .recipe(let recipe): LocalRecipeInfoView(recipe: recipe, allowEdit: true)
+                case .sharedRecipe(let id): RemoteRecipeInfoView(recipeId: id, allowEdit: false)
                 }
             }
             .task { await cookbook.loadAuthorship() }
-            .onChange(of: authStore.isAuthenticated) { _, signedIn in
-                cookbook.forgetAuthorship()
-                if signedIn {
-                    Task { await cookbook.loadAuthorship() }
-                }
+            // Signing in from the Share action's auth sheet is what fills My Recipes with
+            // the Shared Recipes written on another device, so the segment reloads on it.
+            .onChange(of: authStore.isAuthenticated) { _, _ in
+                Task { await cookbook.loadAuthorship() }
             }
             // The chosen segment only changes which Recipes pass the filter, so the swap
             // animates here rather than inside the control's own transaction.
@@ -75,27 +78,28 @@ struct CookbookView: View {
 
     @ViewBuilder
     private var contents: some View {
-        if visibleRecipes.isEmpty {
+        if entries.isEmpty {
             emptyState
         } else {
-            RecipeGrid(items: visibleRecipes) { recipe in
-                tile(for: recipe)
+            RecipeGrid(items: entries) { entry in
+                tile(for: entry)
             }
         }
     }
 
     /// The heart sits beside the tile rather than inside it: the whole tile is already a
     /// button, and a button nested in another button does not reliably take its own taps.
-    private func tile(for recipe: Recipe) -> some View {
+    /// It is offered only over a Saved Recipe — there is no un-saving one's own work.
+    private func tile(for entry: CookbookEntry) -> some View {
         ZStack(alignment: .topTrailing) {
             Button {
-                destination = .recipe(recipe)
+                destination = destination(for: entry)
             } label: {
-                RecipeTile(recipe: RecipeSummary(recipe))
+                RecipeTile(recipe: entry.summary)
             }
             .buttonStyle(.plain)
 
-            if cookbook.segment(for: recipe) == .saved {
+            if case .local(let recipe) = entry, cookbook.segment(for: recipe) == .saved {
                 SaveButton(
                     isSaved: true,
                     onSave: {},
@@ -103,6 +107,13 @@ struct CookbookView: View {
                 )
                 .padding(Spacing.s)
             }
+        }
+    }
+
+    private func destination(for entry: CookbookEntry) -> CookbookDestination {
+        switch entry {
+        case .local(let recipe): .recipe(recipe)
+        case .shared(let summary): .sharedRecipe(summary.id)
         }
     }
 
@@ -130,11 +141,7 @@ struct CookbookView: View {
 }
 
 #Preview {
-    let authStore = AuthStore()
-    let service = RecipeService(api: APIClient(authStore: authStore))
     CookbookView()
-        .environment(authStore)
-        .environment(service)
-        .environment(Cookbook(service: service, authStore: authStore))
+        .previewStores()
         .modelContainer(for: Recipe.self, inMemory: true)
 }

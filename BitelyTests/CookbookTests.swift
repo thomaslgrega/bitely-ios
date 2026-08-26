@@ -57,6 +57,20 @@ private func privateRecipe() -> Recipe { Recipe(name: "Sunday Ragu", category: .
 private func someoneElses() -> Recipe { Recipe(remoteId: "theirs", name: "Shakshuka", category: .breakfast) }
 private func ownShared() -> Recipe { Recipe(remoteId: "mine", name: "Short Rib", category: .beef) }
 
+private func sharedDetail(id: String, name: String) -> RecipeDetailDTO {
+    RecipeDetailDTO(
+        id: id,
+        userId: "u1",
+        name: name,
+        category: .pasta,
+        instructions: nil,
+        thumbnailUrl: nil,
+        ingredients: [],
+        calories: nil,
+        totalCookTime: nil
+    )
+}
+
 @Suite("Cookbook")
 struct CookbookTests {
 
@@ -88,14 +102,45 @@ struct CookbookTests {
         #expect(cookbook.segment(for: ownShared()) == .myRecipes)
     }
 
-    @Test("The two segments partition the Cookbook")
+    @Test("The two segments partition what the device holds")
     func segmentsPartitionTheCookbook() async {
         let (cookbook, _, _) = makeCookbook()
         await cookbook.loadAuthorship()
         let all = [privateRecipe(), someoneElses(), ownShared()]
 
-        #expect(cookbook.recipes(in: .myRecipes, from: all).map(\.name) == ["Sunday Ragu", "Short Rib"])
-        #expect(cookbook.recipes(in: .saved, from: all).map(\.name) == ["Shakshuka"])
+        #expect(cookbook.entries(in: .myRecipes, from: all).map(\.name) == ["Short Rib", "Sunday Ragu"])
+        #expect(cookbook.entries(in: .saved, from: all).map(\.name) == ["Shakshuka"])
+    }
+
+    @Test("My Recipes merges in a Shared Recipe this user wrote on another device")
+    func myRecipesMergesInRecipesWrittenElsewhere() async {
+        let authorship = Authorship()
+        authorship.ids = ["mine", "elsewhere"]
+        let (cookbook, _, _) = makeCookbook(authorship)
+        await cookbook.loadAuthorship()
+
+        let entries = cookbook.entries(in: .myRecipes, from: [privateRecipe(), ownShared()])
+
+        #expect(entries.map(\.name) == ["Recipe elsewhere", "Short Rib", "Sunday Ragu"])
+        #expect(entries.contains { $0.id == "elsewhere" })
+    }
+
+    @Test("A Shared Recipe the device already holds is listed once, from the local copy")
+    func aHeldSharedRecipeIsNotListedTwice() async {
+        let (cookbook, _, _) = makeCookbook()
+        await cookbook.loadAuthorship()
+
+        let entries = cookbook.entries(in: .myRecipes, from: [ownShared()])
+
+        #expect(entries.map(\.name) == ["Short Rib"])
+    }
+
+    @Test("Saved stays a pure local query — nobody else's Recipes are fetched into it")
+    func savedIsALocalQuery() async {
+        let (cookbook, _, _) = makeCookbook()
+        await cookbook.loadAuthorship()
+
+        #expect(cookbook.entries(in: .saved, from: []).isEmpty)
     }
 
     @Test("Authorship is asked for once a session")
@@ -131,7 +176,7 @@ struct CookbookTests {
         await cookbook.loadAuthorship()
 
         #expect(transport.requests.isEmpty)
-        #expect(cookbook.recipes(in: .myRecipes, from: [privateRecipe(), someoneElses()]).map(\.name)
+        #expect(cookbook.entries(in: .myRecipes, from: [privateRecipe(), someoneElses()]).map(\.name)
                 == ["Sunday Ragu"])
     }
 
@@ -142,40 +187,64 @@ struct CookbookTests {
         let recipe = privateRecipe()
 
         recipe.remoteId = "fresh"
-        cookbook.recordAuthorship(of: "fresh")
+        cookbook.recordAuthorship(of: sharedDetail(id: "fresh", name: "Sunday Ragu"))
 
         #expect(cookbook.segment(for: recipe) == .myRecipes)
         #expect(transport.requests.count == 1)
     }
 
-    @Test("Signing out forgets whose Shared Recipes were whose")
+    @Test("Signing out forgets whose Shared Recipes were whose, without being told to")
     func signingOutForgetsAuthorship() async {
-        let (cookbook, _, auth) = makeCookbook()
+        let (cookbook, transport, auth) = makeCookbook()
         await cookbook.loadAuthorship()
 
         auth.signOut()
-        cookbook.forgetAuthorship()
+        await cookbook.loadAuthorship()
 
         #expect(cookbook.segment(for: ownShared()) == .saved)
+        #expect(cookbook.entries(in: .myRecipes, from: []).isEmpty)
+        #expect(transport.requests.count == 1)
     }
 
-    @Test("Unsaving deletes the local copy and the segment loses it")
-    func unsavingDeletesTheLocalCopy() throws {
+    @Test("A second account does not inherit the first one's authorship")
+    func aNewSessionAsksAgain() async {
+        let (cookbook, transport, auth) = makeCookbook()
+        await cookbook.loadAuthorship()
+
+        auth.signOut()
+        auth.setSession(
+            token: "another",
+            user: User(id: "u2", email: "other@example.com", firstName: nil, lastName: nil)
+        )
+        await cookbook.loadAuthorship()
+
+        #expect(transport.requests.count == 2)
+    }
+
+    @Test("The heart confirms first: a tap leaves the Recipe in place, Remove deletes it")
+    func unsavingConfirmsBeforeDeleting() throws {
         let (cookbook, _, _) = makeCookbook()
         let context = try makeContext()
         let saved = someoneElses()
-        context.insert(saved)
+        cookbook.commit(saved, into: context)
         try context.save()
+
+        // The tap raises the confirmation rather than unsaving, so nothing is gone yet.
+        #expect(SaveControl(isSaved: true).tap == .confirmUnsave)
+        #expect(try context.fetch(FetchDescriptor<Recipe>()).count == 1)
 
         cookbook.unsave(saved, from: context)
         try context.save()
 
         #expect(try context.fetch(FetchDescriptor<Recipe>()).isEmpty)
+        #expect(cookbook.entries(in: .saved, from: []).isEmpty)
     }
 
     @Test("Editing a Saved Recipe writes to the local copy and asks the API for nothing")
-    func editingASavedRecipeStaysLocal() throws {
-        let (_, transport, _) = makeCookbook()
+    func editingASavedRecipeStaysLocal() async throws {
+        let (cookbook, transport, _) = makeCookbook()
+        await cookbook.loadAuthorship()
+        let requestsAfterLoad = transport.requests.count
         let context = try makeContext()
         let saved = Recipe(
             remoteId: "theirs",
@@ -183,15 +252,30 @@ struct CookbookTests {
             category: .breakfast,
             ingredients: [Ingredient(name: "eggs", measurement: "4")]
         )
-        context.insert(saved)
+        cookbook.commit(saved, into: context)
         try context.save()
 
         saved.ingredients.append(Ingredient(name: "salt", measurement: "1 tsp"))
+        cookbook.commit(saved, into: context)
         try context.save()
 
         let stored = try #require(try context.fetch(FetchDescriptor<Recipe>()).first)
         #expect(stored.ingredients.count == 2)
-        #expect(transport.requests.isEmpty)
+        #expect(cookbook.segment(for: stored) == .saved)
+        #expect(transport.requests.count == requestsAfterLoad)
+    }
+
+    @Test("Committing a Recipe the store already holds does not insert a second copy")
+    func committingTwiceKeepsOneCopy() throws {
+        let (cookbook, _, _) = makeCookbook()
+        let context = try makeContext()
+        let recipe = privateRecipe()
+
+        cookbook.commit(recipe, into: context)
+        cookbook.commit(recipe, into: context)
+        try context.save()
+
+        #expect(try context.fetch(FetchDescriptor<Recipe>()).count == 1)
     }
 }
 

@@ -5,6 +5,7 @@ import SwiftUI
 /// Adding salt to a Saved Recipe writes to the local copy and never reaches the API —
 /// which is why gating sharing costs the user nothing. docs/design/app-flow.md, Cookbook.
 struct EditRecipeView: View {
+    @Environment(Cookbook.self) private var cookbook
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     @Bindable var recipe: Recipe
@@ -249,10 +250,7 @@ struct EditRecipeView: View {
             recipe.imageData = nil
         }
 
-        if recipe.modelContext == nil {
-            modelContext.insert(recipe)
-        }
-
+        cookbook.commit(recipe, into: modelContext)
         dismiss()
     }
 }
@@ -264,4 +262,5 @@ struct EditRecipeView: View {
     NavigationStack {
         EditRecipeView(recipe: Recipe(name: "", category: .beef, thumbnailURL: "", ingredients: [ingredient1, ingredient2], calories: nil, totalCookTime: nil))
     }
+    .previewStores()
 }

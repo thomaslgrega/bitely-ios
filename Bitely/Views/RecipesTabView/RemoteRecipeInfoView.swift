@@ -88,4 +88,5 @@ struct RemoteRecipeInfoView: View {
 
 #Preview {
     RemoteRecipeInfoView(recipeId: "12345", allowEdit: false)
+        .previewStores()
 }

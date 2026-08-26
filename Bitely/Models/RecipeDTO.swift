@@ -15,6 +15,21 @@ struct RecipeSummaryDTO: Decodable, Identifiable, Hashable {
     }
 }
 
+extension RecipeSummaryDTO {
+    /// The summary carried by a Recipe the API has just answered in full — what a grid
+    /// needs of a Recipe the device holds no copy of.
+    init(_ detail: RecipeDetailDTO) {
+        self.init(
+            id: detail.id,
+            name: detail.name,
+            category: detail.category,
+            thumbnailUrl: detail.thumbnailUrl,
+            calories: detail.calories,
+            totalCookTime: detail.totalCookTime
+        )
+    }
+}
+
 struct RecipeDetailDTO: Codable, Identifiable {
     let id: String
     let userId: String

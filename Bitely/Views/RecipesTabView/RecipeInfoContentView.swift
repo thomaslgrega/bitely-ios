@@ -147,7 +147,7 @@ struct RecipeInfoContentView: View {
                         ))
 
                         recipe.remoteId = remoteRecipe.id
-                        cookbook.recordAuthorship(of: remoteRecipe.id)
+                        cookbook.recordAuthorship(of: remoteRecipe)
                     } catch {
                         print("Failed to share recipe:", error)
                     }
@@ -183,4 +183,5 @@ struct RecipeInfoContentView: View {
         isSaved: true,
         onToggleBookmark: {}
     )
+        .previewStores()
 }

@@ -2,6 +2,7 @@ import SwiftData
 import SwiftUI
 
 struct LocalRecipeInfoView: View {
+    @Environment(Cookbook.self) private var cookbook
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
@@ -20,7 +21,7 @@ struct LocalRecipeInfoView: View {
             allowEdit: allowEdit,
             isSaved: isSaved,
             onToggleBookmark: {
-                modelContext.delete(recipe)
+                cookbook.unsave(recipe, from: modelContext)
                 dismiss()
             }
         )
@@ -29,4 +30,5 @@ struct LocalRecipeInfoView: View {
 
 #Preview {
     LocalRecipeInfoView(recipe: Recipe(name: "Lemonade", category: .other), allowEdit: true)
+        .previewStores()
 }
