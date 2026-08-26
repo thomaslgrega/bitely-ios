@@ -17,9 +17,11 @@ struct RecipeGrid<Item: Identifiable, Tile: View>: View {
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    /// Cells top-align: a row is as tall as its tallest tile, and centring one whose name
+    /// wraps to fewer lines drops its thumbnail below its neighbour's.
     private var columns: [GridItem] {
         Array(
-            repeating: GridItem(.flexible(), spacing: columnSpacing),
+            repeating: GridItem(.flexible(), spacing: columnSpacing, alignment: .top),
             count: RecipeGridLayout.columnCount(for: dynamicTypeSize)
         )
     }
