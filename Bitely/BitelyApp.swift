@@ -6,14 +6,19 @@ struct BitelyApp: App {
     private let authStore: AuthStore
     private let authService: AuthService
     private let recipeService: RecipeService
+    private let recipeStore: RecipeStore
 
     init() {
         let store = AuthStore()
         let client = APIClient(authStore: store)
+        let recipes = RecipeService(api: client)
 
         self.authStore = store
         self.authService = AuthService(api: client, authStore: store)
-        self.recipeService = RecipeService(api: client)
+        self.recipeService = recipes
+        // Held by the app, not by Discover: a store rebuilt on every appearance would
+        // refetch the Feed each time the user came back to the tab.
+        self.recipeStore = RecipeStore(service: recipes)
     }
 
     var body: some Scene {
@@ -23,6 +28,7 @@ struct BitelyApp: App {
                 .environment(authStore)
                 .environment(authService)
                 .environment(recipeService)
+                .environment(recipeStore)
                 .task {
                     await authService.bootstrap()
                 }

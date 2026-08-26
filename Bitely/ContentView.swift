@@ -14,8 +14,8 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Recipes", systemImage: "fork.knife", value: .searchRecipes) {
-                RecipesTabView()
+            Tab("Discover", systemImage: "fork.knife", value: .searchRecipes) {
+                DiscoverView()
             }
 
             Tab("Calendar", systemImage: "calendar", value: .calendar) {

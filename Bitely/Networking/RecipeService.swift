@@ -12,6 +12,12 @@ final class RecipeService {
         try await api.request(path: "recipes/\(id)")
     }
 
+    /// The Feed: the corpus by recency of sharing, capped by the API — `bitelyapi`
+    /// ADR-0005. A `category` query item here would answer something else entirely.
+    func getFeed() async throws -> [RecipeSummaryDTO] {
+        try await api.request(path: "recipes")
+    }
+
     func getRecipesByCategory(category: FoodCategory) async throws -> [RecipeSummaryDTO] {
         try await api.request(path: "recipes", query: [URLQueryItem(name: "category", value: category.rawValue)])
     }

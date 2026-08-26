@@ -33,6 +33,17 @@ struct APIClientTests {
         #expect(url.absoluteString == "\(client.baseURL.absoluteString)/recipes?category=Chicken")
     }
 
+    @Test("builds a bare URL when there are no query items")
+    func buildsURLWithoutQuery() async throws {
+        let transport = StubTransport.json(#"{"value":"ok"}"#)
+        let (client, _) = makeClient(transport: transport)
+
+        let _: Payload = try await client.request(path: "recipes")
+
+        let url = try #require(transport.lastRequest?.url)
+        #expect(url.absoluteString == "\(client.baseURL.absoluteString)/recipes")
+    }
+
     @Test("sends the method, JSON content type and body it was given")
     func sendsMethodAndBody() async throws {
         let transport = StubTransport.json(#"{"value":"ok"}"#)
