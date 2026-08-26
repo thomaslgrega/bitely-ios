@@ -18,8 +18,11 @@ _Avoid_: Library, collection, my recipes
 ### Discovery
 
 **Today's Picks**:
-The selection of Shared Recipes the app opens on, chosen by the day's date. It
-makes no claim about popularity, because nothing in Bitely measures any.
+How Discover arranges the Feed: the same Shared Recipes the API returns, ordered
+by the day's date so the grid is stable within a day and changes daily. Not a
+second name for the Feed — that is the API's selection, this is what the app
+does with it. It makes no claim about popularity, because nothing in Bitely
+measures any.
 _Avoid_: Popular, trending, featured, recommended
 
 **Pantry Search**:
