@@ -7,6 +7,8 @@ struct RecipeTile: View {
     let thumbnail: ThumbnailSource
     var cookTime: Int?
     var calories: Int?
+    /// Absent over a Recipe the user authored, which there is no keeping a copy of, and on
+    /// the tiles that act as pickers, where a heart competes with the tap that selects.
     var saveButton: SaveButton?
 
     var body: some View {
