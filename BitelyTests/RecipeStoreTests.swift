@@ -17,8 +17,8 @@ private func summaries(_ names: [String], category: String = "Pasta") -> String 
 private final class Corpus: @unchecked Sendable {
     var feed = summaries(["Shakshuka", "Carbonara", "Short Rib"])
     var category = summaries(["Seared Scallops"], category: "Seafood")
-    var feedFails = false
-    var categoryFails = false
+    var feedError: Error?
+    var categoryError: Error?
 }
 
 private func makeStore(_ corpus: Corpus) -> (RecipeStore, StubTransport) {
@@ -26,8 +26,8 @@ private func makeStore(_ corpus: Corpus) -> (RecipeStore, StubTransport) {
         let isCategoryQuery = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?
             .queryItems?.contains { $0.name == "category" } ?? false
 
-        if isCategoryQuery ? corpus.categoryFails : corpus.feedFails {
-            throw URLError(.notConnectedToInternet)
+        if let error = isCategoryQuery ? corpus.categoryError : corpus.feedError {
+            throw error
         }
 
         let body = isCategoryQuery ? corpus.category : corpus.feed
@@ -82,17 +82,52 @@ struct RecipeStoreTests {
     @Test("A failed Feed leaves an error the user can retry from")
     func failedFeedIsRetryable() async {
         let corpus = Corpus()
-        corpus.feedFails = true
+        corpus.feedError = URLError(.notConnectedToInternet)
         let (store, transport) = makeStore(corpus)
 
         await store.loadFeed()
         #expect(store.contents(on: aDay) == .failed)
 
-        corpus.feedFails = false
+        corpus.feedError = nil
         await store.retry()
 
         #expect(transport.requests.count == 2)
         #expect(names(store.contents(on: aDay)).count == 3)
+    }
+
+    @Test(
+        "A cancelled Feed request is the screen going away, not an error",
+        arguments: [URLError(.cancelled) as Error, CancellationError()]
+    )
+    func cancelledFeedIsNotAFailure(cancellation: Error) async {
+        let corpus = Corpus()
+        corpus.feedError = cancellation
+        let (store, transport) = makeStore(corpus)
+
+        await store.loadFeed()
+        #expect(store.contents(on: aDay) == .loading)
+
+        corpus.feedError = nil
+        await store.loadFeed()
+
+        #expect(transport.requests.count == 2)
+        #expect(names(store.contents(on: aDay)).count == 3)
+    }
+
+    @Test("A cancelled Category request is asked again the next time the chip is selected")
+    func cancelledCategoryIsNotAFailure() async {
+        let corpus = Corpus()
+        corpus.categoryError = CancellationError()
+        let (store, transport) = makeStore(corpus)
+        await store.loadFeed()
+        await store.select(.seafood)
+
+        corpus.categoryError = nil
+        await store.select(nil)
+        await store.select(.seafood)
+
+        #expect(transport.requests.count == 3)
+        #expect(names(store.contents(on: aDay)) == ["Seared Scallops"])
     }
 
     @Test("Selecting a chip fetches that Category once and narrows the grid to it")
@@ -128,7 +163,7 @@ struct RecipeStoreTests {
     @Test("A failed Category leaves the Feed intact behind it")
     func failedCategoryLeavesTheFeed() async {
         let corpus = Corpus()
-        corpus.categoryFails = true
+        corpus.categoryError = URLError(.notConnectedToInternet)
         let (store, transport) = makeStore(corpus)
         await store.loadFeed()
 
@@ -143,12 +178,12 @@ struct RecipeStoreTests {
     @Test("A failed Category is retryable on its own")
     func failedCategoryIsRetryable() async {
         let corpus = Corpus()
-        corpus.categoryFails = true
+        corpus.categoryError = URLError(.notConnectedToInternet)
         let (store, _) = makeStore(corpus)
         await store.loadFeed()
         await store.select(.seafood)
 
-        corpus.categoryFails = false
+        corpus.categoryError = nil
         await store.retry()
 
         #expect(names(store.contents(on: aDay)) == ["Seared Scallops"])

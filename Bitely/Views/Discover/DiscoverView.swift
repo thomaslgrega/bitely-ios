@@ -4,7 +4,7 @@ import SwiftUI
 /// docs/design/app-flow.md, Discover.
 struct DiscoverView: View {
     @Environment(AuthStore.self) private var authStore
-    @Environment(RecipeStore.self) private var recipes
+    @Environment(RecipeStore.self) private var store
 
     @State private var showSettings = false
     @State private var showPantrySearch = false
@@ -30,7 +30,7 @@ struct DiscoverView: View {
                 RemoteRecipeInfoView(recipeId: recipe.id, allowEdit: false)
             }
             .sheet(isPresented: $showSettings) { SettingsView() }
-            .task { await recipes.loadFeed() }
+            .task { await store.loadFeed() }
         }
     }
 
@@ -65,21 +65,24 @@ struct DiscoverView: View {
     /// binding hands it straight over rather than holding a copy the two could disagree on.
     private var selection: Binding<FoodCategory?> {
         Binding(
-            get: { recipes.selectedCategory },
-            set: { category in Task { await recipes.select(category) } }
+            get: { store.selectedCategory },
+            set: { category in Task { await store.select(category) } }
         )
     }
 
     private var picks: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            SectionHeader(recipes.heading)
+        VStack(alignment: .leading, spacing: Spacing.l) {
+            SectionHeader(store.heading)
             grid
         }
+        // The chip's tap only starts the store's work, so the swap animates on the
+        // selection landing rather than inside the rail's own transaction.
+        .animation(.snappy, value: store.selectedCategory)
     }
 
     @ViewBuilder
     private var grid: some View {
-        switch recipes.contents(on: Date()) {
+        switch store.contents(on: Date()) {
         case .loading:
             ProgressView()
                 .frame(maxWidth: .infinity)
@@ -92,7 +95,7 @@ struct DiscoverView: View {
                 message: "Check your connection and try again.",
                 actionTitle: "Try again"
             ) {
-                Task { await recipes.retry() }
+                Task { await store.retry() }
             }
 
         case .recipes(let recipes) where recipes.isEmpty:

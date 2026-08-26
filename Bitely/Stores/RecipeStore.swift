@@ -38,9 +38,9 @@ final class RecipeStore {
 
     func contents(on date: Date) -> Contents {
         switch load(for: selectedCategory) {
-        case .idle, .loading, nil: .loading
+        case .idle, .loading: .loading
         case .failed: .failed
-        case .loaded(let recipes): .recipes(selectedCategory == nil ? picks(from: recipes, on: date) : recipes)
+        case .loaded(let recipes): .recipes(selectedCategory == nil ? todaysPicks(on: date) : recipes)
         }
     }
 
@@ -61,7 +61,7 @@ final class RecipeStore {
 
     func select(_ category: FoodCategory?) async {
         selectedCategory = category
-        guard let category, categories[category] == nil else { return }
+        guard let category, load(for: category) == .idle else { return }
         categories[category] = .loading
         categories[category] = await fetch { try await service.getRecipesByCategory(category: category) }
     }
@@ -70,7 +70,7 @@ final class RecipeStore {
     /// they tapped from belongs to.
     func retry() async {
         if let selectedCategory {
-            categories[selectedCategory] = nil
+            categories[selectedCategory] = .idle
             await select(selectedCategory)
         } else {
             feed = .idle
@@ -78,14 +78,20 @@ final class RecipeStore {
         }
     }
 
-    private func load(for category: FoodCategory?) -> Load? {
+    private func load(for category: FoodCategory?) -> Load {
         guard let category else { return feed }
-        return categories[category]
+        return categories[category] ?? .idle
     }
 
+    /// A cancelled request is the screen going away mid-flight, not a failure the user
+    /// can act on, so it goes back to idle and the next appearance asks again.
     private func fetch(_ request: () async throws -> [RecipeSummaryDTO]) async -> Load {
         do {
             return .loaded(try await request())
+        } catch is CancellationError {
+            return .idle
+        } catch let error as URLError where error.code == .cancelled {
+            return .idle
         } catch {
             return .failed
         }
