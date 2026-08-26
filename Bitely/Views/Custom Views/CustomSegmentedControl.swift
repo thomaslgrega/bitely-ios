@@ -7,7 +7,7 @@ struct CustomSegmentedControl<SelectionValue: Hashable>: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                ForEach(Array(options.enumerated()), id: \.element.value) { _, option in
+                ForEach(options, id: \.value) { option in
                     Button {
                         withAnimation(.snappy) {
                             selection = option.value
@@ -50,7 +50,7 @@ private struct CustomSegmentedControlPreview: View {
     var body: some View {
         CustomSegmentedControl(
             selection: $selection,
-            options: [(0, "My recipes"), (1, "Saved")]
+            options: [(0, "Written"), (1, "Saved")]
         )
         .padding()
         .background(Color.surface)

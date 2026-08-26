@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A 46×46 `surfaceRaised` square at `control` radius holding one symbol. The size is
-/// fixed: these sit in a row with the avatar, which does not grow with Dynamic Type either.
+/// The 46×46 size is fixed: these sit in a row with the avatar, which does not grow with
+/// Dynamic Type either.
 struct CircleIconButton: View {
     let systemImage: String
     let accessibilityLabel: String
@@ -9,20 +9,15 @@ struct CircleIconButton: View {
 
     var body: some View {
         Button(action: action) {
-            CircleIconFace(systemImage: systemImage)
+            face
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
     }
-}
 
-/// The same face without the button, for the times it labels a `NavigationLink` instead.
-struct CircleIconFace: View {
-    let systemImage: String
-
-    var body: some View {
+    private var face: some View {
         Image(systemName: systemImage)
-            .font(.system(size: 17, weight: .medium))
+            .font(.system(size: SymbolSize.control, weight: .medium))
             .foregroundStyle(Color.contentPrimary)
             .frame(width: 46, height: 46)
             .background(

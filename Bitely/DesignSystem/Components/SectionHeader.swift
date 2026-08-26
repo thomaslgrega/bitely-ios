@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// A `sectionTitle` heading with an optional trailing action in `accent`.
 struct SectionHeader<Action: View>: View {
     let title: String
     @ViewBuilder let action: () -> Action

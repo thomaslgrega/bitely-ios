@@ -9,6 +9,8 @@ enum ThumbnailSource: Equatable {
     case categoryTint(FoodCategory)
 
     init(imageData: Data?, thumbnailURL: String?, category: FoodCategory) {
+        // Decoding here rather than in the view keeps data that is not an image out of the
+        // `photo` case entirely, so a corrupt blob falls through to the next source.
         if let imageData, UIImage(data: imageData) != nil {
             self = .photo(imageData)
         } else if let url = Self.fetchableURL(thumbnailURL) {
@@ -28,9 +30,8 @@ enum ThumbnailSource: Equatable {
     }
 }
 
-/// The recipe photo when there is one, the category tint under the category icon when
-/// there is not. Both cases carry the same radius and the same inset `border` stroke, and
-/// photos take a warm overlay, so a grid mixing the two reads as one set.
+/// Photo and tint share a radius, an inset stroke and a warm overlay, so a grid mixing
+/// the two reads as one set rather than as half-loaded — design-system.md, RecipeThumbnail.
 struct RecipeThumbnail: View {
     let source: ThumbnailSource
     let cornerRadius: CGFloat

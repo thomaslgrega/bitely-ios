@@ -18,3 +18,11 @@ enum Radius {
     static let card: CGFloat = 18
     static let promo: CGFloat = 26
 }
+
+/// Symbol point sizes, the axis the type scale does not cover: these glyphs sit inside
+/// fixed-size controls, so they hold their size while the text around them grows.
+enum SymbolSize {
+    static let control: CGFloat = 17
+    static let save: CGFloat = 15
+    static let emptyState: CGFloat = 34
+}

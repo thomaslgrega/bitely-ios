@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// A symbol and a `meta` string in `contentSecondary`: cook time, calories, counts.
 struct MetaLabel: View {
     let systemImage: String
     let text: String

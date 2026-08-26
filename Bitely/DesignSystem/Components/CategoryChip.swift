@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A capsule carrying the category icon and name. Chips filter; they never navigate.
+/// Chips filter; they never navigate — design-system.md, CategoryChip and ChipRail.
 struct CategoryChip: View {
     let category: FoodCategory
     let isSelected: Bool
@@ -37,7 +37,7 @@ struct ChipRail: View {
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Spacing.s + 2) {
+            HStack(spacing: 10) {
                 ForEach(categories, id: \.self) { category in
                     CategoryChip(category: category, isSelected: selection == category) {
                         withAnimation(.snappy) {

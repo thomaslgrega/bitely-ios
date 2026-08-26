@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// One recipe in a grid: a square `RecipeThumbnail` with an optional `SaveButton` floating
-/// top-trailing, the name, and the meta row. Intrinsically sized — no reserved line count —
-/// because the name grows with Dynamic Type and a fixed height clips it.
+/// Intrinsically sized — no reserved line count — because the name grows with Dynamic
+/// Type and a fixed height clips it.
 struct RecipeTile: View {
     let name: String
     let thumbnail: ThumbnailSource

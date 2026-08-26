@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A full-bleed `surfaceInverse` panel at `promo` radius, carrying a heading, subcopy, a
-/// capsule button, and an optional image bleeding off the trailing corner.
+/// The panel that carries a screen's one headline offer — design-system.md, PromoCard.
+/// The whole card is the tap target, so the capsule inside it is a label, not a button.
 struct PromoCard: View {
     let heading: String
     let subcopy: String
@@ -22,7 +22,7 @@ struct PromoCard: View {
                         .accessibilityHidden(true)
                 }
 
-                VStack(alignment: .leading, spacing: Spacing.s + 2) {
+                VStack(alignment: .leading, spacing: 10) {
                     Text(heading)
                         .textStyle(.display)
                         .foregroundStyle(Color.contentOnInverse)
@@ -34,13 +34,11 @@ struct PromoCard: View {
                     Text(actionTitle)
                         .textStyle(.label)
                         .foregroundStyle(Color.contentPrimary)
-                        .padding(.horizontal, Spacing.xxl - 2)
-                        .padding(.vertical, Spacing.m)
-                        .background(Capsule().fill(Color.surface))
-                        .padding(.top, Spacing.xs + 2)
+                        .capsuleFace(fill: Color.surface)
+                        .padding(.top, Spacing.xs)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(Spacing.xxl - 2)
+                .padding(Spacing.xxl)
             }
             .background(Color.surfaceInverse)
             .clipShape(RoundedRectangle(cornerRadius: Radius.promo, style: .continuous))

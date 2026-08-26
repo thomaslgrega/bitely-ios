@@ -1,36 +1,27 @@
 import SwiftUI
 
-/// `contentOnInverse` on a `surfaceInverse` capsule.
 struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .textStyle(.label)
             .foregroundStyle(Color.contentOnInverse)
-            .padding(.horizontal, Spacing.xxl)
-            .padding(.vertical, Spacing.m + 2)
-            .frame(maxWidth: .infinity)
-            .background(Capsule().fill(Color.surfaceInverse))
+            .capsuleFace(fill: Color.surfaceInverse)
             .pressFeedback(configuration.isPressed)
     }
 }
 
-/// `contentPrimary` on a `cream` capsule, for the choice that sits beside a primary one.
 struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .textStyle(.label)
             .foregroundStyle(Color.contentPrimary)
-            .padding(.horizontal, Spacing.xxl)
-            .padding(.vertical, Spacing.m + 2)
-            .frame(maxWidth: .infinity)
-            .background(Capsule().fill(Color.surface))
+            .capsuleFace(fill: Color.surface)
+            // A cream capsule on the cream page needs the stroke to have an edge at all.
             .overlay(Capsule().strokeBorder(Color.border, lineWidth: 1))
             .pressFeedback(configuration.isPressed)
     }
 }
 
-/// A bare `label` in `accent`: section actions, links, anything that must not read as a
-/// control with weight of its own.
 struct TextActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -50,6 +41,16 @@ extension ButtonStyle where Self == SecondaryButtonStyle {
 
 extension ButtonStyle where Self == TextActionButtonStyle {
     static var textAction: Self { TextActionButtonStyle() }
+}
+
+extension View {
+    /// The pill shared by the button styles and by `PromoCard`, whose capsule sits inside
+    /// the card's own tap target and so cannot be a `Button`.
+    func capsuleFace(fill: Color) -> some View {
+        padding(.horizontal, Spacing.xxl)
+            .padding(.vertical, 14)
+            .background(Capsule().fill(fill))
+    }
 }
 
 private extension View {

@@ -43,7 +43,7 @@ struct GreetingBar<Trailing: View>: View {
                         .foregroundStyle(Color.contentPrimary)
                 } else {
                     Image(systemName: "person")
-                        .font(.system(size: 17, weight: .medium))
+                        .font(.system(size: SymbolSize.control, weight: .medium))
                         .foregroundStyle(Color.contentPrimary)
                 }
             }

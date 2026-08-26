@@ -1,19 +1,23 @@
 import Kingfisher
 import SwiftUI
 
+/// The bare picture, without the thumbnail's radius, stroke or overlay: the detail screen
+/// runs it full-bleed. The source order is `ThumbnailSource`'s, so there is one copy of it.
 struct RecipeImageView: View {
     let recipe: Recipe
 
     var body: some View {
-        if let data = recipe.imageData, let image = UIImage(data: data) {
-            Image(uiImage: image)
-                .resizable()
-        } else if let urlString = recipe.thumbnailURL, let url = URL(string: urlString) {
-            KFImage(url)
-                .resizable()
-        } else {
-            Image(recipe.category.rawValue.lowercased())
-                .resizable()
+        switch ThumbnailSource(
+            imageData: recipe.imageData,
+            thumbnailURL: recipe.thumbnailURL,
+            category: recipe.category
+        ) {
+        case .photo(let data):
+            Image(uiImage: UIImage(data: data) ?? UIImage()).resizable()
+        case .remote(let url):
+            KFImage(url).resizable()
+        case .categoryTint(let category):
+            Image(category.rawValue.lowercased()).resizable()
         }
     }
 }

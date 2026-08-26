@@ -72,6 +72,9 @@ Every size goes through `relativeTo:` so text scales with Dynamic Type.
 | `meta` | System | 13 | `.footnote` |
 | `label` | System SemiBold | 14 | `.subheadline` |
 
+Symbols are not on this scale: they sit inside fixed-size controls, so their point
+sizes live in `SymbolSize` and hold still while the text around them grows.
+
 **The type scale is mandatory.** A font size chosen at a call site is the way a
 design system dies, and it is what the mock already does in a dozen places.
 

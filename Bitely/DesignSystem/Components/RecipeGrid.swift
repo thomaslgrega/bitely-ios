@@ -11,20 +11,21 @@ enum RecipeGridLayout {
 /// The two-column grid of `RecipeTile`s, collapsing to one column at the accessibility sizes.
 struct RecipeGrid<Item: Identifiable, Tile: View>: View {
     let items: [Item]
-    var spacing: CGFloat = Spacing.xl
+    var rowSpacing: CGFloat = Spacing.xl
+    var columnSpacing: CGFloat = 14
     @ViewBuilder let tile: (Item) -> Tile
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var columns: [GridItem] {
         Array(
-            repeating: GridItem(.flexible(), spacing: Spacing.l - 2),
+            repeating: GridItem(.flexible(), spacing: columnSpacing),
             count: RecipeGridLayout.columnCount(for: dynamicTypeSize)
         )
     }
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: spacing) {
+        LazyVGrid(columns: columns, spacing: rowSpacing) {
             ForEach(items) { tile($0) }
         }
     }

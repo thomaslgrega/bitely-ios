@@ -19,7 +19,6 @@ struct SaveControl: Equatable {
     var accessibilityLabel: String { isSaved ? "Remove from cookbook" : "Save recipe" }
 }
 
-/// A heart on the thumbnail, filled `accent` when saved.
 struct SaveButton: View {
     let isSaved: Bool
     let onSave: () -> Void
@@ -32,7 +31,7 @@ struct SaveButton: View {
     var body: some View {
         Button(action: act) {
             Image(systemName: control.symbolName)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: SymbolSize.save, weight: .semibold))
                 .foregroundStyle(isSaved ? Color.accent : Color.contentPrimary)
                 .frame(width: 34, height: 34)
                 .background(Circle().fill(Color.surface))

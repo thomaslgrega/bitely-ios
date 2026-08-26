@@ -1,7 +1,5 @@
 import SwiftUI
 
-/// A centred symbol, a `sectionTitle` line, a `body` line, and an optional action. Used by
-/// an empty Cookbook and by signed-out states.
 struct EmptyState: View {
     let systemImage: String
     let title: String
@@ -12,7 +10,7 @@ struct EmptyState: View {
     var body: some View {
         VStack(spacing: Spacing.m) {
             Image(systemName: systemImage)
-                .font(.system(size: 34, weight: .light))
+                .font(.system(size: SymbolSize.emptyState, weight: .light))
                 .foregroundStyle(Color.contentSecondary)
                 .accessibilityHidden(true)
 
@@ -27,7 +25,6 @@ struct EmptyState: View {
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
                     .buttonStyle(.primary)
-                    .fixedSize()
                     .padding(.top, Spacing.xs)
             }
         }
