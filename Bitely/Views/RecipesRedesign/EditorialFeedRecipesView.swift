@@ -194,7 +194,7 @@ struct EditorialFeedRecipesView: View {
                             MockThumbnail(category: recipe.category)
                                 .aspectRatio(1, contentMode: .fit)
                                 .overlay(alignment: .topTrailing) {
-                                    SaveButton(recipe: recipe, store: store).padding(8)
+                                    MockSaveButton(recipe: recipe, store: store).padding(8)
                                 }
 
                             Text(recipe.name)
@@ -204,8 +204,8 @@ struct EditorialFeedRecipesView: View {
                                 .multilineTextAlignment(.leading)
 
                             HStack(spacing: 10) {
-                                MetaLabel(systemImage: "clock", text: recipe.cookTimeText)
-                                MetaLabel(systemImage: "flame", text: recipe.caloriesText)
+                                MockMetaLabel(systemImage: "clock", text: recipe.cookTimeText)
+                                MockMetaLabel(systemImage: "flame", text: recipe.caloriesText)
                             }
                         }
                     }

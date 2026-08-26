@@ -39,7 +39,7 @@ struct MockRecipeCard: View {
             MockThumbnail(category: recipe.category)
                 .aspectRatio(1, contentMode: .fit)
                 .overlay(alignment: .topTrailing) {
-                    SaveButton(recipe: recipe, store: store).padding(8)
+                    MockSaveButton(recipe: recipe, store: store).padding(8)
                 }
 
             Text(recipe.name)
@@ -49,8 +49,8 @@ struct MockRecipeCard: View {
                 .multilineTextAlignment(.leading)
 
             HStack(spacing: 12) {
-                MetaLabel(systemImage: "clock", text: recipe.cookTimeText)
-                MetaLabel(systemImage: "flame", text: recipe.caloriesText)
+                MockMetaLabel(systemImage: "clock", text: recipe.cookTimeText)
+                MockMetaLabel(systemImage: "flame", text: recipe.caloriesText)
             }
         }
     }
@@ -174,7 +174,7 @@ struct MockPantrySearchView: View {
                             }
 
                             Spacer()
-                            SaveButton(recipe: result.recipe, store: store)
+                            MockSaveButton(recipe: result.recipe, store: store)
                         }
                         .padding(12)
                         .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(.white))
@@ -208,9 +208,9 @@ struct MockRecipeDetailView: View {
                     .foregroundStyle(Redesign.ink)
 
                 HStack(spacing: 16) {
-                    MetaLabel(systemImage: "clock", text: recipe.cookTimeText)
-                    MetaLabel(systemImage: "flame", text: recipe.caloriesText)
-                    MetaLabel(systemImage: "tag", text: recipe.category.rawValue)
+                    MockMetaLabel(systemImage: "clock", text: recipe.cookTimeText)
+                    MockMetaLabel(systemImage: "flame", text: recipe.caloriesText)
+                    MockMetaLabel(systemImage: "tag", text: recipe.category.rawValue)
                 }
 
                 Text("Ingredients")

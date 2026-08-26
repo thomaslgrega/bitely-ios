@@ -161,7 +161,7 @@ The existing `CustomSegmentedControl`, restyled onto the tokens.
 Recipe grids are two columns and collapse to one at `.accessibility1` and above,
 read from `@Environment(\.dynamicTypeSize)`. `GridItem(.adaptive(minimum:))` does
 not solve this — it responds to container width, which does not change when text
-grows.
+grows. `RecipeGrid` holds the rule so no screen restates it.
 
 ## Migration
 
