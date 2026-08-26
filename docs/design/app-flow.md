@@ -30,24 +30,19 @@ Category and the grid to that Category's Recipes.
 
 ### Where the Recipes come from
 
-The API serves `recipes?category=`, and nothing else that returns a feed. So on
-first open the app fans out across all ten Categories in parallel and holds the
-result for the session. Categories that fill the first screen are requested
-first and the grid paints as they land.
+A bare `GET /recipes` answers the Feed — the corpus by recency of sharing,
+capped at fifty. The ordering and the cap are the API's, in `bitelyapi`
+ADR-0005. Today's Picks rotates within what it returns; that rotation is the
+app's business, not the API's.
 
-The chips then cost nothing: they filter a store that already holds every
-Category completely. This is the point of the fan-out. The alternative — filter
-only what a small merged feed happened to load — shows two Recipes under
-Seafood and gives the user no way to tell whether that is the filter or the
-catalogue.
+Chips fetch their Category rather than filtering the Feed. Fifty Recipes
+ordered by recency filtered to Seafood shows however many of the newest fifty
+happen to be seafood, and gives the user no way to tell whether that is the
+filter or the catalogue. `recipes?category=` answers everything it finds, so a
+chip always shows its Category completely.
 
-The store lives for the session and is refetched on cold launch. Ten small
-parallel requests on launch is fewer than the app makes today, where every
-category push refetches with no cache.
-
-**This does not scale.** Once the corpus outgrows a few hundred Recipes the
-fan-out stops being viable and the API needs a real feed endpoint. That is
-filed; the view does not change when it lands.
+The store lives for the session: the Feed once on cold launch, then at most one
+request per Category the user actually taps, each cached until relaunch.
 
 ## Cookbook
 
@@ -102,7 +97,7 @@ Expand, migrate, contract — so the suite is green at every step.
 
 1. **Expand**: the token layer, beside the existing palette.
 2. Components, against the design system doc.
-3. Discover, including the fan-out store.
+3. Discover, including the session Recipe store.
 4. Cookbook, including the segment split and the sharing action.
 5. Plan, Shop, recipe detail and Pantry Search.
 6. The tab bar, settings and the auth entry.
