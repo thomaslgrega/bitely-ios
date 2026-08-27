@@ -19,6 +19,7 @@ private final class Authorship: @unchecked Sendable {
     var error: Error?
 }
 
+@MainActor
 private func makeCookbook(
     _ authorship: Authorship = Authorship(),
     signedIn: Bool = true
@@ -45,6 +46,7 @@ private func makeCookbook(
 }
 
 /// Each test gets its own store, so inserts and deletes cannot reach another running test.
+@MainActor
 private func makeContext() throws -> ModelContext {
     let container = try ModelContainer(
         for: Recipe.self,
@@ -71,6 +73,7 @@ private func sharedDetail(id: String, name: String) -> RecipeDetailDTO {
     )
 }
 
+@MainActor
 @Suite("Cookbook")
 struct CookbookTests {
 
@@ -279,6 +282,7 @@ struct CookbookTests {
     }
 }
 
+@MainActor
 @Suite("Share control")
 struct ShareControlTests {
 

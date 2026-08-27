@@ -107,6 +107,11 @@ name in `cardTitle`, and a row of `MetaLabel`s for cook time and calories.
 Intrinsically sized — no reserved line count — because the name grows with
 Dynamic Type.
 
+A grid whose whole tile is a button or a link — Discover, the Cookbook — passes
+no `saveButton` and lays the heart over the tile itself, in the same
+top-trailing position: a button nested in another button does not reliably take
+its own taps.
+
 ### SaveButton
 
 A heart on the thumbnail. Filled `accent` when saved. Unsaving always confirms:

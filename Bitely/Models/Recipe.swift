@@ -76,4 +76,21 @@ final class Recipe {
     }
 }
 
+extension Recipe {
+    /// The device's copy of a corpus Recipe. Every save builds it here, so one kept from a
+    /// tile and one kept from the detail screen are the same local Recipe.
+    convenience init(_ dto: RecipeDetailDTO) {
+        self.init(
+            remoteId: dto.id,
+            name: dto.name,
+            category: dto.category,
+            instructions: dto.instructions,
+            thumbnailURL: dto.thumbnailUrl,
+            ingredients: dto.ingredients.map { Ingredient(name: $0.name, measurement: $0.measurement) },
+            calories: dto.calories,
+            totalCookTime: dto.totalCookTime
+        )
+    }
+}
+
 
