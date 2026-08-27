@@ -64,6 +64,11 @@ struct HeldRecipes {
 /// The Recipes themselves come from SwiftData; `me/recipes` answers what the device cannot
 /// know on its own — which Shared Recipes this user authored. That both separates their own
 /// from the ones they saved and supplies the ones they wrote elsewhere.
+///
+/// Main-actor bound because it writes the `ModelContext` the views query. A nonisolated
+/// `async` method resumes on the global executor, so an insert after an `await` would land
+/// off the main thread and `@Query` would never hear about it — SE-0338.
+@MainActor
 @Observable
 final class Cookbook {
     var segment: CookbookSegment = .myRecipes
@@ -193,6 +198,7 @@ final class Cookbook {
 extension View {
     /// The stores every Recipe screen reads out of the environment. Previews wire them the
     /// way the app does, so a preview shows the screen rather than trapping on a missing one.
+    @MainActor
     func previewStores() -> some View {
         let authStore = AuthStore()
         let service = RecipeService(api: APIClient(authStore: authStore))

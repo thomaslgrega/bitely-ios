@@ -17,6 +17,7 @@ private let authorshipJSON = """
 """
 
 /// Answers `me/recipes` with one authored Recipe and `recipes/{id}` with a Recipe in full.
+@MainActor
 private func makeCookbook() -> (Cookbook, StubTransport) {
     let transport = StubTransport { request in
         let path = request.url?.path ?? ""
@@ -37,6 +38,7 @@ private func makeCookbook() -> (Cookbook, StubTransport) {
     return (Cookbook(service: service, authStore: auth), transport)
 }
 
+@MainActor
 private func makeContext() throws -> ModelContext {
     let container = try ModelContainer(
         for: Recipe.self,
@@ -49,6 +51,7 @@ private func theirDetail() throws -> RecipeDetailDTO {
     try JSONDecoder().decode(RecipeDetailDTO.self, from: Data(detailJSON.utf8))
 }
 
+@MainActor
 @Suite("Saving from the grid")
 struct SavingFromTheGridTests {
 
