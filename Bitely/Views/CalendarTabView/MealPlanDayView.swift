@@ -3,57 +3,69 @@ import SwiftUI
 struct MealPlanDayView: View {
     @Environment(\.modelContext) var modelContext
     @Bindable var mealPlanDay: MealPlanDay
-    @State private var showDeleteAlert = false
+    @State private var pendingRemoval: PlannedRecipe?
     @State private var selectedRecipe: Recipe?
     @State private var selectedMealType: MealType?
 
+    /// A Recipe under the Meal Type it is planned for: removing it needs both, and an alert
+    /// driven by one shared flag would ask about whichever row happened to render first.
+    struct PlannedRecipe: Identifiable {
+        let recipe: Recipe
+        let mealType: MealType
+
+        var id: String { "\(mealType.rawValue)-\(recipe.id)" }
+    }
+
+    private var isRemoving: Binding<Bool> {
+        Binding(get: { pendingRemoval != nil }, set: { if !$0 { pendingRemoval = nil } })
+    }
+
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: Spacing.xxl) {
             ForEach(MealType.allCases, id: \.self) { type in
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text(type.rawValue)
-                            .font(.largeTitle)
-
-                        Spacer()
-
+                VStack(alignment: .leading, spacing: Spacing.m) {
+                    SectionHeader(type.rawValue) {
                         Button {
                             selectedMealType = type
                         } label: {
                             Image(systemName: "plus")
                         }
-                        .font(.title)
-                        .bold()
-                        .frame(width: 40, height: 40)
-                        .foregroundStyle(Color.primaryMain)
+                        .accessibilityLabel("Add a \(type.rawValue.lowercased())")
                     }
 
                     if mealPlanDay[type].isEmpty {
                         Text("You don't have any meals planned for \(type.rawValue)")
-                            .foregroundStyle(Color.secondary400)
-                            .italic()
+                            .textStyle(.body)
+                            .foregroundStyle(Color.contentSecondary)
                     } else {
-                        VStack(alignment: .leading, spacing: 8) {
-                            ForEach(mealPlanDay[type]) { recipe in
-                                CustomListCardView(mainText: recipe.name, trailingIcon: "minus.circle") {
-                                    selectedRecipe = recipe
-                                } iconOnTapAction: {
-                                    showDeleteAlert = true
-                                }
-                                .alert("Remove \(recipe.name) from \(type.rawValue.lowercased())?", isPresented: $showDeleteAlert) {
-                                    Button("Cancel", role: .cancel) { }
-                                    Button("Delete", role: .destructive) {
-                                        removeRecipeFromCalendar(recipe, type)
-                                    }
-                                }
+                        ForEach(mealPlanDay[type]) { recipe in
+                            ListRowCard(
+                                title: recipe.name,
+                                removeLabel: "Remove \(recipe.name)"
+                            ) {
+                                selectedRecipe = recipe
+                            } onRemove: {
+                                pendingRemoval = PlannedRecipe(recipe: recipe, mealType: type)
                             }
                         }
                     }
                 }
-                .padding(.vertical)
             }
         }
-        .foregroundStyle(Color.secondaryMain)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .confirmationDialog(
+            "Remove this recipe from the day?",
+            isPresented: isRemoving,
+            titleVisibility: .visible,
+            presenting: pendingRemoval
+        ) { planned in
+            Button("Remove", role: .destructive) {
+                removeRecipeFromCalendar(planned.recipe, planned.mealType)
+            }
+            Button("Keep", role: .cancel) {}
+        } message: { planned in
+            Text("\(planned.recipe.name) comes off \(planned.mealType.rawValue.lowercased()).")
+        }
         .sheet(item: $selectedMealType) { mealType in
             AddToMealPlanDaySheet(mealType: mealType, addRecipeToCalendar: addRecipeToCalendar)
         }
@@ -75,8 +87,11 @@ struct MealPlanDayView: View {
 
 #Preview {
     let mealPlanDay = MealPlanDay(dayKey: Date().dayKey)
-    ScrollView {
-        MealPlanDayView(mealPlanDay: mealPlanDay)
-            .padding(.horizontal)
+    NavigationStack {
+        ScrollView {
+            MealPlanDayView(mealPlanDay: mealPlanDay)
+                .padding(.horizontal, Spacing.xl)
+        }
+        .background(Color.surface)
     }
 }

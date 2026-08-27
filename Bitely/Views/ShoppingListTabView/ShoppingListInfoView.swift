@@ -11,6 +11,8 @@ struct ShoppingListInfoView: View {
         }
     }
 
+    /// Still a `List`: swiping an item away is the delete affordance this screen has, and a
+    /// `ScrollView` of cards would take it away.
     var body: some View {
         List {
             ForEach(sortedItems, id: \.wrappedValue.id) { $item in
@@ -20,18 +22,22 @@ struct ShoppingListInfoView: View {
                     ShoppingListItemRowView(item: $item)
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(item.purchased ? Color.secondary400 : Color.secondaryMain)
-                .font(.title3)
-                .padding(.vertical)
+                .padding(.vertical, Spacing.s)
+                .listRowBackground(Color.surface)
+                .listRowSeparatorTint(Color.border)
             }
             .onDelete(perform: deleteItem)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color.surface)
         .navigationTitle(list.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             Button("Edit") {
                 showEditShoppingListSheet = true
             }
+            .tint(Color.accent)
         }
         .sheet(isPresented: $showEditShoppingListSheet) {
             AddShoppingListView(shoppingList: list, onCreate: { _ in })
@@ -54,5 +60,8 @@ struct ShoppingListInfoView: View {
         ShoppingListItem(name: "Coke", measurement: "1 L"),
     ]
     let list = ShoppingList(name: "Target", items: shoppingList)
-    ShoppingListInfoView(list: list)
+
+    NavigationStack {
+        ShoppingListInfoView(list: list)
+    }
 }

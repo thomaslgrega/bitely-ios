@@ -36,7 +36,7 @@ struct PantrySearchView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: Spacing.l) {
             entryField
 
             if !search.pantryItems.isEmpty {
@@ -47,7 +47,9 @@ struct PantrySearchView: View {
 
             foundRecipes
         }
-        .padding(.top)
+        .padding(.top, Spacing.l)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color.surface)
         .navigationTitle("Cook what you have")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -55,65 +57,56 @@ struct PantrySearchView: View {
     // MARK: - Entering Pantry Items
 
     private var entryField: some View {
-        HStack {
+        HStack(spacing: Spacing.m) {
             TextField("Add a food you have, e.g. eggs", text: $search.draft)
+                .textStyle(.body)
+                .foregroundStyle(Color.contentPrimary)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .submitLabel(.done)
                 .focused($draftFocused)
-                .onSubmit {
-                    search.commitDraft()
-                    draftFocused = true
-                }
+                .onSubmit(commitDraft)
 
-            Button {
-                search.commitDraft()
-                draftFocused = true
-            } label: {
+            Button(action: commitDraft) {
                 Image(systemName: "plus.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(Color.primaryMain)
+                    .font(.system(size: SymbolSize.control, weight: .medium))
+                    .foregroundStyle(Color.accent)
             }
+            .buttonStyle(.plain)
             .disabled(!search.canCommit)
+            .opacity(search.canCommit ? 1 : 0.4)
+            .accessibilityLabel("Add this food")
         }
-        .padding()
-        .background(Color.secondary100)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.secondary200, lineWidth: 1)
-        )
-        .padding(.horizontal)
+        .fieldSurface()
+        .padding(.horizontal, Spacing.xl)
     }
 
+    /// The rail bleeds past the page margin the way Discover's chip rail does, so a long
+    /// Pantry scrolls to the screen edge rather than stopping short of it.
     private var pantryItemChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 ForEach(search.pantryItems, id: \.self) { item in
                     Button {
-                        search.remove(item)
+                        withAnimation(.snappy) { search.remove(item) }
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: Spacing.xs) {
                             Text(item)
+                                .textStyle(.label)
                             Image(systemName: "xmark.circle.fill")
                         }
-                        .font(.subheadline)
-                        .foregroundStyle(Color.secondary700)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Color.primary100)
-                        .clipShape(Capsule())
+                        .chipFace()
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Remove \(item)")
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, Spacing.xl)
         }
     }
 
     private var searchButton: some View {
-        Button {
+        Button("Find recipes") {
             draftFocused = false
             Task {
                 await search.search(
@@ -122,17 +115,15 @@ struct PantrySearchView: View {
                     corpus: recipeService
                 )
             }
-        } label: {
-            Text("Find recipes")
-                .bold()
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(search.canSearch ? Color.primaryMain : Color.secondary200)
-                .foregroundStyle(search.canSearch ? Color.secondary50 : Color.secondary400)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
         }
+        .buttonStyle(.primary)
         .disabled(!search.canSearch)
-        .padding(.horizontal)
+        .padding(.horizontal, Spacing.xl)
+    }
+
+    private func commitDraft() {
+        search.commitDraft()
+        draftFocused = true
     }
 
     // MARK: - Matches
@@ -141,25 +132,37 @@ struct PantrySearchView: View {
     private var foundRecipes: some View {
         switch search.state {
         case .idle:
-            message("Add the foods you have on hand and we'll find the recipes you can cook — yours and everyone else's.")
+            EmptyState(
+                systemImage: "carrot",
+                title: "What's in the kitchen?",
+                message: "Add the foods you have on hand and we'll find the recipes you can cook — yours and everyone else's."
+            )
+            .frame(maxHeight: .infinity, alignment: .top)
 
         case .noMatches:
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: Spacing.s) {
                 corpusNotice
-                message("Nothing we can find uses what you have. Try adding another food.")
+
+                EmptyState(
+                    systemImage: "magnifyingglass",
+                    title: "Nothing matches yet",
+                    message: "Nothing we can find uses what you have. Try adding another food."
+                )
             }
+            .frame(maxHeight: .infinity, alignment: .top)
 
         case .matches(let matches):
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: Spacing.s) {
                 corpusNotice
 
                 ScrollView {
-                    LazyVStack(spacing: 12) {
+                    LazyVStack(spacing: Spacing.m) {
                         ForEach(matches) { match in
                             matchLink(match)
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, Spacing.xl)
+                    .padding(.bottom, Spacing.xxxl)
                 }
             }
         }
@@ -203,72 +206,22 @@ struct PantrySearchView: View {
     @ViewBuilder
     private var corpusNotice: some View {
         if search.awaitingCorpus {
-            HStack(spacing: 8) {
+            HStack(spacing: Spacing.s) {
                 ProgressView()
                 Text("Looking for shared recipes\u{2026}")
             }
-            .font(.subheadline)
-            .foregroundStyle(Color.secondary700)
-            .padding(.horizontal)
+            .textStyle(.meta)
+            .foregroundStyle(Color.contentSecondary)
+            .padding(.horizontal, Spacing.xl)
         } else if search.localOnly {
             Label(
                 "We couldn't reach shared recipes, so these are the ones on your device.",
                 systemImage: "wifi.slash"
             )
-            .font(.subheadline)
-            .foregroundStyle(Color.secondary700)
-            .padding(.horizontal)
+            .textStyle(.meta)
+            .foregroundStyle(Color.contentSecondary)
+            .padding(.horizontal, Spacing.xl)
         }
-    }
-
-    private func message(_ text: String) -> some View {
-        VStack {
-            Text(text)
-                .font(.title3)
-                .italic()
-                .foregroundStyle(Color.secondary400)
-
-            Spacer()
-        }
-        .padding()
-    }
-}
-
-/// One Match: the Recipe, its Coverage as the integer pair the matcher keeps,
-/// and the Missing Ingredients spelled out — an incomplete Match is the point
-/// of the feature, so it says what a trip to the shop would cost.
-struct PantryMatchRow: View {
-    let match: RecipeMatch
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(match.recipeName)
-                .font(.title3)
-                .bold()
-                .foregroundStyle(Color.secondaryMain)
-
-            Text("You have \(match.matchedCount) of \(match.totalCount) ingredients")
-                .font(.subheadline)
-                .foregroundStyle(Color.secondary700)
-
-            if match.missingIngredients.isEmpty {
-                Text("You have everything")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.accentMain)
-            } else {
-                Text("Missing: \(match.missingIngredients.joined(separator: ", "))")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.secondary400)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color.secondary100)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.secondary200, lineWidth: 1)
-        )
     }
 }
 
@@ -276,4 +229,5 @@ struct PantryMatchRow: View {
     NavigationStack {
         PantrySearchView()
     }
+    .previewStores()
 }

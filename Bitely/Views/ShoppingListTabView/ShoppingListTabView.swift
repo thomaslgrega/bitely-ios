@@ -11,53 +11,12 @@ struct ShoppingListTabView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                if shoppingLists.isEmpty {
-                    VStack {
-                        Text("You have no shopping lists. Create a new one by tapping on the plus button!")
-                            .font(.title2)
-                            .italic()
-                            .foregroundStyle(Color.secondary400)
-
-                        Spacer()
-                    }
-                    .padding()
-                } else {
-                    ScrollView {
-                        ForEach(shoppingLists) { list in
-                            CustomListCardView(mainText: list.name, trailingIcon: "minus.circle") {
-                                selectedList = list
-                            } iconOnTapAction: {
-                                modelContext.delete(list)
-                            }
-                        }
-                        .font(.title3)
-
-                        Spacer()
-                    }
-                    .foregroundStyle(Color.secondaryMain)
-                    .padding()
-                }
-
-                VStack {
-                    Spacer()
-
-                    HStack {
-                        Spacer()
-                        Button {
-                            showAddShoppingListSheet = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .foregroundStyle(Color.secondary100)
-                                .font(.title)
-                        }
-                        .frame(width: 50, height: 50)
-                        .background(Color.primaryMain)
-                        .clipShape(Circle())
-                    }
-                    .padding(32)
-                }
+            ScrollView {
+                contents
+                    .padding(.horizontal, Spacing.xl)
+                    .padding(.bottom, Spacing.xxxl)
             }
+            .background(Color.surface)
             .navigationTitle("Shopping Lists")
             .navigationDestination(item: $selectedList) { shoppingList in
                 ShoppingListInfoView(list: shoppingList)
@@ -69,13 +28,51 @@ struct ShoppingListTabView: View {
                 SettingsView()
             }
             .toolbar {
-                Button {
-                    showSettingsSheet = true
-                } label: {
-                    Image(systemName: "gearshape.fill")
-                        .foregroundStyle(Color.primaryMain)
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showSettingsSheet = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .tint(Color.contentPrimary)
+                    .accessibilityLabel("Settings")
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showAddShoppingListSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .tint(Color.accent)
+                    .accessibilityLabel("New shopping list")
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var contents: some View {
+        if shoppingLists.isEmpty {
+            EmptyState(
+                systemImage: "basket",
+                title: "No shopping lists yet",
+                message: "Write one by hand, or build one from a recipe's ingredients.",
+                actionTitle: "New shopping list"
+            ) {
+                showAddShoppingListSheet = true
+            }
+        } else {
+            LazyVStack(spacing: Spacing.m) {
+                ForEach(shoppingLists) { list in
+                    ListRowCard(title: list.name, removeLabel: "Delete \(list.name)") {
+                        selectedList = list
+                    } onRemove: {
+                        modelContext.delete(list)
+                    }
+                }
+            }
+            .padding(.top, Spacing.l)
         }
     }
 }

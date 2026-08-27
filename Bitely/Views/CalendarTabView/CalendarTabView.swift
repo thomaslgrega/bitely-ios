@@ -3,7 +3,6 @@ import SwiftUI
 
 struct CalendarTabView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var recipes = [String]()
     @State private var selectedDate = Date()
     @State private var showSettingsSheet = false
     @Query var mealPlanDays: [MealPlanDay]
@@ -15,20 +14,21 @@ struct CalendarTabView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                DatePickerView(selectedDate: $selectedDate)
-                    .tint(Color.primaryMain)
+                VStack(alignment: .leading, spacing: Spacing.xl) {
+                    DatePickerView(selectedDate: $selectedDate)
 
-                Divider()
-
-                if let mealPlanDay = selectedDateMealPlan {
-                    MealPlanDayView(mealPlanDay: mealPlanDay)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding()
-                } else {
-                    ProgressView()
+                    if let mealPlanDay = selectedDateMealPlan {
+                        MealPlanDayView(mealPlanDay: mealPlanDay)
+                    } else {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Spacing.xxxl)
+                    }
                 }
+                .padding(.horizontal, Spacing.xl)
+                .padding(.bottom, Spacing.xxxl)
             }
-            .offset(y: -20)
+            .background(Color.surface)
             .onAppear {
                 loadMealPlanDay()
             }
@@ -42,9 +42,10 @@ struct CalendarTabView: View {
                 Button {
                     showSettingsSheet = true
                 } label: {
-                    Image(systemName: "gearshape.fill")
-                        .foregroundStyle(Color.primaryMain)
+                    Image(systemName: "gearshape")
                 }
+                .tint(Color.contentPrimary)
+                .accessibilityLabel("Settings")
             }
         }
     }

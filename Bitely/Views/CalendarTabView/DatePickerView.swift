@@ -10,10 +10,14 @@ struct DatePickerView: View {
             displayedComponents: [.date]
         )
         .datePickerStyle(.graphical)
-        .frame(width: 320, height: 400)
+        .tint(Color.accent)
+        .frame(maxWidth: .infinity)
+        .frame(height: 400)
     }
 }
 
 #Preview {
     DatePickerView(selectedDate: .constant(Date()))
+        .padding()
+        .background(Color.surface)
 }

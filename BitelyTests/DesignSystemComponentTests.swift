@@ -123,4 +123,11 @@ struct DesignSystemComponentTests {
     func oneColumnAtAccessibilitySizes(size: DynamicTypeSize) {
         #expect(RecipeGridLayout.columnCount(for: size) == 1)
     }
+
+    /// Every grid in the app defers here, so the whole scale is walked rather than the
+    /// handful of sizes a caller happened to think of.
+    @Test("the collapse happens at .accessibility1 and nowhere else", arguments: DynamicTypeSize.allCases)
+    func collapseBoundary(size: DynamicTypeSize) {
+        #expect(RecipeGridLayout.columnCount(for: size) == (size >= .accessibility1 ? 1 : 2))
+    }
 }
