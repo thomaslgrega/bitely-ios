@@ -53,9 +53,24 @@ extension View {
     }
 }
 
+/// Press and disabled feedback for all three styles. A `ButtonStyle` cannot read
+/// `isEnabled` itself — it is resolved for the label, not for `makeBody` — so this sits in
+/// a modifier, and a disabled button dims rather than swapping to a second set of colors.
+private struct ButtonFeedback: ViewModifier {
+    let isPressed: Bool
+
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(isEnabled ? (isPressed ? 0.7 : 1) : 0.4)
+            .animation(.snappy(duration: 0.15), value: isPressed)
+    }
+}
+
 private extension View {
     func pressFeedback(_ isPressed: Bool) -> some View {
-        opacity(isPressed ? 0.7 : 1).animation(.snappy(duration: 0.15), value: isPressed)
+        modifier(ButtonFeedback(isPressed: isPressed))
     }
 }
 

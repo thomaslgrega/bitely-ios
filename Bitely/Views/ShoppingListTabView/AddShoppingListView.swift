@@ -11,77 +11,60 @@ struct AddShoppingListView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 40) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Name")
-                            .foregroundStyle(Color.secondary700)
-                            .font(.subheadline)
-
+                VStack(alignment: .leading, spacing: Spacing.xxxl) {
+                    FormField(label: "Name") {
                         TextField("Costco, Target, etc.", text: $shoppingList.name)
-                            .padding()
-                            .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
-                            .textFieldStyle(.roundedBorder)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.secondary200, lineWidth: 1)
-                            )
+                            .textStyle(.body)
                     }
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Ingredients")
-                            .foregroundStyle(Color.secondary700)
-                            .font(.subheadline)
-
-                        ForEach($shoppingList.items) { $item in
-                            ShoppingListItemFormRow(shoppingListItem: $item) {
-                                removeItemFromShoppingList(item)
-                            }
-                            .padding()
-                            .frame(height: 54)
-                            .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.secondary200, lineWidth: 1)
-                            )
-                        }
-
-                        ForEach($itemsToAdd) { $item in
-                            ShoppingListItemFormRow(shoppingListItem: $item) {
-                                removeItemFromItemsToAdd(item)
-                            }
-                            .padding()
-                            .frame(height: 54)
-                            .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.secondary200, lineWidth: 1)
-                            )
-                        }
-
-                        HStack {
-                            Image(systemName: "plus.circle")
-                            Button("Add an ingredient", action: addItem)
-                        }
-                        .foregroundStyle(Color.primaryMain)
-                    }
+                    items
                 }
-                .padding()
+                .padding(Spacing.xl)
             }
-            .navigationTitle("Create a new Shopping List")
+            .background(Color.surface)
+            .navigationTitle("New shopping list")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    Button("Cancel") { dismiss() }
+                        .tint(Color.contentPrimary)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        saveShoppingList()
-                    }
+                    Button("Save", action: saveShoppingList)
+                        .tint(Color.accent)
                 }
             }
+            .toolbarBackground(Color.surface, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+        }
+    }
+
+    private var items: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            Text("Ingredients")
+                .textStyle(.label)
+                .foregroundStyle(Color.contentSecondary)
+
+            ForEach($shoppingList.items) { $item in
+                ShoppingListItemFormRow(shoppingListItem: $item) {
+                    removeItemFromShoppingList(item)
+                }
+                .fieldSurface()
+            }
+
+            ForEach($itemsToAdd) { $item in
+                ShoppingListItemFormRow(shoppingListItem: $item) {
+                    removeItemFromItemsToAdd(item)
+                }
+                .fieldSurface()
+            }
+
+            Button(action: addItem) {
+                Label("Add an ingredient", systemImage: "plus.circle")
+            }
+            .buttonStyle(.textAction)
+            .padding(.top, Spacing.xs)
         }
     }
 

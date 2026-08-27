@@ -1,44 +1,34 @@
 import SwiftUI
 
 struct IngredientRowView: View {
-    @State private var name = ""
-    @State private var measurement = ""
     @Binding var ingredient: Ingredient
     var onDelete: () -> Void
 
-    init(ingredient: Binding<Ingredient>, onDelete: @escaping () -> Void) {
-        self._ingredient = ingredient
-        self.onDelete = onDelete
-        self._name = State(initialValue: ingredient.wrappedValue.name.trimmingCharacters(in: .whitespaces))
-        self._measurement = State(initialValue: ingredient.wrappedValue.measurement.trimmingCharacters(in: .whitespaces))
-    }
-
     var body: some View {
-        HStack {
+        HStack(spacing: Spacing.m) {
             TextField("e.g., flour", text: $ingredient.name)
-                .textFieldStyle(.roundedBorder)
 
             TextField("e.g., 2 cups", text: $ingredient.measurement)
-                .textFieldStyle(.roundedBorder)
 
-            Spacer()
-
-            Button {
-                onDelete()
-            } label: {
+            Button(action: onDelete) {
                 Image(systemName: "minus.circle")
+                    .font(.system(size: SymbolSize.control, weight: .medium))
+                    .foregroundStyle(Color.destructive)
             }
-            .foregroundStyle(Color.primaryMain)
-            .buttonStyle(.borderless)
+            .buttonStyle(.plain)
+            .accessibilityLabel("Remove this ingredient")
         }
+        .textStyle(.body)
+        .foregroundStyle(Color.contentPrimary)
     }
 }
 
 #Preview {
-    List {
-        IngredientRowView(
-            ingredient: .constant(Ingredient(name: "Lemon Juice", measurement: "1 cup")),
-            onDelete: { }
-        )
-    }
+    IngredientRowView(
+        ingredient: .constant(Ingredient(name: "Lemon Juice", measurement: "1 cup")),
+        onDelete: {}
+    )
+    .fieldSurface()
+    .padding()
+    .background(Color.surface)
 }

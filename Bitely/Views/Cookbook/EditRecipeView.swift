@@ -11,220 +11,148 @@ struct EditRecipeView: View {
     @Bindable var recipe: Recipe
 
     @State private var showRequiredNameError = false
-    @State private var showRequiredCategoryError = false
 
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 40) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Recipe name")
-                            .foregroundStyle(Color.secondary700)
-
-                        if showRequiredNameError {
-                            Spacer()
-                            HStack {
-                                Image(systemName: "exclamationmark.triangle")
-                                Text("This field is required")
-                            }
-                            .foregroundStyle(.red)
-                        }
-                    }
-                    .font(.subheadline)
-
-                    TextField("Recipe Name", text: $recipe.name)
-                        .padding()
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
-                        .textFieldStyle(.roundedBorder)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(showRequiredNameError ? .red : .secondary200, lineWidth: 1)
-                        )
+            VStack(alignment: .leading, spacing: Spacing.xxl) {
+                FormField(
+                    label: "Recipe name",
+                    error: showRequiredNameError ? FieldError.required : nil
+                ) {
+                    TextField("Recipe name", text: $recipe.name)
+                        .textStyle(.body)
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Image")
-                        .foregroundStyle(Color.secondary700)
-                        .font(.subheadline)
+                photo
 
-                    PhotosPicker(
-                        selection: $selectedPhotoItem,
-                        matching: .images,
-                        photoLibrary: .shared()
-                    ) {
-                        if let image = selectedImage {
-                            ZStack(alignment: .bottomLeading) {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(height: 200)
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                                Button {
-                                    selectedPhotoItem = nil
-                                    selectedImage = nil
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .foregroundStyle(Color.secondary100)
-                                        .frame(width: 50, height: 50)
-                                        .background(Color.primaryMain)
-                                        .clipShape(Circle())
-                                        .padding()
-                                }
-                            }
-                        } else {
-                            VStack(alignment: .center, spacing: 12) {
-                                Image(systemName: "photo")
-                                Text("Add Photo")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                        }
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.secondary200, lineWidth: 1)
-                    )
-                    .onChange(of: selectedPhotoItem) { _, newItem in
-                        Task {
-                            if let data = try? await newItem?.loadTransferable(type: Data.self),
-                               let image = UIImage(data: data) {
-                                selectedImage = image
-                            }
-                        }
-                    }
-                }
-
-                VStack(alignment: .leading) {
-                    HStack {
-                        Text("Category")
-                            .foregroundStyle(Color.secondary700)
-
-                        if showRequiredCategoryError {
-                            Spacer()
-                            HStack {
-                                Image(systemName: "exclamationmark.triangle")
-                                Text("This field is required")
-                            }
-                            .foregroundStyle(.red)
-                        }
-                    }
-                    .font(.subheadline)
-
+                FormField(label: "Category") {
                     Picker("Category", selection: $recipe.category) {
-                        Text("Select a category")
-                            .tag(nil as FoodCategory?)
-                            .disabled(true)
-
                         ForEach(FoodCategory.allCases, id: \.self) { category in
-                            Text(category.rawValue)
-                                .tag(Optional(category))
+                            Text(category.rawValue).tag(category)
                         }
                     }
+                    .tint(Color.contentPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(showRequiredCategoryError ? .red : .secondary200, lineWidth: 1)
-                    )
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Calories")
-                                .font(.subheadline)
-                                .foregroundStyle(Color.secondary700)
+                HStack(alignment: .top, spacing: Spacing.m) {
+                    FormField(label: "Calories") {
+                        TextField("Calories", text: .optionalInt($recipe.calories))
+                            .keyboardType(.numberPad)
+                            .textStyle(.body)
+                    }
 
-                            TextField("Calories", text: .optionalInt($recipe.calories))
-                                .keyboardType(.numberPad)
-                                .padding()
-                                .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
-                                .textFieldStyle(.roundedBorder)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.secondary200, lineWidth: 1)
-                                )
-                        }
-
-                        VStack(alignment: .leading) {
-                            Text("Cooking time (in min)")
-                                .font(.subheadline)
-                                .foregroundStyle(Color.secondary700)
-
-                            TextField("Minutes", text: .optionalInt($recipe.totalCookTime))
-                                .keyboardType(.numberPad)
-                                .padding()
-                                .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
-                                .textFieldStyle(.roundedBorder)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.secondary200, lineWidth: 1)
-                                )
-                        }
+                    FormField(label: "Cooking time (min)") {
+                        TextField("Minutes", text: .optionalInt($recipe.totalCookTime))
+                            .keyboardType(.numberPad)
+                            .textStyle(.body)
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Ingredients")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.secondary700)
+                ingredients
 
-                    ForEach($recipe.ingredients) { $ingredient in
-                        IngredientRowView(ingredient: $ingredient) {
-                            removeIngredient(ingredient)
-                        }
-                        .padding()
-                        .frame(height: 54)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.secondary200, lineWidth: 1)
-                        )
-                    }
-
-                    HStack {
-                        Image(systemName: "plus.circle")
-                            .foregroundStyle(Color.primaryMain)
-                        Button("Add an ingredient", action: addNewIngredient)
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Instructions")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.secondary700)
-
+                FormField(label: "Instructions") {
                     TextField("Instructions", text: $recipe.instructions.orEmpty(), axis: .vertical)
-                        .padding()
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary100))
-                        .textFieldStyle(.roundedBorder)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.secondary200, lineWidth: 1)
-                        )
+                        .textStyle(.body)
                         .lineLimit(3...)
                 }
+            }
+            .foregroundStyle(Color.contentPrimary)
+            .padding(Spacing.xl)
+        }
+        .background(Color.surface)
+        .toolbar {
+            // TODO: Toolbar and alert for discard (cancel or discard)
+            Button("Save", action: saveRecipe)
+                .tint(Color.accent)
+        }
+        .onAppear {
+            if let data = recipe.imageData, let image = UIImage(data: data) {
+                selectedImage = image
+            }
+        }
+    }
 
-                Spacer()
+    private var photo: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            Text("Photo")
+                .textStyle(.label)
+                .foregroundStyle(Color.contentSecondary)
+
+            // The picker wraps both branches, so tapping a photo already chosen replaces
+            // it; the trash beside it is the only way to end up with none.
+            PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
+                if let image = selectedImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 200)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                } else {
+                    VStack(spacing: Spacing.s) {
+                        Image(systemName: "photo")
+                            .font(.system(size: SymbolSize.emptyState, weight: .light))
+                        Text("Add a photo")
+                            .textStyle(.label)
+                    }
+                    .foregroundStyle(Color.contentSecondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Spacing.xl)
+                    .fieldSurface()
+                }
             }
-            .padding()
-            .toolbar {
-                // TODO: Toolbar and alert for discard (cancel or discard)
-                Button("Save", action: saveRecipe)
+            .overlay(alignment: .bottomLeading) {
+                if selectedImage != nil { removePhotoButton }
             }
-            .onAppear {
-                if let data = recipe.imageData, let image = UIImage(data: data) {
+        }
+        .onChange(of: selectedPhotoItem) { _, newItem in
+            Task {
+                if let data = try? await newItem?.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
                     selectedImage = image
                 }
             }
+        }
+    }
+
+    private var removePhotoButton: some View {
+        Button {
+            selectedPhotoItem = nil
+            selectedImage = nil
+        } label: {
+            Image(systemName: "trash")
+                .font(.system(size: SymbolSize.control, weight: .medium))
+                .foregroundStyle(Color.contentOnInverse)
+                .frame(width: 46, height: 46)
+                .background(Circle().fill(Color.destructive))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Remove this photo")
+        .padding(Spacing.m)
+    }
+
+    private var ingredients: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            Text("Ingredients")
+                .textStyle(.label)
+                .foregroundStyle(Color.contentSecondary)
+
+            ForEach($recipe.ingredients) { $ingredient in
+                IngredientRowView(ingredient: $ingredient) {
+                    removeIngredient(ingredient)
+                }
+                .fieldSurface()
+            }
+
+            Button(action: addNewIngredient) {
+                Label("Add an ingredient", systemImage: "plus.circle")
+            }
+            .buttonStyle(.textAction)
+            .padding(.top, Spacing.xs)
         }
     }
 

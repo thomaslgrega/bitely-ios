@@ -121,6 +121,9 @@ stroke unselected, `accent` with `contentOnInverse` type selected. The rail
 scrolls horizontally and bleeds past the page margin. Chips filter; they never
 navigate.
 
+The capsule itself is `chipFace`, so the Pantry Items on Pantry Search wear the
+same one without pretending to be categories.
+
 ### PromoCard
 
 Full-bleed `surfaceInverse` panel at `promo` radius, `display` heading in
@@ -148,7 +151,8 @@ A `sectionTitle` heading with an optional trailing action in `accent`.
 ### Buttons
 
 `primary` is `contentOnInverse` on a `surfaceInverse` capsule; `secondary` is
-`contentPrimary` on a `cream` capsule; `text` is a bare `label` in `accent`.
+`contentPrimary` on a `cream` capsule; `text` is a bare `label` in `accent`. All
+three dim when disabled rather than swapping to a second set of colors.
 
 ### EmptyState
 
@@ -158,6 +162,31 @@ Used by an empty cookbook and by signed-out states.
 ### SegmentedControl
 
 The existing `CustomSegmentedControl`, restyled onto the tokens.
+
+### SelectionIndicator
+
+The circle that fills when a row or a tile is picked: `accent` filled when picked,
+a `contentSecondary` outline when not. Decorative — the row's own text is its
+label — so the picked state is announced by the `.isSelected` trait rather than
+by a second string read after the name. `onThumbnail` gives it the `surface`
+ground it needs over a photo.
+
+### ListRowCard
+
+A named thing on a `surfaceRaised` card at `card` radius, with a `destructive`
+control that removes it. The rows of a Meal Plan Day and the Shopping Lists on
+Shop. The remove control is a `Button` beside the card rather than inside it: a
+button nested in another button does not reliably take its own taps.
+
+### FormField
+
+A labelled control on the writing screens — the label in `label`, the message a
+required field shows when it is empty, and `fieldSurface` under the control. A
+field in error takes the `destructive` stroke and nothing else changes, so the
+value stays readable while it is being corrected.
+
+`fieldSurface` is on offer separately, for the rows of a repeating field that
+share one label above them.
 
 ## Dynamic Type
 

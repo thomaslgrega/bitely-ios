@@ -16,14 +16,22 @@ struct CategoryChip: View {
                 Text(category.rawValue)
                     .textStyle(.label)
             }
-            .foregroundStyle(isSelected ? Color.contentOnInverse : Color.contentPrimary)
+            .chipFace(isSelected: isSelected)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(SelectionState(isSelected: isSelected).traits)
+    }
+}
+
+extension View {
+    /// The capsule every chip wears: category chips on Discover, Pantry Items on Pantry
+    /// Search — design-system.md, CategoryChip and ChipRail.
+    func chipFace(isSelected: Bool = false) -> some View {
+        foregroundStyle(isSelected ? Color.contentOnInverse : Color.contentPrimary)
             .padding(.horizontal, Spacing.l)
             .padding(.vertical, Spacing.m)
             .background(Capsule().fill(isSelected ? Color.accent : Color.surfaceRaised))
             .overlay(Capsule().strokeBorder(Color.border, lineWidth: isSelected ? 0 : 1))
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 }
 

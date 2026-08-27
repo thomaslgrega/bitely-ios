@@ -29,6 +29,8 @@ struct RemoteRecipeInfoView: View {
                     onToggleBookmark: { isSaved ? deleteSavedCopy() : bookmarkRemoteRecipe() })
             } else {
                 ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.surface)
                     .task(id: recipeId) {
                         await load()
                     }

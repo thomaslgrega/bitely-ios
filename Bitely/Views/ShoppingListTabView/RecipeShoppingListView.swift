@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct RecipeShoppingListView: View {
     @Environment(\.dismiss) var dismiss
@@ -15,108 +15,33 @@ struct RecipeShoppingListView: View {
     @State private var showRequiredWarning = false
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            if showRequiredWarning {
-                HStack(spacing: 3) {
-                    Image(systemName: "exclamationmark.triangle")
-                    Text("Choose a shopping list")
-                }
-                .padding(.horizontal)
-                .foregroundStyle(.red)
-                .font(.subheadline)
-            }
-            VStack(alignment: .leading, spacing: 0) {
-                Button {
-                    withAnimation(.snappy) {
-                        showShoppingListPicker.toggle()
-                    }
-                } label: {
-                    HStack {
-                        Text(selectedShoppingList?.name ?? "Select a shopping list")
-                            .lineLimit(1)
-                        Image(systemName: "chevron.down")
-                            .rotationEffect(.degrees(showShoppingListPicker ? 180 : 0))
-                    }
-                    .padding()
+        ScrollView {
+            VStack(alignment: .leading, spacing: Spacing.l) {
+                if showRequiredWarning {
+                    Label("Choose a shopping list", systemImage: "exclamationmark.triangle")
+                        .textStyle(.meta)
+                        .foregroundStyle(Color.destructive)
                 }
 
-                if showShoppingListPicker {
-                    ForEach(shoppingLists) { list in
-                        if list != selectedShoppingList {
-                            Divider()
-                                .background(Color.secondary50)
-                                .frame(width: 230)
-                                .padding(.horizontal)
-                            Button {
-                                withAnimation(.snappy) {
-                                    selectedShoppingList = list
-                                    showShoppingListPicker = false
-                                    showRequiredWarning = false
-                                }
-                            } label: {
-                                Text(list.name)
-                                    .lineLimit(1)
-                            }
-                            .padding()
-                        }
-                    }
+                listPicker
 
-                    Divider()
-                        .background(Color.secondary50)
-                        .frame(width: 230)
-                        .padding(.horizontal)
-
-                    Button {
-                        withAnimation(.snappy) {
-                            showAddNewShoppingListSheet = true
-                            showShoppingListPicker = false
-                            showRequiredWarning = false
-                        }
-                    } label: {
-                        HStack {
-                            Image(systemName: "plus.circle")
-                            Text("Create a new shopping list")
-                        }
-                        .padding()
-                    }
-                }
-            }
-            .zIndex(1000)
-            .background(showShoppingListPicker ? Color.secondary200 : Color.primaryMain)
-            .foregroundStyle(showShoppingListPicker ? Color.primaryMain : Color.secondary100)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .padding()
-            .padding(.top, 6)
-            .shadow(radius: showShoppingListPicker ? 2 : 0)
-
-            VStack(alignment: .leading) {
-                Divider()
-                    .frame(height: 1)
-                    .overlay(.gray)
-                    .padding(.bottom)
-
-                Button("Select all") {
-                    if itemsToAdd.count == items.count {
-                        itemsToAdd = []
-                    } else {
-                        itemsToAdd = items
-                    }
-                }
-                .font(.subheadline)
-
-                ScrollView {
-                    ForEach(items) { item in
-                        Divider()
-                        itemRow(for: item)
-                            .foregroundStyle(.primary)
-                    }
+                HStack {
+                    Text("Ingredients")
+                        .textStyle(.label)
+                        .foregroundStyle(Color.contentSecondary)
 
                     Spacer()
+
+                    Button("Select all", action: toggleSelectAll)
+                        .buttonStyle(.textAction)
                 }
+
+                ingredients
             }
-            .offset(y: 80)
-            .padding()
+            .padding(.horizontal, Spacing.xl)
+            .padding(.bottom, Spacing.xxxl)
         }
+        .background(Color.surface)
         .navigationTitle("Choose Ingredients")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showAddNewShoppingListSheet) {
@@ -126,32 +51,118 @@ struct RecipeShoppingListView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Add") {
-                    saveShoppingList()
-                }
+                Button("Add", action: saveShoppingList)
+                    .tint(Color.accent)
             }
         }
     }
 
-    func itemRow(for item: Ingredient) -> some View {
-        HStack {
+    // MARK: - Choosing a Shopping List
+
+    /// The choices expand in place rather than in a menu: creating a list is one of them,
+    /// and it opens a sheet, which a `Menu` item cannot do without dismissing first.
+    private var listPicker: some View {
+        VStack(alignment: .leading, spacing: 0) {
             Button {
-                itemsToAdd.contains(item) ? removeFromItemList(item: item) : addToItemList(item: item)
+                withAnimation(.snappy) { showShoppingListPicker.toggle() }
             } label: {
                 HStack {
-                    Image(systemName: itemsToAdd.contains(item) ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(itemsToAdd.contains(item) ? Color.primaryMain : .secondaryMain)
-
-                    Text(item.name)
-                        .bold()
-
-                    Text("(\(item.measurement))")
+                    Text(selectedShoppingList?.name ?? "Select a shopping list")
+                        .lineLimit(1)
 
                     Spacer()
+
+                    Image(systemName: "chevron.down")
+                        .rotationEffect(.degrees(showShoppingListPicker ? 180 : 0))
                 }
+                .textStyle(.cardTitle)
+                .foregroundStyle(Color.contentPrimary)
+                .padding(Spacing.l)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if showShoppingListPicker {
+                ForEach(shoppingLists.filter { $0 != selectedShoppingList }) { list in
+                    Divider().overlay(Color.border)
+
+                    Button {
+                        withAnimation(.snappy) { select(list) }
+                    } label: {
+                        Text(list.name)
+                            .lineLimit(1)
+                            .textStyle(.body)
+                            .foregroundStyle(Color.contentPrimary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(Spacing.l)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Divider().overlay(Color.border)
+
+                Button {
+                    withAnimation(.snappy) {
+                        showAddNewShoppingListSheet = true
+                        showShoppingListPicker = false
+                        showRequiredWarning = false
+                    }
+                } label: {
+                    Label("Create a new shopping list", systemImage: "plus.circle")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(Spacing.l)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.textAction)
             }
         }
-        .foregroundStyle(.primary)
+        .background(
+            RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
+                .fill(Color.surfaceRaised)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
+                .strokeBorder(showRequiredWarning ? Color.destructive : Color.border, lineWidth: 1)
+        )
+    }
+
+    private func select(_ list: ShoppingList) {
+        selectedShoppingList = list
+        showShoppingListPicker = false
+        showRequiredWarning = false
+    }
+
+    // MARK: - Choosing Ingredients
+
+    private var ingredients: some View {
+        LazyVStack(alignment: .leading, spacing: Spacing.m) {
+            ForEach(items) { item in
+                Button {
+                    itemsToAdd.contains(item) ? removeFromItemList(item: item) : addToItemList(item: item)
+                } label: {
+                    HStack(spacing: Spacing.m) {
+                        SelectionIndicator(isSelected: itemsToAdd.contains(item))
+
+                        Text(item.name)
+                            .textStyle(.cardTitle)
+
+                        Text("(\(item.measurement))")
+                            .textStyle(.meta)
+
+                        Spacer()
+                    }
+                    .foregroundStyle(Color.contentPrimary)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(SelectionState(isSelected: itemsToAdd.contains(item)).traits)
+            }
+        }
+    }
+
+    private func toggleSelectAll() {
+        itemsToAdd = itemsToAdd.count == items.count ? [] : items
     }
 
     func removeFromItemList(item: Ingredient) {
@@ -179,5 +190,10 @@ struct RecipeShoppingListView: View {
 }
 
 #Preview {
-    RecipeShoppingListView(items: [])
+    NavigationStack {
+        RecipeShoppingListView(items: [
+            Ingredient(name: "Gnocchi", measurement: "500g"),
+            Ingredient(name: "Sage", measurement: "1 bunch")
+        ])
+    }
 }

@@ -26,3 +26,11 @@ enum SymbolSize {
     static let save: CGFloat = 15
     static let emptyState: CGFloat = 34
 }
+
+/// Sizes of the controls that float over a thumbnail. They sit on a picture rather than in
+/// the text flow, so they hold still while the text around them grows.
+enum ControlSize {
+    /// The save heart and the selection indicator, which share a corner across screens and
+    /// so must share a size.
+    static let thumbnailBadge: CGFloat = 34
+}

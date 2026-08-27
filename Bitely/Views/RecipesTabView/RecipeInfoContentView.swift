@@ -15,7 +15,6 @@ struct RecipeInfoContentView: View {
     let isSaved: Bool
     let onToggleBookmark: () -> Void
 
-    @State private var showDeleteAlert = false
     @State private var showShareAlert = false
     @State private var showAuthSheet = false
     @State private var selectedTab: RecipeTab = .ingredients
@@ -26,68 +25,16 @@ struct RecipeInfoContentView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .center, spacing: 20) {
-                ZStack(alignment: .topTrailing) {
-                    RecipeImageView(recipe: recipe)
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: .infinity)
-
-                    ZStack {
-                        Circle()
-                            .frame(width: 50, height: 50)
-                            .padding()
-
-                        Button {
-                            isSaved ? showDeleteAlert = true : onToggleBookmark()
-                        } label: {
-                            Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
-                                .bold()
-                                .foregroundStyle(Color.primaryMain)
-                                .font(.title3)
-                        }
-                    }
-                }
+            VStack(alignment: .leading, spacing: Spacing.xl) {
+                picture
 
                 Text(recipe.name)
-                    .font(.title)
-                    .foregroundStyle(Color.secondaryMain)
-                    .padding(.horizontal)
+                    .textStyle(.display)
+                    .foregroundStyle(Color.contentPrimary)
 
-                HStack(spacing: 24) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(Color.primaryMain)
-                        Text(recipe.calories.map { "\($0) cals"} ?? "N/A")
-                            .foregroundStyle(Color.secondaryMain)
-                    }
+                meta
 
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock.fill")
-                            .foregroundStyle(Color.primaryMain)
-                        Text(recipe.totalCookTime.map { "\($0) min"} ?? "N/A")
-                            .foregroundStyle(Color.secondaryMain)
-                    }
-
-                    NavigationLink {
-                        RecipeShoppingListView(items: recipe.ingredients)
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "basket.fill")
-                            Text("Add to")
-                        }
-                        .foregroundStyle(Color.primaryMain)
-                    }
-
-                    if shareControl.isOffered {
-                        Button(action: share) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "square.and.arrow.up")
-                                Text("Share")
-                            }
-                            .foregroundStyle(Color.primaryMain)
-                        }
-                    }
-                }
+                actions
 
                 CustomSegmentedControl(
                     selection: $selectedTab,
@@ -96,63 +43,17 @@ struct RecipeInfoContentView: View {
                         (.instructions, "Instructions")
                     ]
                 )
-                .padding(.vertical)
 
-                ZStack {
-                    switch selectedTab {
-                    case .ingredients:
-                        VStack(alignment: .leading, spacing: 16) {
-                            ForEach(recipe.ingredients) { ingredient in
-                                HStack {
-                                    Text(ingredient.measurement).bold()
-                                    Text(ingredient.name)
-                                }
-                                .font(.title3)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .transition(.move(edge: .leading))
-                    case .instructions:
-                        VStack(alignment: .leading) {
-                            Text(recipe.instructions ?? "")
-                                .lineSpacing(8)
-                                .font(.title3)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .transition(.move(edge: .trailing))
-                    }
-                }
-                .padding([.leading, .bottom])
-                .animation(.snappy, value: selectedTab)
+                tabContents
+                    .animation(.snappy, value: selectedTab)
             }
+            .padding(.horizontal, Spacing.xl)
+            .padding(.bottom, Spacing.xxxl)
         }
-        .alert("Are you sure?", isPresented: $showDeleteAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Delete", role: .destructive, action: onToggleBookmark)
-        }
+        .background(Color.surface)
         .alert("Do you want to share this recipe?", isPresented: $showShareAlert) {
             Button("Cancel", role: .cancel) {}
-            Button("Share") {
-                Task {
-                    do {
-                        let ingredients = recipe.ingredients.map { CreateIngredientRequest(name: $0.name, measurement: $0.measurement) }
-                        let remoteRecipe = try await recipeService.createRecipe(recipe: CreateRecipeRequest(
-                            name: recipe.name,
-                            category: recipe.category,
-                            instructions: recipe.instructions,
-                            thumbnailUrl: recipe.thumbnailURL,
-                            ingredients: ingredients,
-                            calories: recipe.calories,
-                            totalCookTime: recipe.totalCookTime
-                        ))
-
-                        recipe.remoteId = remoteRecipe.id
-                        cookbook.recordAuthorship(of: remoteRecipe)
-                    } catch {
-                        print("Failed to share recipe:", error)
-                    }
-                }
-            }
+            Button("Share", action: shareRecipe)
         }
         .sheet(isPresented: $showAuthSheet) {
             AuthSheet()
@@ -162,7 +63,86 @@ struct RecipeInfoContentView: View {
                 NavigationLink("Edit") {
                     EditRecipeView(recipe: recipe)
                 }
+                .tint(Color.accent)
             }
+        }
+    }
+
+    /// Full-bleed, so the picture takes the page margin back off the padding above it.
+    /// Fitted rather than filled: this is the one screen that shows a Recipe's photo whole,
+    /// and a portrait shot cropped to a band loses what the user attached it for.
+    private var picture: some View {
+        RecipeImageView(recipe: recipe)
+            .aspectRatio(contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .overlay(alignment: .topTrailing) {
+                SaveButton(
+                    isSaved: isSaved,
+                    onSave: onToggleBookmark,
+                    onUnsave: onToggleBookmark
+                )
+                .padding(Spacing.m)
+            }
+            .padding(.horizontal, -Spacing.xl)
+    }
+
+    /// A Recipe carrying neither number gets no row at all, rather than the gap an empty
+    /// `HStack` would leave between the name and the actions.
+    @ViewBuilder
+    private var meta: some View {
+        if recipe.totalCookTime != nil || recipe.calories != nil {
+            HStack(spacing: Spacing.xl) {
+                MetaLabel.cookTime(minutes: recipe.totalCookTime)
+                MetaLabel.calories(recipe.calories)
+            }
+        }
+    }
+
+    private var actions: some View {
+        HStack(spacing: Spacing.m) {
+            NavigationLink {
+                RecipeShoppingListView(items: recipe.ingredients)
+            } label: {
+                Label("Add to list", systemImage: "basket")
+            }
+            .buttonStyle(.secondary)
+
+            if shareControl.isOffered {
+                Button(action: share) {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+                .buttonStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var tabContents: some View {
+        switch selectedTab {
+        case .ingredients:
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                ForEach(recipe.ingredients) { ingredient in
+                    HStack(alignment: .firstTextBaseline, spacing: Spacing.s) {
+                        Text(ingredient.measurement)
+                            .textStyle(.label)
+                            .foregroundStyle(Color.contentSecondary)
+
+                        Text(ingredient.name)
+                            .textStyle(.body)
+                            .foregroundStyle(Color.contentPrimary)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .transition(.move(edge: .leading))
+
+        case .instructions:
+            Text(recipe.instructions ?? "")
+                .textStyle(.body)
+                .foregroundStyle(Color.contentPrimary)
+                .lineSpacing(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .transition(.move(edge: .trailing))
         }
     }
 
@@ -174,14 +154,38 @@ struct RecipeInfoContentView: View {
         case .presentAuth: showAuthSheet = true
         }
     }
+
+    private func shareRecipe() {
+        Task {
+            do {
+                let ingredients = recipe.ingredients.map { CreateIngredientRequest(name: $0.name, measurement: $0.measurement) }
+                let remoteRecipe = try await recipeService.createRecipe(recipe: CreateRecipeRequest(
+                    name: recipe.name,
+                    category: recipe.category,
+                    instructions: recipe.instructions,
+                    thumbnailUrl: recipe.thumbnailURL,
+                    ingredients: ingredients,
+                    calories: recipe.calories,
+                    totalCookTime: recipe.totalCookTime
+                ))
+
+                recipe.remoteId = remoteRecipe.id
+                cookbook.recordAuthorship(of: remoteRecipe)
+            } catch {
+                print("Failed to share recipe:", error)
+            }
+        }
+    }
 }
 
 #Preview {
-    RecipeInfoContentView(
-        recipe: Recipe(name: "Lemonade", category: .other),
-        allowEdit: false,
-        isSaved: true,
-        onToggleBookmark: {}
-    )
-        .previewStores()
+    NavigationStack {
+        RecipeInfoContentView(
+            recipe: Recipe(name: "Lemonade", category: .other),
+            allowEdit: false,
+            isSaved: true,
+            onToggleBookmark: {}
+        )
+    }
+    .previewStores()
 }
