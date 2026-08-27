@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// The front door: greeting, the Pantry Search promo, the chip rail and Today's Picks —
@@ -5,6 +6,10 @@ import SwiftUI
 struct DiscoverView: View {
     @Environment(AuthStore.self) private var authStore
     @Environment(RecipeStore.self) private var store
+    @Environment(Cookbook.self) private var cookbook
+    @Environment(\.modelContext) private var modelContext
+    /// The grid's one query: every tile reads its saved state out of this.
+    @Query private var localRecipes: [Recipe]
 
     @State private var showSettings = false
     @State private var showPantrySearch = false
@@ -31,6 +36,12 @@ struct DiscoverView: View {
             }
             .sheet(isPresented: $showSettings) { SettingsView() }
             .task { await store.loadFeed() }
+            // Which tiles offer a heart turns on authorship, so the grid asks for it the
+            // same way the Cookbook does.
+            .task { await cookbook.loadAuthorship() }
+            .onChange(of: authStore.isAuthenticated) { _, _ in
+                Task { await cookbook.loadAuthorship() }
+            }
         }
     }
 
@@ -106,19 +117,41 @@ struct DiscoverView: View {
             )
 
         case .recipes(let recipes):
+            // Built once for the grid rather than per tile, which is the whole point of
+            // answering fifty tiles from one query.
+            let held = HeldRecipes(localRecipes)
             RecipeGrid(items: recipes) { recipe in
-                NavigationLink(value: recipe) {
-                    RecipeTile(recipe: RecipeSummary(recipe))
-                }
-                .buttonStyle(.plain)
+                tile(for: recipe, held: held)
+            }
+        }
+    }
+
+    /// The heart sits beside the tile rather than inside it: the whole tile is already a
+    /// link, and a button nested in another button does not reliably take its own taps.
+    private func tile(for recipe: RecipeSummaryDTO, held: HeldRecipes) -> some View {
+        ZStack(alignment: .topTrailing) {
+            NavigationLink(value: recipe) {
+                RecipeTile(recipe: RecipeSummary(recipe))
+            }
+            .buttonStyle(.plain)
+
+            if cookbook.offersSaving(of: recipe.id) {
+                SaveButton(
+                    isSaved: held.contains(recipe.id),
+                    onSave: { Task { await cookbook.save(remoteId: recipe.id, into: modelContext) } },
+                    onUnsave: {
+                        guard let local = held.recipe(for: recipe.id) else { return }
+                        cookbook.unsave(local, from: modelContext)
+                    }
+                )
+                .padding(Spacing.s)
             }
         }
     }
 }
 
 #Preview {
-    let authStore = AuthStore()
     DiscoverView()
-        .environment(authStore)
-        .environment(RecipeStore(service: RecipeService(api: APIClient(authStore: authStore))))
+        .previewStores()
+        .modelContainer(for: Recipe.self, inMemory: true)
 }

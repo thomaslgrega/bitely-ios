@@ -38,6 +38,27 @@ enum CookbookEntry: Identifiable, Hashable {
     }
 }
 
+/// Whether the device holds a copy of a corpus Recipe, answered by remote id. It covers
+/// every local Recipe, this user's own Shared Recipes included, so it is not the Cookbook's
+/// Saved segment.
+///
+/// A grid builds one of these from its own query over the device's Recipes; the alternative
+/// — a tile asking for itself — is a query per tile, and Today's Picks draws fifty.
+struct HeldRecipes {
+    private let byRemoteId: [String: Recipe]
+
+    init(_ recipes: [Recipe]) {
+        byRemoteId = Dictionary(
+            recipes.compactMap { recipe in recipe.remoteId.map { ($0, recipe) } },
+            uniquingKeysWith: { first, _ in first }
+        )
+    }
+
+    func recipe(for remoteId: String) -> Recipe? { byRemoteId[remoteId] }
+
+    func contains(_ remoteId: String) -> Bool { byRemoteId[remoteId] != nil }
+}
+
 /// Which of the device's Recipes this user wrote, for the length of a session.
 ///
 /// The Recipes themselves come from SwiftData; `me/recipes` answers what the device cannot
@@ -48,9 +69,14 @@ final class Cookbook {
     var segment: CookbookSegment = .myRecipes
 
     private var authored: [RecipeSummaryDTO] = []
+    /// Kept beside `authored` because a grid asks this of every tile it draws.
+    private var authoredIds: Set<String> = []
     /// The session the authorship belongs to. Holding it rather than a flag means a sign-out
     /// or a switch of account cannot leave one user's authorship answering for another's.
     private var loadedForSession: String?
+    /// The saves whose fetch is still in flight. The heart only fills on the insert, so a
+    /// second tap during the fetch is the same save asked for twice and is dropped.
+    private var saving: Set<String> = []
 
     @ObservationIgnored private let service: RecipeService
     @ObservationIgnored private let authStore: AuthStore
@@ -60,8 +86,15 @@ final class Cookbook {
         self.authStore = authStore
     }
 
-    private var authoredIds: Set<String> {
-        Set(authored.map(\.id))
+    /// Whether a grid offers a heart over a corpus Recipe. A Recipe this user wrote is
+    /// already theirs and there is no keeping a second copy of it; until `me/recipes` has
+    /// answered, the device cannot tell which those are, so an unanswered authorship offers
+    /// nothing rather than offering the user their own work. Signed out there is no
+    /// authorship to wait for.
+    func offersSaving(of remoteId: String) -> Bool {
+        guard authStore.accessToken != nil else { return true }
+        guard loadedForSession != nil else { return false }
+        return !authoredIds.contains(remoteId)
     }
 
     func segment(for recipe: Recipe) -> CookbookSegment {
@@ -94,6 +127,7 @@ final class Cookbook {
 
         do {
             authored = try await service.getSharedRecipes()
+            authoredIds = Set(authored.map(\.id))
             loadedForSession = session
         } catch {
             forgetAuthorship()
@@ -105,10 +139,12 @@ final class Cookbook {
     func recordAuthorship(of shared: RecipeDetailDTO) {
         guard !authoredIds.contains(shared.id) else { return }
         authored.append(RecipeSummaryDTO(shared))
+        authoredIds.insert(shared.id)
     }
 
     private func forgetAuthorship() {
         authored = []
+        authoredIds = []
         loadedForSession = nil
     }
 
@@ -118,6 +154,32 @@ final class Cookbook {
     func commit(_ recipe: Recipe, into context: ModelContext) {
         guard recipe.modelContext == nil else { return }
         context.insert(recipe)
+    }
+
+    /// Keeps a corpus Recipe. A grid carries summaries, which have neither ingredients nor
+    /// instructions, so the copy comes from the Recipe in full rather than from the tile.
+    ///
+    /// A save that cannot reach the API keeps nothing: the heart stays unfilled and the tap
+    /// is there to make again.
+    func save(remoteId: String, into context: ModelContext) async {
+        guard saving.insert(remoteId).inserted else { return }
+        defer { saving.remove(remoteId) }
+
+        guard let detail = try? await service.getRecipeById(id: remoteId) else { return }
+        save(detail, into: context)
+    }
+
+    func save(_ detail: RecipeDetailDTO, into context: ModelContext) {
+        guard !holds(detail.id, in: context) else { return }
+        context.insert(Recipe(detail))
+    }
+
+    /// The detail screen bookmarks a Recipe the grid may already have kept, and a Recipe
+    /// kept twice is two copies to edit and two to unsave.
+    private func holds(_ remoteId: String, in context: ModelContext) -> Bool {
+        var descriptor = FetchDescriptor<Recipe>(predicate: #Predicate { $0.remoteId == remoteId })
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.isEmpty == false
     }
 
     /// The local copy is the only copy of any edits made to it, which is why `SaveControl`
@@ -137,6 +199,7 @@ extension View {
         return environment(authStore)
             .environment(service)
             .environment(Cookbook(service: service, authStore: authStore))
+            .environment(RecipeStore(service: service))
     }
 }
 #endif
