@@ -1,5 +1,10 @@
 import SwiftUI
 
+/// The messages a field shows when it will not accept what it has.
+enum FieldError {
+    static let required = "This field is required"
+}
+
 /// A labelled control on the writing screens — design-system.md, FormField. The label, the
 /// message a required field shows when it is empty, and the surface the control sits on.
 struct FormField<Content: View>: View {

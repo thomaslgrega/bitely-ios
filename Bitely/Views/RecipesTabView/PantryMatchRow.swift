@@ -45,15 +45,7 @@ struct PantryMatchRow: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.l)
-        .background(
-            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                .fill(Color.surfaceRaised)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                .strokeBorder(Color.border, lineWidth: 1)
-        )
+        .cardFace()
     }
 }
 

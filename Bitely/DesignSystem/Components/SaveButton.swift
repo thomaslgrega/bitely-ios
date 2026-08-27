@@ -33,7 +33,7 @@ struct SaveButton: View {
             Image(systemName: control.symbolName)
                 .font(.system(size: SymbolSize.save, weight: .semibold))
                 .foregroundStyle(isSaved ? Color.accent : Color.contentPrimary)
-                .frame(width: 34, height: 34)
+                .frame(width: ControlSize.thumbnailBadge, height: ControlSize.thumbnailBadge)
                 .background(Circle().fill(Color.surface))
         }
         .buttonStyle(.plain)

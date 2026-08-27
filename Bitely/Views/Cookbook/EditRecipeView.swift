@@ -15,14 +15,12 @@ struct EditRecipeView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
 
-    private static let requiredMessage = "This field is required"
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.xxl) {
                 FormField(
                     label: "Recipe name",
-                    error: showRequiredNameError ? Self.requiredMessage : nil
+                    error: showRequiredNameError ? FieldError.required : nil
                 ) {
                     TextField("Recipe name", text: $recipe.name)
                         .textStyle(.body)
@@ -84,16 +82,17 @@ struct EditRecipeView: View {
                 .textStyle(.label)
                 .foregroundStyle(Color.contentSecondary)
 
-            if let image = selectedImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 200)
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-                    .overlay(alignment: .bottomLeading) { removePhotoButton }
-            } else {
-                PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
+            // The picker wraps both branches, so tapping a photo already chosen replaces
+            // it; the trash beside it is the only way to end up with none.
+            PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
+                if let image = selectedImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 200)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                } else {
                     VStack(spacing: Spacing.s) {
                         Image(systemName: "photo")
                             .font(.system(size: SymbolSize.emptyState, weight: .light))
@@ -103,8 +102,11 @@ struct EditRecipeView: View {
                     .foregroundStyle(Color.contentSecondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Spacing.xl)
+                    .fieldSurface()
                 }
-                .fieldSurface()
+            }
+            .overlay(alignment: .bottomLeading) {
+                if selectedImage != nil { removePhotoButton }
             }
         }
         .onChange(of: selectedPhotoItem) { _, newItem in

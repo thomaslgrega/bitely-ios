@@ -90,7 +90,39 @@ struct AddToMealPlanDaySheet: View {
     }
 }
 
-#Preview {
+@MainActor
+private func plannableRecipes() -> ModelContainer {
+    let container = try! ModelContainer(
+        for: Recipe.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+
+    for recipe in [
+        Recipe(name: "Slow-Braised Short Rib with Red Wine", category: .beef, calories: 720, totalCookTime: 190),
+        Recipe(name: "Shakshuka", category: .breakfast, calories: 410, totalCookTime: 35),
+        Recipe(name: "Brown Butter Gnocchi", category: .pasta, calories: 640, totalCookTime: 45)
+    ] {
+        container.mainContext.insert(recipe)
+    }
+
+    return container
+}
+
+/// The pair of sizes the grid's collapse exists for: at `.accessibility3` the picker is one
+/// column and no recipe name clips — design-system.md, Dynamic Type.
+#Preview("Large") {
+    AddToMealPlanDaySheet(mealType: .breakfast, addRecipeToCalendar: { _, _ in })
+        .modelContainer(plannableRecipes())
+        .dynamicTypeSize(.large)
+}
+
+#Preview("Accessibility 3") {
+    AddToMealPlanDaySheet(mealType: .breakfast, addRecipeToCalendar: { _, _ in })
+        .modelContainer(plannableRecipes())
+        .dynamicTypeSize(.accessibility3)
+}
+
+#Preview("Nothing to plan") {
     AddToMealPlanDaySheet(mealType: .breakfast, addRecipeToCalendar: { _, _ in })
         .modelContainer(for: Recipe.self, inMemory: true)
 }

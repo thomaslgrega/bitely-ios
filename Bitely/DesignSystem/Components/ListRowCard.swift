@@ -7,7 +7,6 @@ import SwiftUI
 /// in another button does not reliably take its own taps.
 struct ListRowCard: View {
     let title: String
-    var removeIcon: String = "minus.circle"
     var removeLabel: String
     let onTap: () -> Void
     let onRemove: () -> Void
@@ -25,22 +24,26 @@ struct ListRowCard: View {
             .buttonStyle(.plain)
 
             Button(action: onRemove) {
-                Image(systemName: removeIcon)
+                Image(systemName: "minus.circle")
                     .font(.system(size: SymbolSize.control, weight: .medium))
                     .foregroundStyle(Color.destructive)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(removeLabel)
         }
-        .padding(Spacing.l)
-        .background(
-            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                .fill(Color.surfaceRaised)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                .strokeBorder(Color.border, lineWidth: 1)
-        )
+        .cardFace()
+    }
+}
+
+extension View {
+    /// The raised panel a card is drawn on: rows on Plan and Shop, Matches on Pantry
+    /// Search — design-system.md, ListRowCard.
+    func cardFace() -> some View {
+        let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+
+        return padding(Spacing.l)
+            .background(shape.fill(Color.surfaceRaised))
+            .overlay(shape.strokeBorder(Color.border, lineWidth: 1))
     }
 }
 

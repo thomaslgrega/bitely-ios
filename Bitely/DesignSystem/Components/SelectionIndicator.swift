@@ -32,7 +32,8 @@ extension SelectionIndicator {
     /// Over a thumbnail the symbol needs a ground of its own: an unfilled circle on a photo
     /// is invisible at this weight.
     var onThumbnail: some View {
-        frame(width: 34, height: 34).background(Circle().fill(Color.surface))
+        frame(width: ControlSize.thumbnailBadge, height: ControlSize.thumbnailBadge)
+            .background(Circle().fill(Color.surface))
     }
 }
 

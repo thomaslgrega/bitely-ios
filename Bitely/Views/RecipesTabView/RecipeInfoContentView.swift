@@ -69,12 +69,12 @@ struct RecipeInfoContentView: View {
     }
 
     /// Full-bleed, so the picture takes the page margin back off the padding above it.
+    /// Fitted rather than filled: this is the one screen that shows a Recipe's photo whole,
+    /// and a portrait shot cropped to a band loses what the user attached it for.
     private var picture: some View {
         RecipeImageView(recipe: recipe)
-            .aspectRatio(contentMode: .fill)
+            .aspectRatio(contentMode: .fit)
             .frame(maxWidth: .infinity)
-            .frame(height: 260)
-            .clipped()
             .overlay(alignment: .topTrailing) {
                 SaveButton(
                     isSaved: isSaved,
@@ -86,10 +86,15 @@ struct RecipeInfoContentView: View {
             .padding(.horizontal, -Spacing.xl)
     }
 
+    /// A Recipe carrying neither number gets no row at all, rather than the gap an empty
+    /// `HStack` would leave between the name and the actions.
+    @ViewBuilder
     private var meta: some View {
-        HStack(spacing: Spacing.xl) {
-            MetaLabel.cookTime(minutes: recipe.totalCookTime)
-            MetaLabel.calories(recipe.calories)
+        if recipe.totalCookTime != nil || recipe.calories != nil {
+            HStack(spacing: Spacing.xl) {
+                MetaLabel.cookTime(minutes: recipe.totalCookTime)
+                MetaLabel.calories(recipe.calories)
+            }
         }
     }
 

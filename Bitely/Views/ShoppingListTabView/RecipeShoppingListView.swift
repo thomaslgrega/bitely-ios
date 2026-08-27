@@ -32,7 +32,7 @@ struct RecipeShoppingListView: View {
 
                     Spacer()
 
-                    Button(selectAllTitle, action: toggleSelectAll)
+                    Button("Select all", action: toggleSelectAll)
                         .buttonStyle(.textAction)
                 }
 
@@ -134,10 +134,6 @@ struct RecipeShoppingListView: View {
     }
 
     // MARK: - Choosing Ingredients
-
-    private var selectAllTitle: String {
-        itemsToAdd.count == items.count ? "Clear all" : "Select all"
-    }
 
     private var ingredients: some View {
         LazyVStack(alignment: .leading, spacing: Spacing.m) {

@@ -34,7 +34,7 @@ struct MealPlanDayView: View {
                     }
 
                     if mealPlanDay[type].isEmpty {
-                        Text("You don't have any meals planned for \(type.rawValue)")
+                        Text("Nothing planned for \(type.rawValue.lowercased()) yet")
                             .textStyle(.body)
                             .foregroundStyle(Color.contentSecondary)
                     } else {
