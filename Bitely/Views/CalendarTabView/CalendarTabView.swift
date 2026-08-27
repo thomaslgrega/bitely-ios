@@ -4,7 +4,6 @@ import SwiftUI
 struct CalendarTabView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var selectedDate = Date()
-    @State private var showSettingsSheet = false
     @Query var mealPlanDays: [MealPlanDay]
 
     var selectedDateMealPlan: MealPlanDay? {
@@ -34,18 +33,6 @@ struct CalendarTabView: View {
             }
             .onChange(of: selectedDate) { _, _ in
                 loadMealPlanDay()
-            }
-            .sheet(isPresented: $showSettingsSheet) {
-                SettingsView()
-            }
-            .toolbar {
-                Button {
-                    showSettingsSheet = true
-                } label: {
-                    Image(systemName: "gearshape")
-                }
-                .tint(Color.contentPrimary)
-                .accessibilityLabel("Settings")
             }
         }
     }
