@@ -1,0 +1,11 @@
+.DS_Store
+
+# Per-developer Xcode state. The Bitely scheme is shared under
+# xcshareddata/xcschemes, so builds are unaffected.
+xcuserdata/
+
+# Per-machine Claude Code config: the Codex review hook depends on a local
+# codex install and an authenticated gh, so it is not shareable.
+.claude/settings.local.json
+.claude/hooks/logs/
+.claude/worktrees/
