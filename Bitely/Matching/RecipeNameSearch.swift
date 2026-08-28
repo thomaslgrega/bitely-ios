@@ -40,8 +40,10 @@ final class RecipeNameSearch {
     private(set) var query: String = ""
     private(set) var state: RecipeNameSearchState = .prompt
 
-    /// The debounce and the request it leads to. Held so the next keystroke can cancel it.
-    private(set) var work: Task<Void, Never>?
+    /// The debounce and the request it leads to. Held so the next keystroke can cancel it,
+    /// and so `deinit` can — which is why it is readable off the main actor: every write is
+    /// made on it, and by `deinit` nothing else holds the search at all.
+    @ObservationIgnored nonisolated(unsafe) private(set) var work: Task<Void, Never>?
 
     /// Bumped by every query. An answer carrying a stale number is dropped, so a slow
     /// response cannot overwrite the results of the query that replaced it.
@@ -56,6 +58,9 @@ final class RecipeNameSearch {
         self.service = service
         self.clock = clock
     }
+
+    /// The screen has gone, so the request it was waiting on has nowhere to land.
+    deinit { work?.cancel() }
 
     /// Takes what the field now holds and searches for it once the typing settles. Too
     /// short to search — cleared included — is the prompt, not an empty result.
@@ -92,28 +97,48 @@ final class RecipeNameSearch {
         return trimmed.count >= Self.minimumQueryLength ? trimmed : ""
     }
 
+    /// The task holds the search weakly and touches it only between its own suspensions, so
+    /// a screen dismissed while the request is out takes the search with it rather than
+    /// waiting on a network it can no longer show. `deinit` then cancels what is left.
     private func search(for name: String, debounced: Bool) -> Task<Void, Never> {
         generation += 1
         let issued = generation
+        let clock = clock
+        let service = service
 
-        return Task {
+        return Task { [weak self] in
             if debounced {
                 guard (try? await clock.sleep(for: Self.debounce)) != nil else { return }
             }
-            guard issued == generation else { return }
+            guard self?.begin(issued) == true else { return }
 
-            state = .loading
             do {
                 let recipes = try await service.getRecipesByName(name: name)
-                guard issued == generation else { return }
-                state = recipes.isEmpty ? .noResults(query: name) : .results(recipes)
+                self?.show(recipes, for: name, issued: issued)
             } catch {
-                guard issued == generation else { return }
-                // Leaving the screen mid-request is not something the user can retry, so a
-                // cancellation goes back to the prompt the way `RecipeStore` goes idle.
-                state = Self.isCancellation(error) ? .prompt : .failed
+                self?.report(error, issued: issued)
             }
         }
+    }
+
+    /// Whether this query is still the one the screen is waiting on, marking it as under
+    /// way if it is.
+    private func begin(_ issued: Int) -> Bool {
+        guard issued == generation else { return false }
+        state = .loading
+        return true
+    }
+
+    private func show(_ recipes: [RecipeSummaryDTO], for name: String, issued: Int) {
+        guard issued == generation else { return }
+        state = recipes.isEmpty ? .noResults(query: name) : .results(recipes)
+    }
+
+    private func report(_ error: Error, issued: Int) {
+        guard issued == generation else { return }
+        // Leaving the screen mid-request is not something the user can retry, so a
+        // cancellation goes back to the prompt the way `RecipeStore` goes idle.
+        state = Self.isCancellation(error) ? .prompt : .failed
     }
 
     private static func isCancellation(_ error: Error) -> Bool {

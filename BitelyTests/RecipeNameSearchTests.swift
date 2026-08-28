@@ -34,6 +34,20 @@ private func type(_ query: String, into search: RecipeNameSearch, clock: TestClo
     await search.work?.value
 }
 
+/// Runs a search up to the point where the request is in flight, then drops the search the
+/// way a dismissed screen does — the local reference dies with this call — and answers with
+/// a weak handle on it and the task it left behind.
+@MainActor
+private func dismissedMidRequest(
+    transport: HTTPTransport,
+    clock: TestClock
+) async -> (value: WeakHandle<RecipeNameSearch>, work: Task<Void, Never>?) {
+    let search = makeSearch(transport: transport, clock: clock)
+    search.setQuery("shakshuka")
+    await clock.advance(by: RecipeNameSearch.debounce)
+    return (WeakHandle(search), search.work)
+}
+
 private func names(of state: RecipeNameSearchState) -> [String]? {
     guard case .results(let recipes) = state else { return nil }
     return recipes.map(\.name)
@@ -243,6 +257,23 @@ struct RecipeNameSearchTests {
         let url = try #require(transport.lastRequest?.url)
         let components = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false))
         #expect(components.queryItems == [URLQueryItem(name: "name", value: "shakshuka")])
+    }
+
+    @Test("A search whose screen goes away mid-request is released, not held by its own work")
+    func dismissalMidRequestReleasesTheSearch() async {
+        let transport = HoldingAnswer(
+            to: "shakshuka",
+            responder: jsonResponder { _ in summaryPayload("Shakshuka") }
+        )
+        let clock = TestClock()
+        let (search, work) = await dismissedMidRequest(transport: transport, clock: clock)
+
+        // The request has not answered yet: nothing but the task in flight could be
+        // keeping the search alive.
+        #expect(search.value == nil)
+
+        transport.release()
+        await work?.value
     }
 
     @Test("A cancelled request is not a failure")
