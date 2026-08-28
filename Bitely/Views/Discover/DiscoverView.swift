@@ -5,14 +5,15 @@ import SwiftUI
 /// docs/design/app-flow.md, Discover.
 struct DiscoverView: View {
     @Environment(AuthStore.self) private var authStore
+    @Environment(RecipeService.self) private var recipeService
     @Environment(RecipeStore.self) private var store
     @Environment(Cookbook.self) private var cookbook
-    @Environment(\.modelContext) private var modelContext
     /// The grid's one query: every tile reads its saved state out of this.
     @Query private var localRecipes: [Recipe]
 
     @State private var showSettings = false
     @State private var showPantrySearch = false
+    @State private var showNameSearch = false
 
     private var greeting: Greeting { Greeting(user: authStore.user) }
 
@@ -31,6 +32,9 @@ struct DiscoverView: View {
             .background(Color.surface)
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(isPresented: $showPantrySearch) { PantrySearchView() }
+            .navigationDestination(isPresented: $showNameSearch) {
+                RecipeNameSearchView(service: recipeService)
+            }
             .navigationDestination(for: RecipeSummaryDTO.self) { recipe in
                 RemoteRecipeInfoView(recipeId: recipe.id, allowEdit: false)
             }
@@ -49,7 +53,11 @@ struct DiscoverView: View {
         GreetingBar(greeting: greeting.salutation, name: greeting.name) {
             showSettings = true
         } trailing: {
-            EmptyView()
+            // Deliberately lighter than the Pantry promo: the two answer different
+            // questions, and a name search is the one iOS users look for up here.
+            CircleIconButton(systemImage: "magnifyingglass", accessibilityLabel: "Search recipes by name") {
+                showNameSearch = true
+            }
         }
         .padding(.top, Spacing.m)
     }
@@ -121,30 +129,7 @@ struct DiscoverView: View {
             // answering fifty tiles from one query.
             let held = HeldRecipes(localRecipes)
             RecipeGrid(items: recipes) { recipe in
-                tile(for: recipe, held: held)
-            }
-        }
-    }
-
-    /// The heart sits beside the tile rather than inside it: the whole tile is already a
-    /// link, and a button nested in another button does not reliably take its own taps.
-    private func tile(for recipe: RecipeSummaryDTO, held: HeldRecipes) -> some View {
-        ZStack(alignment: .topTrailing) {
-            NavigationLink(value: recipe) {
-                RecipeTile(recipe: RecipeSummary(recipe))
-            }
-            .buttonStyle(.plain)
-
-            if cookbook.offersSaving(of: recipe.id) {
-                SaveButton(
-                    isSaved: held.contains(recipe.id),
-                    onSave: { Task { await cookbook.save(remoteId: recipe.id, into: modelContext) } },
-                    onUnsave: {
-                        guard let local = held.recipe(for: recipe.id) else { return }
-                        cookbook.unsave(local, from: modelContext)
-                    }
-                )
-                .padding(Spacing.s)
+                SavableRecipeTile(recipe: recipe, held: held)
             }
         }
     }
