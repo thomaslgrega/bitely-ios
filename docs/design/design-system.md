@@ -1,9 +1,8 @@
 # Bitely design system
 
-The visual system for the whole app, derived from the Editorial Feed direction in
-[recipes-redesign-handoff.md](./recipes-redesign-handoff.md). Every screen is
-built from the tokens and components here; a screen that needs something not on
-this page needs this page changed first.
+The visual system for the whole app. Every screen is built from the tokens and
+components here; a screen that needs something not on this page needs this page
+changed first.
 
 Why the token layer is shaped this way is [ADR-0001](../adr/0001-editorial-visual-system.md).
 
@@ -199,19 +198,3 @@ Recipe grids are two columns and collapse to one at `.accessibility1` and above,
 read from `@Environment(\.dynamicTypeSize)`. `GridItem(.adaptive(minimum:))` does
 not solve this — it responds to container width, which does not change when text
 grows. `RecipeGrid` holds the rule so no screen restates it.
-
-## Migration
-
-`Extensions/Color.swift`'s coral, slate and teal palette is deleted rather than
-redefined — those names describe a system that no longer exists — but it is
-deleted **last**, by expand–contract:
-
-1. **Expand.** The token layer lands beside the old palette. Nothing breaks.
-2. **Migrate.** One screen group at a time onto the tokens. Unconverted screens
-   still compile, because the old palette is still there, so the suite stays
-   green after every step.
-3. **Contract.** The old palette is deleted once nothing references it, and the
-   compiler proves the migration finished.
-
-Deleting first would leave the build red across the whole project, and a suite
-that cannot run is a suite that cannot catch a conversion mistake.
