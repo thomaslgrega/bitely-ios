@@ -7,6 +7,8 @@ import SwiftUI
 enum CookbookSegment: String, CaseIterable, Hashable {
     case myRecipes = "My Recipes"
     case saved = "Saved"
+
+    var other: CookbookSegment { self == .myRecipes ? .saved : .myRecipes }
 }
 
 /// A row of a segment. My Recipes merges two sources, so it can hold a Shared Recipe this
@@ -107,17 +109,43 @@ final class Cookbook {
         return authoredIds.contains(remoteId) ? .myRecipes : .saved
     }
 
+    /// Whether `me/recipes` has answered for this session, which is what My Recipes needs
+    /// before it can claim a name is absent: until then the Shared Recipes written on
+    /// another device are not in `entries` at all. Signed out there is nothing to wait for.
+    var hasResolvedAuthorship: Bool {
+        authStore.accessToken == nil || loadedForSession != nil
+    }
+
     /// Saved is a pure local query. My Recipes adds the Shared Recipes this user authored
     /// that the device holds no copy of, so the segment is the whole of their own work
     /// rather than the part of it that happens to be on this phone.
-    func entries(in segment: CookbookSegment, from recipes: [Recipe]) -> [CookbookEntry] {
+    ///
+    /// The query matches by name and is deliberately not fuzzy, so routing it through the
+    /// API's trigram search would be the wrong fix — docs/design/app-flow.md, Cookbook.
+    /// Asking the other segment for its own count is all the cross-segment empty state needs.
+    func entries(
+        in segment: CookbookSegment,
+        from recipes: [Recipe],
+        matching query: String = ""
+    ) -> [CookbookEntry] {
         let local = recipes.filter { self.segment(for: $0) == segment }.map(CookbookEntry.local)
-        guard segment == .myRecipes else { return local }
+        let all: [CookbookEntry]
+        if segment == .myRecipes {
+            let held = Set(recipes.compactMap(\.remoteId))
+            let elsewhere = authored.filter { !held.contains($0.id) }.map(CookbookEntry.shared)
+            all = (local + elsewhere)
+                .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        } else {
+            all = local
+        }
 
-        let held = Set(recipes.compactMap(\.remoteId))
-        let elsewhere = authored.filter { !held.contains($0.id) }.map(CookbookEntry.shared)
-        return (local + elsewhere)
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        let tokens = query.split(whereSeparator: \.isWhitespace)
+        guard !tokens.isEmpty else { return all }
+        return all.filter { entry in
+            tokens.allSatisfy { token in
+                entry.name.range(of: token, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            }
+        }
     }
 
     /// Signed out there is no authorship to ask about, and the split falls back to the one

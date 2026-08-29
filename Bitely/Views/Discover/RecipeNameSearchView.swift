@@ -14,7 +14,6 @@ struct RecipeNameSearchView: View {
     @Query private var localRecipes: [Recipe]
 
     @State private var search: RecipeNameSearch
-    @FocusState private var queryFocused: Bool
 
     init(service: RecipeService) {
         _search = State(initialValue: RecipeNameSearch(service: service))
@@ -30,40 +29,14 @@ struct RecipeNameSearchView: View {
         .background(Color.surface)
         .navigationTitle("Find a recipe")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { queryFocused = true }
     }
 
     private var queryField: some View {
-        HStack(spacing: Spacing.m) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: SymbolSize.control, weight: .medium))
-                .foregroundStyle(Color.contentSecondary)
-                .accessibilityHidden(true)
-
-            TextField(
-                "Search by name, e.g. shakshuka",
-                text: Binding(get: { search.query }, set: search.setQuery)
-            )
-            .textStyle(.body)
-            .foregroundStyle(Color.contentPrimary)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .submitLabel(.search)
-            .focused($queryFocused)
-
-            if !search.query.isEmpty {
-                Button {
-                    search.setQuery("")
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: SymbolSize.control, weight: .medium))
-                        .foregroundStyle(Color.contentSecondary)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Clear the search")
-            }
-        }
-        .fieldSurface()
+        SearchField(
+            text: Binding(get: { search.query }, set: search.setQuery),
+            prompt: "Search by name, e.g. shakshuka",
+            autofocus: true
+        )
         .padding(.horizontal, Spacing.xl)
     }
 

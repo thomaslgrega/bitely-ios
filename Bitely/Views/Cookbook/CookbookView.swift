@@ -17,9 +17,26 @@ struct CookbookView: View {
     @Query(sort: [SortDescriptor(\Recipe.name)]) private var recipes: [Recipe]
 
     @State private var destination: CookbookDestination?
+    /// The query is the view's, not the store's: `Cookbook` outlives the screen, and coming
+    /// back to a Cookbook still trimmed by a forgotten query would look like lost Recipes.
+    @State private var query = ""
 
     private var entries: [CookbookEntry] {
-        cookbook.entries(in: cookbook.segment, from: recipes)
+        cookbook.entries(in: cookbook.segment, from: recipes, matching: query)
+    }
+
+    /// Whether the segment holds nothing at all, as opposed to nothing matching: the field
+    /// and the two original empty states turn on the collection, not on the filter.
+    private var segmentIsEmpty: Bool {
+        cookbook.entries(in: cookbook.segment, from: recipes).isEmpty
+    }
+
+    private var otherSegment: CookbookSegment { cookbook.segment.other }
+
+    /// What the same query finds one segment over, which is what keeps a correct spelling
+    /// from being a dead end while the filter stays scoped to the segment on screen.
+    private var matchesInOtherSegment: Int {
+        cookbook.entries(in: otherSegment, from: recipes, matching: query).count
     }
 
     var body: some View {
@@ -33,11 +50,18 @@ struct CookbookView: View {
                         options: CookbookSegment.allCases.map { ($0, $0.rawValue) }
                     )
 
+                    // Below the segments, not above: the position is what says the filter
+                    // covers the open half rather than the whole Cookbook — #48.
+                    if !segmentIsEmpty {
+                        SearchField(text: $query, prompt: "Search your recipes")
+                    }
+
                     contents
                 }
                 .padding(.horizontal, Spacing.xl)
                 .padding(.bottom, Spacing.xxxl)
             }
+            .scrollDismissesKeyboard(.immediately)
             .background(Color.surface)
             .navigationTitle("Cookbook")
             .toolbar { newRecipeButton }
@@ -58,6 +82,9 @@ struct CookbookView: View {
             // animates here rather than inside the control's own transaction.
             .animation(.snappy, value: cookbook.segment)
         }
+        // On the stack rather than its root, so pushing a Recipe keeps the query and only
+        // leaving the tab drops it.
+        .onDisappear { query = "" }
     }
 
     /// One `+`, on My Recipes, always making a Private Recipe: it never publishes and never
@@ -79,7 +106,7 @@ struct CookbookView: View {
     @ViewBuilder
     private var contents: some View {
         if entries.isEmpty {
-            emptyState
+            if segmentIsEmpty { emptyState } else { noMatchesState }
         } else {
             RecipeGrid(items: entries) { entry in
                 tile(for: entry)
@@ -135,6 +162,47 @@ struct CookbookView: View {
                 systemImage: "heart",
                 title: "Nothing saved yet",
                 message: "Recipes you save from other people land here."
+            )
+        }
+    }
+
+    private var crossSegmentMessage: String {
+        let count = matchesInOtherSegment
+        let subject = count == 1 ? "One recipe" : "\(count) recipes"
+        let verb = count == 1 ? "matches" : "match"
+        return "\(subject) in \(otherSegment.rawValue) \(verb) \u{201C}\(query)\u{201D}."
+    }
+
+    /// Filtered to nothing, as opposed to empty. It names the query back so the user can
+    /// see their own spelling, and offers no way to write a Recipe: someone hunting for one
+    /// did not ask to author one.
+    @ViewBuilder
+    private var noMatchesState: some View {
+        // Offered ahead of the softening below: a Recipe one tap away answers the question
+        // the user asked, where a caveat about authorship only explains why nothing does.
+        if matchesInOtherSegment > 0 {
+            EmptyState(
+                systemImage: "fork.knife",
+                title: "Not in \(cookbook.segment.rawValue)",
+                message: crossSegmentMessage,
+                actionTitle: "Look in \(otherSegment.rawValue)"
+            ) {
+                cookbook.segment = otherSegment
+            }
+        } else if cookbook.segment == .myRecipes && !cookbook.hasResolvedAuthorship {
+            // The Shared Recipes this user wrote elsewhere are not in `entries` yet, so
+            // saying nothing matches would deny a Recipe they know they wrote. That fetch
+            // may have failed rather than be running, so the copy claims neither.
+            EmptyState(
+                systemImage: "icloud.slash",
+                title: "Can't check all of your recipes",
+                message: "Nothing on this device matches \u{201C}\(query)\u{201D}. The recipes you wrote elsewhere aren't here yet."
+            )
+        } else {
+            EmptyState(
+                systemImage: "fork.knife",
+                title: "No recipes named that",
+                message: "Nothing in your cookbook matches \u{201C}\(query)\u{201D}."
             )
         }
     }
