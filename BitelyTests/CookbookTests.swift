@@ -224,6 +224,122 @@ struct CookbookTests {
         #expect(transport.requests.count == 2)
     }
 
+    @Test("A query narrows the segment to the names holding it")
+    func aQueryNarrowsTheSegment() async {
+        let (cookbook, _, _) = makeCookbook()
+        await cookbook.loadAuthorship()
+        let all = [privateRecipe(), ownShared()]
+
+        let entries = cookbook.entries(in: .myRecipes, from: all, matching: "rib")
+
+        #expect(entries.map(\.name) == ["Short Rib"])
+    }
+
+    @Test("Every word must appear, in any order")
+    func aMultiWordQueryIgnoresWordOrder() async {
+        let (cookbook, _, _) = makeCookbook()
+        await cookbook.loadAuthorship()
+        let tikka = Recipe(name: "Chicken Tikka Masala", category: .chicken)
+
+        #expect(cookbook.entries(in: .myRecipes, from: [tikka], matching: "tikka chicken")
+                .map(\.name) == ["Chicken Tikka Masala"])
+        #expect(cookbook.entries(in: .myRecipes, from: [tikka], matching: "tikka lamb").isEmpty)
+    }
+
+    @Test("Case and accents are ignored", arguments: ["ragu", "RAGÙ", "Ragu"])
+    func caseAndDiacriticsAreIgnored(query: String) async {
+        let (cookbook, _, _) = makeCookbook()
+        await cookbook.loadAuthorship()
+        let ragu = Recipe(name: "Sunday Ragù", category: .pasta)
+
+        #expect(cookbook.entries(in: .myRecipes, from: [ragu], matching: query).count == 1)
+    }
+
+    @Test("A query of nothing but whitespace is no query at all", arguments: ["", "   ", "\n\t"])
+    func anEmptyQueryReturnsTheWholeSegment(query: String) async {
+        let (cookbook, _, _) = makeCookbook()
+        await cookbook.loadAuthorship()
+        let all = [privateRecipe(), ownShared()]
+
+        #expect(cookbook.entries(in: .myRecipes, from: all, matching: query).map(\.name)
+                == cookbook.entries(in: .myRecipes, from: all).map(\.name))
+    }
+
+    @Test("A Shared Recipe written elsewhere is filtered like any other row")
+    func theFilterCoversRecipesWrittenElsewhere() async {
+        let authorship = Authorship()
+        authorship.ids = ["mine", "elsewhere"]
+        let (cookbook, _, _) = makeCookbook(authorship)
+        await cookbook.loadAuthorship()
+
+        let entries = cookbook.entries(in: .myRecipes, from: [ownShared()], matching: "elsewhere")
+
+        #expect(entries.map(\.id) == ["elsewhere"])
+    }
+
+    @Test("A name held only in Saved does not answer under My Recipes")
+    func theFilterDoesNotReachAcrossSegments() async {
+        let (cookbook, _, _) = makeCookbook()
+        await cookbook.loadAuthorship()
+        let all = [privateRecipe(), someoneElses()]
+
+        #expect(cookbook.entries(in: .myRecipes, from: all, matching: "shakshuka").isEmpty)
+        #expect(cookbook.entries(in: .saved, from: all, matching: "shakshuka").map(\.name)
+                == ["Shakshuka"])
+    }
+
+    @Test("A query matching nothing here is counted in the other segment")
+    func aQueryMatchingNothingIsCountedInTheOtherSegment() async {
+        let (cookbook, _, _) = makeCookbook()
+        await cookbook.loadAuthorship()
+        let all = [privateRecipe(), someoneElses(), ownShared()]
+
+        #expect(cookbook.entries(in: .myRecipes, from: all, matching: "shak").isEmpty)
+        #expect(cookbook.entries(in: .saved, from: all, matching: "shak").count == 1)
+        #expect(cookbook.segment.other == .saved)
+        #expect(CookbookSegment.saved.other == .myRecipes)
+    }
+
+    @Test("Authorship reports whether me/recipes has answered for this session")
+    func authorshipReportsWhetherItHasResolved() async {
+        let authorship = Authorship()
+        authorship.error = URLError(.notConnectedToInternet)
+        let (cookbook, _, _) = makeCookbook(authorship)
+
+        #expect(!cookbook.hasResolvedAuthorship)
+        await cookbook.loadAuthorship()
+        #expect(!cookbook.hasResolvedAuthorship)
+
+        authorship.error = nil
+        await cookbook.loadAuthorship()
+
+        #expect(cookbook.hasResolvedAuthorship)
+    }
+
+    @Test("A second account's authorship is unresolved until it has answered for itself")
+    func authorshipIsNotResolvedByAnotherAccountsAnswer() async {
+        let (cookbook, _, auth) = makeCookbook()
+        await cookbook.loadAuthorship()
+        #expect(cookbook.hasResolvedAuthorship)
+
+        auth.signOut()
+        auth.setSession(
+            token: "another",
+            user: User(id: "u2", email: "other@example.com", firstName: nil, lastName: nil)
+        )
+
+        #expect(!cookbook.hasResolvedAuthorship)
+    }
+
+    @Test("Signed out there is no authorship left to wait for")
+    func signedOutAuthorshipIsResolved() async {
+        let (cookbook, _, _) = makeCookbook(signedIn: false)
+
+        await cookbook.loadAuthorship()
+
+        #expect(cookbook.hasResolvedAuthorship)
+    }
+
     @Test("The heart confirms first: a tap leaves the Recipe in place, Remove deletes it")
     func unsavingConfirmsBeforeDeleting() throws {
         let (cookbook, _, _) = makeCookbook()
@@ -279,6 +395,80 @@ struct CookbookTests {
         try context.save()
 
         #expect(try context.fetch(FetchDescriptor<Recipe>()).count == 1)
+    }
+}
+
+@Suite("Cookbook screen")
+struct CookbookScreenTests {
+
+    private func screen(
+        segment: CookbookSegment = .myRecipes,
+        query: String = "",
+        matches: Int = 0,
+        held: Int = 0,
+        elsewhere: Int = 0,
+        hasResolvedAuthorship: Bool = true
+    ) -> CookbookScreen {
+        CookbookScreen(
+            segment: segment,
+            query: query,
+            matches: matches,
+            held: held,
+            matchesElsewhere: elsewhere,
+            hasResolvedAuthorship: hasResolvedAuthorship
+        )
+    }
+
+    @Test("A segment with something in it draws the grid and offers the filter")
+    func aFilledSegmentDrawsTheGrid() {
+        let screen = screen(matches: 3, held: 3)
+
+        #expect(screen.offersFilter)
+        #expect(screen.placeholder == .grid)
+    }
+
+    @Test("A segment holding nothing offers what to do rather than a way to filter nothing")
+    func anEmptySegmentOffersNoFilter() {
+        let screen = screen()
+
+        #expect(!screen.offersFilter)
+        #expect(screen.placeholder == .emptyCollection)
+    }
+
+    @Test("A live query keeps its own field, so it can always be cleared")
+    func aLiveQueryKeepsItsField() {
+        #expect(screen(query: "ragu", held: 4).offersFilter)
+        #expect(screen(query: "ragu").offersFilter)
+    }
+
+    @Test("A live query is never answered with the creation flow")
+    func aLiveQueryIsNeverAnsweredWithTheCreationFlow() {
+        // My Recipes reads as empty while `me/recipes` is unanswered, and offering to write
+        // a recipe to someone who is looking for one answers a question they did not ask.
+        #expect(screen(query: "ragu", hasResolvedAuthorship: false).placeholder
+                == .unresolvedAuthorship)
+        #expect(screen(query: "ragu").placeholder == .noMatches)
+    }
+
+    @Test("A match one segment over is offered ahead of any caveat about authorship")
+    func aMatchElsewhereBeatsTheSoftening() {
+        #expect(screen(query: "ragu", elsewhere: 2, hasResolvedAuthorship: false).placeholder
+                == .matchesElsewhere(2))
+        #expect(screen(query: "ragu", held: 4, elsewhere: 1).placeholder == .matchesElsewhere(1))
+    }
+
+    @Test("Saved never softens: nothing about it waits on me/recipes")
+    func savedDoesNotSoften() {
+        #expect(screen(segment: .saved, query: "ragu", held: 4, hasResolvedAuthorship: false)
+                .placeholder == .noMatches)
+    }
+
+    @Test("A whitespace-only query is no query at all", arguments: ["", "   "])
+    func whitespaceIsNoQuery(query: String) {
+        let screen = screen(query: query)
+
+        #expect(!screen.offersFilter)
+        #expect(screen.placeholder == .emptyCollection)
     }
 }
 

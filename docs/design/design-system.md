@@ -192,6 +192,17 @@ value stays readable while it is being corrected.
 `fieldSurface` is on offer separately, for the rows of a repeating field that
 share one label above them.
 
+### SearchField
+
+A `fieldSurface` row: a magnifying glass, the field, and a clear button that
+appears only once there is something to clear. The prompt is the accessibility
+label, so it carries the whole of what the field is for. `autofocus` takes the
+keyboard on arrival, for a screen that exists to be typed into; a filter over a
+list the user came to look at leaves focus alone.
+
+Not `.searchable`, which draws iOS's own capsule at its own type size and inset
+and pins itself above whatever it filters — position is what states scope.
+
 ## Dynamic Type
 
 Recipe grids are two columns and collapse to one at `.accessibility1` and above,
