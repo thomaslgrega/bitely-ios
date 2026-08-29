@@ -11,7 +11,7 @@ Cookbook, split by authorship rather than by storage.
 
 The front door. Browsing and Pantry Search.
 
-**Greeting bar.** Avatar, greeting, no search button. The name falls back
+**Greeting bar.** Avatar, greeting, and a search button into Name Search. The name falls back
 `firstName` → the local part of `email` → "Welcome to Bitely", so the bar reads
 the same shape signed in, signed in without a name, and signed out. The avatar
 opens settings in every state.
@@ -43,6 +43,26 @@ chip always shows its Category completely.
 
 The store lives for the session: the Feed once on cold launch, then at most one
 request per Category the user actually taps, each cached until relaunch.
+
+### Name Search
+
+A pushed screen off the greeting bar's search button, titled "Find a recipe".
+Type a name, get matching Shared Recipes as a grid of the same savable tiles
+Today's Picks draws. It is reached the way Pantry Search is, so the two are
+structurally siblings; their entry points differ in weight because they answer
+different questions, and Pantry Search keeps the promo card.
+
+Every query is `GET /recipes?name=` — the match is fuzzy and the order is
+closest-first, both the API's (`bitelyapi` ADR-0004), so a misspelling still
+lands and the grid sorts nothing. Filtering the Feed instead would miss exactly
+the Recipe the user came for. The Category selection on Discover underneath is
+untouched and never narrows a Name Query.
+
+Results arrive as the user types: 300ms after the last keystroke, from two
+characters up, one query at a time. Nothing typed is the prompt state; a query
+that matches nothing names itself back to the user; a failure offers a retry
+that re-runs the same query. Nothing is cached — free text is not the small
+closed set the Feed and the Categories are.
 
 ## Cookbook
 

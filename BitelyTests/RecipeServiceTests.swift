@@ -65,6 +65,19 @@ struct RecipeServiceTests {
         #expect(components.queryItems == [URLQueryItem(name: "category", value: category.rawValue)])
     }
 
+    @Test("getRecipesByName sends the Name Query and no Category alongside it")
+    func getRecipesByName() async throws {
+        let transport = StubTransport.json("[]")
+        let service = makeService(transport: transport)
+
+        _ = try await service.getRecipesByName(name: "shakshuka")
+
+        let url = try #require(transport.lastRequest?.url)
+        let components = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        #expect(components.path == "/recipes")
+        #expect(components.queryItems == [URLQueryItem(name: "name", value: "shakshuka")])
+    }
+
     @Test("getSharedRecipes authenticates against me/recipes")
     func getSharedRecipes() async throws {
         let transport = StubTransport.json("[]")

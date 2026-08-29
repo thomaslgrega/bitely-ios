@@ -22,6 +22,13 @@ final class RecipeService {
         try await api.request(path: "recipes", query: [URLQueryItem(name: "category", value: category.rawValue)])
     }
 
+    /// A Name Query: the corpus matched fuzzily against a Recipe name, closest first and
+    /// capped by the API — `bitelyapi` ADR-0004. The endpoint composes `name` with
+    /// `category`; nothing in the app asks it to.
+    func getRecipesByName(name: String) async throws -> [RecipeSummaryDTO] {
+        try await api.request(path: "recipes", query: [URLQueryItem(name: "name", value: name)])
+    }
+
     func getSharedRecipes() async throws -> [RecipeSummaryDTO] {
         try await api.request(path: "me/recipes", requiresAuth: true)
     }
