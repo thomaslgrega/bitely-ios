@@ -93,6 +93,18 @@ sharing costs the user nothing.
 instructions may have been edited, and the new control is a heart, light enough
 that a silent second tap would be destructive.
 
+**Filtering** is a local filter over the open segment, in a field below the
+segments — the position states the scope, where a field above them would read as
+filtering the whole Cookbook. Both segments already hold everything they show,
+so nothing is fetched and nothing can fail. The query is tokenized on
+whitespace and every token must appear in the name, ignoring case and accents,
+which makes word order irrelevant and leaves the match deliberately not fuzzy:
+the typo that finds a Shared Recipe on Discover finds nothing here. An empty
+field shows the whole segment, and a segment holding nothing shows no field at
+all. When a query matches nothing here but something in the other segment, the
+empty state says how many and offers the switch, so a correct spelling is never
+a dead end.
+
 ## Plan
 
 Today's Calendar, restyled. A Meal Plan Day per date, Recipes slotted by Meal
