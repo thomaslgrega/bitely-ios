@@ -112,8 +112,13 @@ final class Cookbook {
     /// Whether `me/recipes` has answered for this session, which is what My Recipes needs
     /// before it can claim a name is absent: until then the Shared Recipes written on
     /// another device are not in `entries` at all. Signed out there is nothing to wait for.
+    ///
+    /// Compared against the current token rather than tested for nil, so the moment the
+    /// account changes the answer goes back to unresolved instead of letting one user's
+    /// authorship vouch for another's.
     var hasResolvedAuthorship: Bool {
-        authStore.accessToken == nil || loadedForSession != nil
+        guard let session = authStore.accessToken else { return true }
+        return loadedForSession == session
     }
 
     /// Saved is a pure local query. My Recipes adds the Shared Recipes this user authored
@@ -121,7 +126,7 @@ final class Cookbook {
     /// rather than the part of it that happens to be on this phone.
     ///
     /// The query matches by name and is deliberately not fuzzy, so routing it through the
-    /// API's trigram search would be the wrong fix — docs/design/app-flow.md, Cookbook.
+    /// API's trigram search would be the wrong fix — #48, docs/design/app-flow.md, Cookbook.
     /// Asking the other segment for its own count is all the cross-segment empty state needs.
     func entries(
         in segment: CookbookSegment,
