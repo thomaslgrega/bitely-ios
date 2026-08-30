@@ -74,6 +74,11 @@ xcodebuild test -project Bitely.xcodeproj -scheme Bitely \
 
 Report step 3's actual output. A suite you did not run is not green.
 
+That command is canonical: it runs anywhere. `.mcp.json` is Claude Code's file
+alone, so an agent configured elsewhere — the Codex PR review, CI — reaches for
+the CLI. Prefer XcodeBuildMCP's tools when they are connected: they carry the
+project, scheme and simulator as session defaults, so those flags come free.
+
 ### Writing tests
 
 - **Swift Testing**, not XCTest: `@Suite` / `@Test` / `#expect` / `try #require`. Cases that
@@ -103,3 +108,5 @@ Reach for the same pattern when new code needs the network, the clock, or the di
   ambiguous destination and errors out instead of picking one. `iPhone 17` resolves.
 - `xcodebuild test` boots a simulator and writes to `~/Library/Developer/Xcode/DerivedData`,
   so it needs an approval mode that allows both.
+- `.mcp.json` pins `DEVELOPER_DIR` and `iPhone 17` for the MCP server, so both
+  routes clear the two traps above.
