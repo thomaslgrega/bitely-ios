@@ -4,7 +4,7 @@ import SwiftUI
 /// Type and a fixed height clips it.
 struct RecipeTile: View {
     let name: String
-    let thumbnail: ThumbnailSource
+    let thumbnail: RecipeImageSource
     var cookTime: Int?
     var calories: Int?
     /// Absent over a Recipe the user authored, which there is no keeping a copy of, and on
@@ -38,9 +38,9 @@ extension RecipeTile {
     init(recipe: RecipeSummary, saveButton: SaveButton? = nil) {
         self.init(
             name: recipe.name,
-            thumbnail: ThumbnailSource(
+            thumbnail: RecipeImageSource(
                 imageData: recipe.imageData,
-                thumbnailURL: recipe.thumbnailUrl,
+                imageURL: recipe.imageUrl,
                 category: recipe.category
             ),
             cookTime: recipe.totalCookTime,

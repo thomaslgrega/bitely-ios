@@ -3,17 +3,17 @@ import SwiftUI
 
 /// Which of a Recipe's three picture sources a thumbnail draws, resolved before any view
 /// exists so the order is exercised directly. Same order `RecipeImageView` has always used.
-enum ThumbnailSource: Equatable {
+enum RecipeImageSource: Equatable {
     case photo(Data)
     case remote(URL)
     case categoryTint(FoodCategory)
 
-    init(imageData: Data?, thumbnailURL: String?, category: FoodCategory) {
+    init(imageData: Data?, imageURL: String?, category: FoodCategory) {
         // Decoding here rather than in the view keeps data that is not an image out of the
         // `photo` case entirely, so a corrupt blob falls through to the next source.
         if let imageData, UIImage(data: imageData) != nil {
             self = .photo(imageData)
-        } else if let url = Self.fetchableURL(thumbnailURL) {
+        } else if let url = Self.fetchableURL(imageURL) {
             self = .remote(url)
         } else {
             self = .categoryTint(category)
@@ -21,7 +21,7 @@ enum ThumbnailSource: Equatable {
     }
 
     /// A stored string only counts as a source if it can actually be fetched: the corpus
-    /// carries empty and relative thumbnail fields, and both of those still parse.
+    /// carries empty and relative image fields, and both of those still parse.
     private static func fetchableURL(_ string: String?) -> URL? {
         guard let string, let url = URL(string: string.trimmingCharacters(in: .whitespaces)),
               url.scheme != nil, url.host()?.isEmpty == false
@@ -33,22 +33,22 @@ enum ThumbnailSource: Equatable {
 /// Photo and tint share a radius, an inset stroke and a warm overlay, so a grid mixing
 /// the two reads as one set rather than as half-loaded — design-system.md, RecipeThumbnail.
 struct RecipeThumbnail: View {
-    let source: ThumbnailSource
+    let source: RecipeImageSource
     let cornerRadius: CGFloat
 
-    init(source: ThumbnailSource, cornerRadius: CGFloat = Radius.card) {
+    init(source: RecipeImageSource, cornerRadius: CGFloat = Radius.card) {
         self.source = source
         self.cornerRadius = cornerRadius
     }
 
     init(
         imageData: Data?,
-        thumbnailURL: String?,
+        imageURL: String?,
         category: FoodCategory,
         cornerRadius: CGFloat = Radius.card
     ) {
         self.init(
-            source: ThumbnailSource(imageData: imageData, thumbnailURL: thumbnailURL, category: category),
+            source: RecipeImageSource(imageData: imageData, imageURL: imageURL, category: category),
             cornerRadius: cornerRadius
         )
     }
@@ -102,8 +102,8 @@ struct RecipeThumbnail: View {
 
 #Preview("Category tints") {
     HStack(spacing: Spacing.l) {
-        RecipeThumbnail(imageData: nil, thumbnailURL: nil, category: .seafood)
-        RecipeThumbnail(imageData: nil, thumbnailURL: nil, category: .dessert)
+        RecipeThumbnail(imageData: nil, imageURL: nil, category: .seafood)
+        RecipeThumbnail(imageData: nil, imageURL: nil, category: .dessert)
     }
     .frame(height: 160)
     .padding()

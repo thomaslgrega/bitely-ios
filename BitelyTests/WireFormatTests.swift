@@ -20,7 +20,7 @@ struct WireFormatTests {
           "id": "r1",
           "name": "Roast Chicken",
           "category": "Chicken",
-          "thumbnail_url": "https://example.com/a.jpg",
+          "image_url": "https://example.com/a.jpg",
           "calories": 640,
           "total_cook_time": 95
         }
@@ -31,7 +31,7 @@ struct WireFormatTests {
         #expect(summary.id == "r1")
         #expect(summary.name == "Roast Chicken")
         #expect(summary.category == .chicken)
-        #expect(summary.thumbnailUrl == "https://example.com/a.jpg")
+        #expect(summary.imageUrl == "https://example.com/a.jpg")
         #expect(summary.calories == 640)
         #expect(summary.totalCookTime == 95)
     }
@@ -43,7 +43,7 @@ struct WireFormatTests {
           "id": "r1",
           "name": "Mystery",
           "category": "Other",
-          "thumbnail_url": null,
+          "image_url": null,
           "calories": null,
           "total_cook_time": null
         }
@@ -51,7 +51,7 @@ struct WireFormatTests {
 
         let summary = try JSONDecoder().decode(RecipeSummaryDTO.self, from: json)
 
-        #expect(summary.thumbnailUrl == nil)
+        #expect(summary.imageUrl == nil)
         #expect(summary.calories == nil)
         #expect(summary.totalCookTime == nil)
     }
@@ -65,7 +65,7 @@ struct WireFormatTests {
           "name": "Carbonara",
           "category": "Pasta",
           "instructions": "Boil water.",
-          "thumbnail_url": "https://example.com/b.jpg",
+          "image_url": "https://example.com/b.jpg",
           "ingredients": [
             { "id": "i1", "name": "Spaghetti", "measurement": "200 g" },
             { "id": "i2", "name": "Guanciale", "measurement": "100 g" }
@@ -81,6 +81,7 @@ struct WireFormatTests {
         #expect(detail.userId == "u9")
         #expect(detail.category == .pasta)
         #expect(detail.instructions == "Boil water.")
+        #expect(detail.imageUrl == "https://example.com/b.jpg")
         #expect(detail.totalCookTime == 25)
         #expect(detail.ingredients.count == 2)
         #expect(detail.ingredients.first?.name == "Spaghetti")
@@ -95,7 +96,7 @@ struct WireFormatTests {
             name: "Carbonara",
             category: .pasta,
             instructions: "Boil water.",
-            thumbnailUrl: "https://example.com/b.jpg",
+            imageUrl: "https://example.com/b.jpg",
             ingredients: [IngredientDTO(id: "i1", name: "Spaghetti", measurement: "200 g")],
             calories: 780,
             totalCookTime: 25
@@ -109,7 +110,7 @@ struct WireFormatTests {
         #expect(decoded.name == original.name)
         #expect(decoded.category == original.category)
         #expect(decoded.instructions == original.instructions)
-        #expect(decoded.thumbnailUrl == original.thumbnailUrl)
+        #expect(decoded.imageUrl == original.imageUrl)
         #expect(decoded.calories == original.calories)
         #expect(decoded.totalCookTime == original.totalCookTime)
         #expect(decoded.ingredients.map(\.name) == original.ingredients.map(\.name))
@@ -123,7 +124,7 @@ struct WireFormatTests {
             name: "Carbonara",
             category: .pasta,
             instructions: nil,
-            thumbnailUrl: "https://example.com/b.jpg",
+            imageUrl: "https://example.com/b.jpg",
             ingredients: [],
             calories: 780,
             totalCookTime: 25
@@ -132,7 +133,7 @@ struct WireFormatTests {
         let object = try encodeToObject(detail)
 
         #expect(object["user_id"] as? String == "u9")
-        #expect(object["thumbnail_url"] as? String == "https://example.com/b.jpg")
+        #expect(object["image_url"] as? String == "https://example.com/b.jpg")
         #expect(object["total_cook_time"] as? Int == 25)
     }
 
@@ -173,13 +174,13 @@ struct WireFormatTests {
 
     // MARK: - Encoding the create request
 
-    @Test("CreateRecipeRequest encodes total_cook_time and thumbnail_url")
+    @Test("CreateRecipeRequest encodes total_cook_time and image_key")
     func createRequestEncodesSnakeCase() throws {
         let request = CreateRecipeRequest(
             name: "Carbonara",
             category: .pasta,
             instructions: "Boil water.",
-            thumbnailUrl: "https://example.com/b.jpg",
+            imageKey: "staged/b",
             ingredients: [CreateIngredientRequest(name: "Spaghetti", measurement: "200 g")],
             calories: 780,
             totalCookTime: 25
@@ -190,7 +191,7 @@ struct WireFormatTests {
         #expect(object["name"] as? String == "Carbonara")
         #expect(object["category"] as? String == "Pasta")
         #expect(object["instructions"] as? String == "Boil water.")
-        #expect(object["thumbnail_url"] as? String == "https://example.com/b.jpg")
+        #expect(object["image_key"] as? String == "staged/b")
         #expect(object["calories"] as? Int == 780)
         #expect(object["total_cook_time"] as? Int == 25)
 
@@ -206,7 +207,7 @@ struct WireFormatTests {
             name: "Carbonara",
             category: .pasta,
             instructions: nil,
-            thumbnailUrl: nil,
+            imageKey: nil,
             ingredients: [],
             calories: nil,
             totalCookTime: 25
@@ -215,7 +216,7 @@ struct WireFormatTests {
         let object = try encodeToObject(request)
 
         #expect(object["totalCookTime"] == nil)
-        #expect(object["thumbnailUrl"] == nil)
+        #expect(object["imageKey"] == nil)
     }
 
     // MARK: - Categories
@@ -251,11 +252,11 @@ struct WireFormatTests {
         let json = Data(#"""
         [
           { "id": "r1", "name": "Roast Chicken", "category": "Chicken",
-            "thumbnail_url": null, "calories": null, "total_cook_time": null },
+            "image_url": null, "calories": null, "total_cook_time": null },
           { "id": "r2", "name": "Fusion Bowl", "category": "Fusion",
-            "thumbnail_url": null, "calories": null, "total_cook_time": null },
+            "image_url": null, "calories": null, "total_cook_time": null },
           { "id": "r3", "name": "Carbonara", "category": "Pasta",
-            "thumbnail_url": null, "calories": null, "total_cook_time": null }
+            "image_url": null, "calories": null, "total_cook_time": null }
         ]
         """#.utf8)
 
@@ -274,7 +275,7 @@ struct WireFormatTests {
           "name": "Fusion Bowl",
           "category": "Fusion",
           "instructions": null,
-          "thumbnail_url": null,
+          "image_url": null,
           "ingredients": [],
           "calories": null,
           "total_cook_time": null

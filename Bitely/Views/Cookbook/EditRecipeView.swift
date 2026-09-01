@@ -188,7 +188,7 @@ struct EditRecipeView: View {
     let ingredient2 = Ingredient(name: "Sugar", measurement: "200g")
 
     NavigationStack {
-        EditRecipeView(recipe: Recipe(name: "", category: .beef, thumbnailURL: "", ingredients: [ingredient1, ingredient2], calories: nil, totalCookTime: nil))
+        EditRecipeView(recipe: Recipe(name: "", category: .beef, imageURL: "", ingredients: [ingredient1, ingredient2], calories: nil, totalCookTime: nil))
     }
     .previewStores()
 }

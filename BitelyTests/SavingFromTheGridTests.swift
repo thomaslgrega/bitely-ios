@@ -5,7 +5,7 @@ import Testing
 
 private let detailJSON = """
 {"id":"theirs","user_id":"u2","name":"Shakshuka","category":"Breakfast",
- "instructions":"Simmer, then crack the eggs in.","thumbnail_url":"https://example.invalid/s.jpg",
+ "instructions":"Simmer, then crack the eggs in.","image_url":"https://example.invalid/s.jpg",
  "ingredients":[{"id":"i1","name":"eggs","measurement":"4"},
                 {"id":"i2","name":"tomatoes","measurement":"400g"}],
  "calories":420,"total_cook_time":35}
@@ -13,7 +13,7 @@ private let detailJSON = """
 
 private let authorshipJSON = """
 [{"id":"mine","name":"Short Rib","category":"Beef",
-  "thumbnail_url":null,"calories":720,"total_cook_time":190}]
+  "image_url":null,"calories":720,"total_cook_time":190}]
 """
 
 /// Answers `me/recipes` with one authored Recipe and `recipes/{id}` with a Recipe in full.
@@ -203,7 +203,7 @@ struct SavingFromTheGridTests {
         #expect(tiled.name == detailed.name)
         #expect(tiled.category == detailed.category)
         #expect(tiled.instructions == detailed.instructions)
-        #expect(tiled.thumbnailURL == detailed.thumbnailURL)
+        #expect(tiled.imageURL == detailed.imageURL)
         #expect(tiled.calories == detailed.calories)
         #expect(tiled.totalCookTime == detailed.totalCookTime)
         #expect(tiled.ingredients.map(\.name).sorted() == detailed.ingredients.map(\.name).sorted())

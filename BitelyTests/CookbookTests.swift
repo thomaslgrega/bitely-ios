@@ -7,7 +7,7 @@ private func sharedRecipes(_ ids: [String]) -> String {
     let objects = ids.map { id in
         """
         {"id":"\(id)","name":"Recipe \(id)","category":"Pasta",
-         "thumbnail_url":null,"calories":500,"total_cook_time":30}
+         "image_url":null,"calories":500,"total_cook_time":30}
         """
     }
     return "[\(objects.joined(separator: ","))]"
@@ -66,7 +66,7 @@ private func sharedDetail(id: String, name: String) -> RecipeDetailDTO {
         name: name,
         category: .pasta,
         instructions: nil,
-        thumbnailUrl: nil,
+        imageUrl: nil,
         ingredients: [],
         calories: nil,
         totalCookTime: nil

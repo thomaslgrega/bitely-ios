@@ -4,13 +4,13 @@ struct RecipeSummaryDTO: Decodable, Identifiable, Hashable {
     let id: String
     let name: String
     let category: FoodCategory
-    let thumbnailUrl: String?
+    let imageUrl: String?
     let calories: Int?
     let totalCookTime: Int?
 
     enum CodingKeys: String, CodingKey {
         case id, name, category, calories
-        case thumbnailUrl = "thumbnail_url"
+        case imageUrl = "image_url"
         case totalCookTime = "total_cook_time"
     }
 }
@@ -23,7 +23,7 @@ extension RecipeSummaryDTO {
             id: detail.id,
             name: detail.name,
             category: detail.category,
-            thumbnailUrl: detail.thumbnailUrl,
+            imageUrl: detail.imageUrl,
             calories: detail.calories,
             totalCookTime: detail.totalCookTime
         )
@@ -36,7 +36,7 @@ struct RecipeDetailDTO: Codable, Identifiable {
     let name: String
     let category: FoodCategory
     let instructions: String?
-    let thumbnailUrl: String?
+    let imageUrl: String?
     let ingredients: [IngredientDTO]
     let calories: Int?
     let totalCookTime: Int?
@@ -45,7 +45,7 @@ struct RecipeDetailDTO: Codable, Identifiable {
         case id
         case userId = "user_id"
         case name, category, instructions, ingredients, calories
-        case thumbnailUrl = "thumbnail_url"
+        case imageUrl = "image_url"
         case totalCookTime = "total_cook_time"
     }
 }

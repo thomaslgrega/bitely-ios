@@ -17,24 +17,24 @@ struct DesignSystemComponentTests {
 
     // MARK: - RecipeThumbnail
 
-    @Test("stored image data wins over a thumbnail URL")
+    @Test("stored image data wins over an image URL")
     func photoBeatsRemote() {
         let data = onePixelPNG()
 
-        let source = ThumbnailSource(
+        let source = RecipeImageSource(
             imageData: data,
-            thumbnailURL: "https://example.com/pot-roast.jpg",
+            imageURL: "https://example.com/pot-roast.jpg",
             category: .beef
         )
 
         #expect(source == .photo(data))
     }
 
-    @Test("a thumbnail URL is used when there is no stored image")
+    @Test("an image URL is used when there is no stored image")
     func remoteWhenNoPhoto() throws {
-        let source = ThumbnailSource(
+        let source = RecipeImageSource(
             imageData: nil,
-            thumbnailURL: "https://example.com/pot-roast.jpg",
+            imageURL: "https://example.com/pot-roast.jpg",
             category: .beef
         )
 
@@ -43,16 +43,16 @@ struct DesignSystemComponentTests {
 
     @Test("no photo and no URL falls back to the category tint")
     func tintWhenNeitherSource() {
-        #expect(ThumbnailSource(imageData: nil, thumbnailURL: nil, category: .seafood)
+        #expect(RecipeImageSource(imageData: nil, imageURL: nil, category: .seafood)
                 == .categoryTint(.seafood))
     }
 
     @Test(
-        "a malformed thumbnail URL falls back to the category tint",
+        "a malformed image URL falls back to the category tint",
         arguments: ["", "   ", "not a url", "http://", "/relative/path.jpg"]
     )
-    func tintWhenURLIsMalformed(thumbnailURL: String) {
-        #expect(ThumbnailSource(imageData: nil, thumbnailURL: thumbnailURL, category: .pasta)
+    func tintWhenURLIsMalformed(imageURL: String) {
+        #expect(RecipeImageSource(imageData: nil, imageURL: imageURL, category: .pasta)
                 == .categoryTint(.pasta))
     }
 
@@ -60,7 +60,7 @@ struct DesignSystemComponentTests {
     func undecodableImageDataFallsThrough() {
         let junk = Data("not an image".utf8)
 
-        #expect(ThumbnailSource(imageData: junk, thumbnailURL: nil, category: .dessert)
+        #expect(RecipeImageSource(imageData: junk, imageURL: nil, category: .dessert)
                 == .categoryTint(.dessert))
     }
 
