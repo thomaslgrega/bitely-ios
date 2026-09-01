@@ -11,7 +11,7 @@ struct RecipeServiceTests {
       "name": "Carbonara",
       "category": "Pasta",
       "instructions": "Boil water.",
-      "thumbnail_url": null,
+      "image_url": null,
       "ingredients": [],
       "calories": 780,
       "total_cook_time": 25
@@ -121,7 +121,7 @@ struct RecipeServiceTests {
             name: "Carbonara",
             category: .pasta,
             instructions: "Boil water.",
-            thumbnailUrl: nil,
+            imageKey: nil,
             ingredients: [CreateIngredientRequest(name: "Spaghetti", measurement: "200 g")],
             calories: 780,
             totalCookTime: 25
@@ -163,7 +163,7 @@ struct RecipeServiceTests {
         "id": "r1",
         "name": "Shakshuka",
         "category": "Breakfast",
-        "thumbnail_url": null,
+        "image_url": null,
         "matched_ingredients": ["eggs", "tomatoes"],
         "missing_ingredients": ["harissa"],
         "coverage": 0.6666666666666666

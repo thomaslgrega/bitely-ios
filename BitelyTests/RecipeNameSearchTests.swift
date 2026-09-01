@@ -13,7 +13,7 @@ import Testing
 private func summaryPayload(_ names: String...) -> String {
     let recipes = names.enumerated().map { index, name in
         """
-        {"id":"r\(index)","name":"\(name)","category":"Breakfast","thumbnail_url":null,"calories":420,"total_cook_time":20}
+        {"id":"r\(index)","name":"\(name)","category":"Breakfast","image_url":null,"calories":420,"total_cook_time":20}
         """
     }
     return "[\(recipes.joined(separator: ","))]"

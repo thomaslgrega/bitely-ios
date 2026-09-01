@@ -6,7 +6,7 @@ private func summaries(_ names: [String], category: String = "Pasta") -> String 
     let objects = names.enumerated().map { index, name in
         """
         {"id":"r\(index)","name":"\(name)","category":"\(category)",
-         "thumbnail_url":null,"calories":500,"total_cook_time":30}
+         "image_url":null,"calories":500,"total_cook_time":30}
         """
     }
     return "[\(objects.joined(separator: ","))]"

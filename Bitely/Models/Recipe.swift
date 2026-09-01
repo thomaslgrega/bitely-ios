@@ -36,7 +36,8 @@ final class Recipe {
     var name: String
     var categoryRaw: String
     var instructions: String?
-    var thumbnailURL: String?
+    /// Renamed with the API's field — `bitelyapi` ADR-0006 — so stored Recipes keep theirs.
+    @Attribute(originalName: "thumbnailURL") var imageURL: String?
     var imageData: Data?
     var calories: Int?
     var totalCookTime: Int?
@@ -59,7 +60,7 @@ final class Recipe {
         name: String,
         category: FoodCategory,
         instructions: String? = nil,
-        thumbnailURL: String? = nil,
+        imageURL: String? = nil,
         ingredients: [Ingredient] = [],
         calories: Int? = nil,
         totalCookTime: Int? = nil
@@ -69,7 +70,7 @@ final class Recipe {
         self.name = name
         self.categoryRaw = category.rawValue
         self.instructions = instructions
-        self.thumbnailURL = thumbnailURL
+        self.imageURL = imageURL
         self.ingredients = ingredients
         self.calories = calories
         self.totalCookTime = totalCookTime
@@ -85,7 +86,7 @@ extension Recipe {
             name: dto.name,
             category: dto.category,
             instructions: dto.instructions,
-            thumbnailURL: dto.thumbnailUrl,
+            imageURL: dto.imageUrl,
             ingredients: dto.ingredients.map { Ingredient(name: $0.name, measurement: $0.measurement) },
             calories: dto.calories,
             totalCookTime: dto.totalCookTime

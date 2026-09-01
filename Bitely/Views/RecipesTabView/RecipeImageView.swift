@@ -2,14 +2,14 @@ import Kingfisher
 import SwiftUI
 
 /// The bare picture, without the thumbnail's radius, stroke or overlay: the detail screen
-/// runs it full-bleed. The source order is `ThumbnailSource`'s, so there is one copy of it.
+/// runs it full-bleed. The source order is `RecipeImageSource`'s, so there is one copy of it.
 struct RecipeImageView: View {
     let recipe: Recipe
 
     var body: some View {
-        switch ThumbnailSource(
+        switch RecipeImageSource(
             imageData: recipe.imageData,
-            thumbnailURL: recipe.thumbnailURL,
+            imageURL: recipe.imageURL,
             category: recipe.category
         ) {
         case .photo(let data):

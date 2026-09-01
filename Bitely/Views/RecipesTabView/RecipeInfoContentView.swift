@@ -163,7 +163,7 @@ struct RecipeInfoContentView: View {
                     name: recipe.name,
                     category: recipe.category,
                     instructions: recipe.instructions,
-                    thumbnailUrl: recipe.thumbnailURL,
+                    imageKey: nil,
                     ingredients: ingredients,
                     calories: recipe.calories,
                     totalCookTime: recipe.totalCookTime
