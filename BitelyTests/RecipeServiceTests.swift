@@ -2,6 +2,18 @@ import Foundation
 import Testing
 @testable import Bitely
 
+/// One transport answers both the API and R2, so an upload's two legs are recorded in order.
+private func makeService(transport: StubTransport, signedIn: Bool = true) -> RecipeService {
+    let store = AuthStore(defaults: makeIsolatedDefaults())
+    if signedIn {
+        store.setSession(token: "t", user: User(id: "u9", email: nil, firstName: nil, lastName: nil))
+    }
+    return RecipeService(
+        api: APIClient(authStore: store, transport: transport),
+        uploads: PresignedUploader(transport: transport)
+    )
+}
+
 @Suite("RecipeService")
 struct RecipeServiceTests {
     private let detailPayload = #"""
@@ -17,14 +29,6 @@ struct RecipeServiceTests {
       "total_cook_time": 25
     }
     """#
-
-    private func makeService(transport: StubTransport, signedIn: Bool = true) -> RecipeService {
-        let store = AuthStore(defaults: makeIsolatedDefaults())
-        if signedIn {
-            store.setSession(token: "t", user: User(id: "u9", email: nil, firstName: nil, lastName: nil))
-        }
-        return RecipeService(api: APIClient(authStore: store, transport: transport))
-    }
 
     @Test("getRecipeById requests the recipe by path")
     func getRecipeById() async throws {
@@ -218,5 +222,90 @@ struct RecipeServiceTests {
         let service = makeService(transport: transport)
 
         #expect(try await service.matchCorpus(pantryItems: ["saffron"]).isEmpty)
+    }
+}
+
+/// A transport that answers the presign from the API and the PUT from R2, so one stub
+/// records both halves of an upload in order.
+private func uploadTransport(
+    uploadURL: String = "https://account.r2.cloudflarestorage.com/bucket/incoming/abc?X-Amz-Signature=1",
+    key: String = "incoming/abc",
+    putStatus: Int = 200
+) -> StubTransport {
+    StubTransport { request in
+        let isPresign = request.url?.host == "bitelyapi-docker.onrender.com"
+        let body = isPresign
+            ? #"{"upload_url":"\#(uploadURL)","key":"\#(key)","expires_at":"2026-01-01T00:00:00Z"}"#
+            : ""
+        let response = HTTPURLResponse(
+            url: request.url!,
+            statusCode: isPresign ? 200 : putStatus,
+            httpVersion: "HTTP/1.1",
+            headerFields: nil
+        )!
+        return (Data(body.utf8), response)
+    }
+}
+
+@Suite("Recipe image upload")
+struct RecipeImageUploadTests {
+    private let image = EncodedRecipeImage(data: Data(repeating: 0xFF, count: 2048))
+
+    @Test("The presign request carries the content type and length the encoder answered")
+    func presignDeclaresTheBytes() async throws {
+        let transport = uploadTransport()
+        let service = makeService(transport: transport)
+
+        _ = try await service.uploadImage(image)
+
+        let presign = try #require(transport.requests.first)
+        #expect(presign.httpMethod == "POST")
+        #expect(presign.url?.path == "/recipes/images")
+        #expect(presign.value(forHTTPHeaderField: "Authorization") == "Bearer t")
+
+        let body = try #require(presign.httpBody)
+        let json = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        #expect(json["content_type"] as? String == "image/jpeg")
+        #expect(json["content_length"] as? Int == 2048)
+    }
+
+    @Test("Presigning needs a session")
+    func presignRequiresAuth() async throws {
+        let service = makeService(transport: uploadTransport(), signedIn: false)
+
+        await #expect(throws: APIError.self) { try await service.uploadImage(image) }
+    }
+
+    /// An `Authorization` header on a presigned URL would hand the session token to
+    /// Cloudflare, which is why the PUT cannot go through `APIClient` — `bitelyapi` ADR-0006.
+    @Test("The PUT goes to the presigned URL with the signed content type and no session token")
+    func putCarriesNoSessionToken() async throws {
+        let transport = uploadTransport()
+        let service = makeService(transport: transport)
+
+        _ = try await service.uploadImage(image)
+
+        #expect(transport.requests.count == 2)
+        let put = try #require(transport.requests.last)
+        #expect(put.httpMethod == "PUT")
+        #expect(put.url?.absoluteString
+                == "https://account.r2.cloudflarestorage.com/bucket/incoming/abc?X-Amz-Signature=1")
+        #expect(put.value(forHTTPHeaderField: "Content-Type") == "image/jpeg")
+        #expect(put.value(forHTTPHeaderField: "Authorization") == nil)
+        #expect(put.httpBody == image.data)
+    }
+
+    @Test("uploadImage answers the key the presign staged")
+    func answersTheStagedKey() async throws {
+        let service = makeService(transport: uploadTransport(key: "incoming/9f3"))
+
+        #expect(try await service.uploadImage(image) == "incoming/9f3")
+    }
+
+    @Test("A PUT R2 refuses fails the upload")
+    func aRefusedPutFails() async throws {
+        let service = makeService(transport: uploadTransport(putStatus: 403))
+
+        await #expect(throws: APIError.self) { try await service.uploadImage(image) }
     }
 }

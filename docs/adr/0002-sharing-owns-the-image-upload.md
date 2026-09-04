@@ -60,6 +60,17 @@ Because the encoder runs when a photo is picked rather than when one is shared, 
 device's own copy is 800px too. Every Recipe pays for a decision only shared ones
 need — and every Recipe stops storing multi-megabyte blobs in SwiftData for it.
 
+A share is taken from a snapshot made before its first suspension: the fields, the
+photo and the session. The Recipe stays editable and the account can change while the
+upload runs, and either read afterwards publishes something the user never confirmed —
+an account that changes mid-share abandons it rather than filing one user's Recipe
+under another's name.
+
+Photos picked before the encoder existed are stored full-resolution and survive an app
+update, so a share puts the stored bytes back through the encoder and keeps the result.
+Without it those Recipes meet the presign's size gate on every retry and can never be
+shared.
+
 The failed state is keyed by local Recipe id and lives in memory, so it is invisible
 to `@Query` and cannot be observed by a view that only holds a `Recipe`. Views read
 it through `Cookbook`, the way they already ask `offersSaving(of:)`.

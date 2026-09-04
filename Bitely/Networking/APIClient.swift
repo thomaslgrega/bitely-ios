@@ -3,6 +3,17 @@ import Foundation
 struct APIError: Error {
     let statusCode: Int
     let body: String?
+
+    /// Every answer this app reads passes here, R2's presigned PUT included: an answer that
+    /// is not HTTP at all is a transport failure, and a non-2xx carries whatever the body said.
+    static func check(_ data: Data, _ response: URLResponse) throws {
+        guard let http = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        guard (200...299).contains(http.statusCode) else {
+            throw APIError(statusCode: http.statusCode, body: String(data: data, encoding: .utf8))
+        }
+    }
 }
 
 /// The seam APIClient sends requests through. URLSession in the app, a stub in tests.
@@ -47,14 +58,7 @@ final class APIClient {
         }
 
         let (data, resp) = try await transport.send(req)
-
-        guard let http = resp as? HTTPURLResponse else {
-            throw URLError(.badServerResponse)
-        }
-
-        guard (200...299).contains(http.statusCode) else {
-            throw APIError(statusCode: http.statusCode, body: String(data: data, encoding: .utf8))
-        }
+        try APIError.check(data, resp)
 
         return try JSONDecoder().decode(T.self, from: data)
     }
@@ -80,13 +84,6 @@ final class APIClient {
         }
 
         let (data, resp) = try await transport.send(req)
-
-        guard let http = resp as? HTTPURLResponse else {
-            throw URLError(.badServerResponse)
-        }
-
-        guard (200...299).contains(http.statusCode) else {
-            throw APIError(statusCode: http.statusCode, body: String(data: data, encoding: .utf8))
-        }
+        try APIError.check(data, resp)
     }
 }

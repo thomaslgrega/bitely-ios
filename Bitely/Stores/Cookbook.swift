@@ -61,6 +61,18 @@ struct HeldRecipes {
     func contains(_ remoteId: String) -> Bool { byRemoteId[remoteId] != nil }
 }
 
+/// Where one Recipe's share got to. Absent means nothing has been attempted, or the last
+/// attempt landed. Session-only and keyed by local Recipe id — ADR-0002.
+enum ShareState: Equatable {
+    case inFlight
+    case failed
+    case needsSignIn
+}
+
+/// A share abandoned because the account moved under it. The staged key is bound to no one
+/// until the create claims it, so stopping there publishes nothing.
+private struct AccountChanged: Error {}
+
 /// Which of the device's Recipes this user wrote, for the length of a session.
 ///
 /// The Recipes themselves come from SwiftData; `me/recipes` answers what the device cannot
@@ -84,6 +96,12 @@ final class Cookbook {
     /// The saves whose fetch is still in flight. The heart only fills on the insert, so a
     /// second tap during the fetch is the same save asked for twice and is dropped.
     private var saving: Set<String> = []
+    /// Where each Recipe's share got to, by local id. In memory for the session, because an
+    /// app killed mid-share has shared nothing and the Recipe is still Private — ADR-0002.
+    private var shares: [UUID: ShareState] = [:]
+    /// The session each refusal was raised against, so signing in again makes it stale
+    /// rather than leaving the Recipe offering the sheet it has already been through.
+    private var refusals: [UUID: String] = [:]
 
     @ObservationIgnored private let service: RecipeService
     @ObservationIgnored private let authStore: AuthStore
@@ -170,6 +188,77 @@ final class Cookbook {
         } catch {
             forgetAuthorship()
         }
+    }
+
+    /// The state a view draws the Share button from. It lives here rather than on the
+    /// Recipe, so `@Query` never sees it — ADR-0002.
+    func shareState(of recipe: Recipe) -> ShareState? {
+        let state = shares[recipe.id]
+        guard state == .needsSignIn else { return state }
+        return refusals[recipe.id] == authStore.accessToken ? .needsSignIn : nil
+    }
+
+    /// Fired rather than awaited: the share outlives the screen that asked for it, so its
+    /// `Task` belongs to this object rather than to a view — ADR-0002.
+    func beginShare(_ recipe: Recipe) {
+        Task { await share(recipe) }
+    }
+
+    /// Publishes a Private Recipe: stages its photo, creates the Shared Recipe claiming the
+    /// staged key, then records the authorship. Fail-closed at every step — ADR-0002.
+    ///
+    /// What goes up is snapshotted before the first suspension, session included. The share
+    /// outlives its screen, so the Recipe stays editable and the account can change while
+    /// the upload runs — read afterwards, either publishes something the user never
+    /// confirmed.
+    func share(_ recipe: Recipe) async {
+        guard shares[recipe.id] != .inFlight else { return }
+        shares[recipe.id] = .inFlight
+        refusals[recipe.id] = nil
+
+        let session = authStore.accessToken
+        let image = stagedImage(of: recipe)
+        var request = CreateRecipeRequest(
+            name: recipe.name,
+            category: recipe.category,
+            instructions: recipe.instructions,
+            imageKey: nil,
+            ingredients: recipe.ingredients.map {
+                CreateIngredientRequest(name: $0.name, measurement: $0.measurement)
+            },
+            calories: recipe.calories,
+            totalCookTime: recipe.totalCookTime
+        )
+
+        do {
+            if let image {
+                request.imageKey = try await service.uploadImage(image)
+            }
+            guard authStore.accessToken == session else { throw AccountChanged() }
+
+            let shared = try await service.createRecipe(recipe: request)
+
+            recipe.remoteId = shared.id
+            recipe.imageURL = shared.imageUrl
+            recordAuthorship(of: shared)
+            shares[recipe.id] = nil
+        } catch let error as APIError where error.statusCode == 401 {
+            shares[recipe.id] = .needsSignIn
+            refusals[recipe.id] = session
+        } catch {
+            shares[recipe.id] = .failed
+        }
+    }
+
+    /// The bytes a share stages, taken through the encoder because a photo picked before it
+    /// existed was stored full-resolution. The normalized bytes replace the stored ones, so
+    /// a Recipe pays for that at most once. Bytes that decode to nothing are not a photo,
+    /// which is what `RecipeThumbnail` already makes of them.
+    private func stagedImage(of recipe: Recipe) -> EncodedRecipeImage? {
+        guard let data = recipe.imageData,
+              let image = RecipeImageEncoder.conforming(data) else { return nil }
+        if image.data != data { recipe.imageData = image.data }
+        return image
     }
 
     /// Sharing hands back the Recipe the API just minted. Recording it keeps the local copy

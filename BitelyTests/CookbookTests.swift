@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import Testing
+import UIKit
 @testable import Bitely
 
 private func sharedRecipes(_ ids: [String]) -> String {
@@ -497,5 +498,347 @@ struct ShareControlTests {
     @Test("Signed out, the action presents auth at the moment of sharing")
     func signedOutPresentsAuth() {
         #expect(ShareControl(isPrivate: true, isAuthenticated: false).tap == .presentAuth)
+    }
+
+    @Test("A share in flight says so and cannot be asked for again")
+    func inFlightSaysSo() {
+        let control = ShareControl(isPrivate: true, isAuthenticated: true, shareState: .inFlight)
+
+        #expect(control.label == "Sharing…")
+        #expect(!control.isEnabled)
+    }
+
+    /// The user already confirmed the share that failed, so the retry does not ask again.
+    @Test("A failed share offers the retry directly")
+    func failedOffersRetry() {
+        let control = ShareControl(isPrivate: true, isAuthenticated: true, shareState: .failed)
+
+        #expect(control.label == "Share failed — tap to retry")
+        #expect(control.isEnabled)
+        #expect(control.tap == .share)
+    }
+
+    /// There is no token refresh (#58), so an expired session is the user's to resolve.
+    @Test("A share refused for the session offers auth rather than a retry")
+    func expiredSessionOffersAuth() {
+        let control = ShareControl(isPrivate: true, isAuthenticated: true, shareState: .needsSignIn)
+
+        #expect(control.label == "Sign in again to share")
+        #expect(control.tap == .presentAuth)
+    }
+}
+
+private let sharedDetail = #"""
+{"id":"new","user_id":"u1","name":"Sunday Ragu","category":"Pasta","instructions":null,
+ "image_url":"https://pub.example/recipes/new/9f3.jpg","ingredients":[],
+ "calories":null,"total_cook_time":null}
+"""#
+
+fileprivate enum ShareStep: String, CaseIterable {
+    case presign, put, create
+}
+
+/// Which leg of the share fails, mutable so one test can let a retry through.
+private final class ShareFaults: @unchecked Sendable {
+    var step: ShareStep?
+    var status: Int
+    /// Runs as each leg is answered, so a test can change the world mid-share.
+    var during: ((ShareStep) -> Void)?
+
+    init(step: ShareStep? = nil, status: Int = 500) {
+        self.step = step
+        self.status = status
+    }
+}
+
+/// Answers all three legs of a share — the presign, R2's PUT and `POST /recipes` — from one
+/// stub, so a test reads the requests in the order the share made them.
+private func shareTransport(_ faults: ShareFaults) -> StubTransport {
+    StubTransport { request in
+        let url = request.url!
+        let body: String
+        let code: Int
+        switch (url.host, url.path) {
+        case (_, "/recipes/images"):
+            faults.during?(.presign)
+            (body, code) = faults.step == .presign
+                ? ("", faults.status)
+                : (#"{"upload_url":"https://r2.example/incoming/abc?sig=1","key":"incoming/abc"}"#, 200)
+        case ("r2.example", _):
+            faults.during?(.put)
+            (body, code) = faults.step == .put ? ("", faults.status) : ("", 200)
+        default:
+            faults.during?(.create)
+            (body, code) = faults.step == .create ? ("", faults.status) : (sharedDetail, 201)
+        }
+        let response = HTTPURLResponse(
+            url: url, statusCode: code, httpVersion: "HTTP/1.1", headerFields: nil
+        )!
+        return (Data(body.utf8), response)
+    }
+}
+
+@MainActor
+private func makeSharer(
+    _ faults: ShareFaults = ShareFaults()
+) -> (Cookbook, StubTransport, AuthStore) {
+    let transport = shareTransport(faults)
+    let auth = AuthStore(defaults: makeIsolatedDefaults())
+    auth.setSession(
+        token: "token",
+        user: User(id: "u1", email: "cook@example.com", firstName: "Nicky", lastName: nil)
+    )
+    let service = RecipeService(
+        api: APIClient(authStore: auth, transport: transport),
+        uploads: PresignedUploader(transport: transport)
+    )
+    return (Cookbook(service: service, authStore: auth), transport, auth)
+}
+
+/// A real JPEG, because a share puts the stored bytes back through the encoder and bytes
+/// that decode to nothing are not a photo.
+private func jpeg(width: CGFloat, height: CGFloat) -> Data {
+    let format = UIGraphicsImageRendererFormat.default()
+    format.scale = 1
+    let image = UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format)
+        .image { context in
+            UIColor.systemOrange.setFill()
+            context.fill(CGRect(origin: .zero, size: CGSize(width: width, height: height)))
+        }
+    return image.jpegData(compressionQuality: 0.8)!
+}
+
+private func photographedRecipe() -> Recipe {
+    let recipe = privateRecipe()
+    recipe.imageData = jpeg(width: 400, height: 300)
+    return recipe
+}
+
+private func otherAccount() -> User {
+    User(id: "u2", email: "someone@example.com", firstName: "Sam", lastName: nil)
+}
+
+@MainActor
+@Suite("Sharing a Recipe")
+struct SharingTests {
+
+    @Test("A photographed Recipe stages its bytes, then claims the key on the create")
+    func sharesInThreeSteps() async throws {
+        let (cookbook, transport, _) = makeSharer()
+
+        await cookbook.share(photographedRecipe())
+
+        #expect(transport.requests.count == 3)
+        #expect(transport.requests[0].url?.path == "/recipes/images")
+        #expect(transport.requests[1].url?.host == "r2.example")
+        #expect(transport.requests[1].httpMethod == "PUT")
+
+        let create = transport.requests[2]
+        #expect(create.httpMethod == "POST")
+        #expect(create.url?.path == "/recipes")
+        let body = try #require(create.httpBody)
+        let json = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        #expect(json["image_key"] as? String == "incoming/abc")
+    }
+
+    @Test("A Recipe with no photo goes straight to the create, carrying no key")
+    func aPhotolessRecipeSkipsTheUpload() async throws {
+        let (cookbook, transport, _) = makeSharer()
+
+        await cookbook.share(privateRecipe())
+
+        #expect(transport.requests.count == 1)
+        #expect(transport.requests[0].url?.path == "/recipes")
+        let body = try #require(transport.requests[0].httpBody)
+        let json = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        #expect(json["image_key"] == nil)
+    }
+
+    /// The local Recipe keeps its own bytes beside the address R2 now serves — ADR-0002.
+    @Test("A share that lands files the Recipe under My Recipes with the URL it was given")
+    func aLandedShareRecordsBoth() async {
+        let (cookbook, _, _) = makeSharer()
+        let recipe = photographedRecipe()
+
+        await cookbook.share(recipe)
+
+        #expect(recipe.remoteId == "new")
+        #expect(recipe.imageURL == "https://pub.example/recipes/new/9f3.jpg")
+        #expect(recipe.imageData != nil)
+        #expect(cookbook.shareState(of: recipe) == nil)
+        #expect(cookbook.segment(for: recipe) == .myRecipes)
+    }
+
+    @Test("A failure at any step leaves the Recipe Private and the failure on it",
+          arguments: ShareStep.allCases)
+    fileprivate func aFailedStepLeavesTheRecipePrivate(step: ShareStep) async {
+        let (cookbook, _, _) = makeSharer(ShareFaults(step: step))
+        let recipe = photographedRecipe()
+
+        await cookbook.share(recipe)
+
+        #expect(recipe.isPrivate)
+        #expect(recipe.imageURL == nil)
+        #expect(cookbook.shareState(of: recipe) == .failed)
+    }
+
+    @Test("A session the API has stopped accepting asks for a sign-in, not a retry")
+    func anExpiredSessionAsksForASignIn() async {
+        let (cookbook, _, _) = makeSharer(ShareFaults(step: .presign, status: 401))
+        let recipe = photographedRecipe()
+
+        await cookbook.share(recipe)
+
+        #expect(recipe.isPrivate)
+        #expect(cookbook.shareState(of: recipe) == .needsSignIn)
+    }
+
+    /// Without this the sheet is a dead end: the button would go on offering the sign-in the
+    /// user has already been through, and the share could never be made again.
+    @Test("Signing in again makes the refusal stale, so the share is offered afresh")
+    func signingInAgainClearsTheRefusal() async {
+        let (cookbook, _, auth) = makeSharer(ShareFaults(step: .presign, status: 401))
+        let recipe = photographedRecipe()
+        await cookbook.share(recipe)
+        #expect(cookbook.shareState(of: recipe) == .needsSignIn)
+
+        auth.setSession(
+            token: "fresh",
+            user: User(id: "u1", email: "cook@example.com", firstName: "Nicky", lastName: nil)
+        )
+
+        #expect(cookbook.shareState(of: recipe) == nil)
+    }
+
+    @Test("A second tap while the first share is in flight is the same share asked for twice")
+    func aSecondTapIsDropped() async {
+        let (cookbook, transport, _) = makeSharer()
+        let recipe = photographedRecipe()
+
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await cookbook.share(recipe) }
+            group.addTask { await cookbook.share(recipe) }
+        }
+
+        #expect(transport.requests.count == 3)
+    }
+
+    @Test("A retry that lands clears the failure it was offered for")
+    func aRetryClearsTheFailure() async {
+        let faults = ShareFaults(step: .put)
+        let (cookbook, _, _) = makeSharer(faults)
+        let recipe = photographedRecipe()
+
+        await cookbook.share(recipe)
+        #expect(cookbook.shareState(of: recipe) == .failed)
+
+        faults.step = nil
+        await cookbook.share(recipe)
+
+        #expect(cookbook.shareState(of: recipe) == nil)
+        #expect(recipe.remoteId == "new")
+    }
+
+    /// The bytes are already within the contract, so the share hands R2 what SwiftData holds
+    /// rather than putting every photo through a second encode.
+    @Test("An encoded photo goes up as it is stored")
+    func anEncodedPhotoGoesUpUntouched() async throws {
+        let (cookbook, transport, _) = makeSharer()
+        let recipe = photographedRecipe()
+        let stored = recipe.imageData
+
+        await cookbook.share(recipe)
+
+        let put = try #require(transport.requests.first { $0.httpMethod == "PUT" })
+        #expect(put.httpBody == stored)
+        #expect(recipe.imageData == stored)
+    }
+
+    /// Photos picked before the encoder existed are full-resolution and survive an app
+    /// update. Untouched, one of them is refused by the presign's size gate on every retry.
+    @Test("A photo stored before the encoder existed is brought within the contract first")
+    func aLegacyPhotoIsNormalizedBeforeItGoesUp() async throws {
+        let (cookbook, transport, _) = makeSharer()
+        let recipe = privateRecipe()
+        recipe.imageData = jpeg(width: 2400, height: 1800)
+
+        await cookbook.share(recipe)
+
+        let put = try #require(transport.requests.first { $0.httpMethod == "PUT" })
+        let uploaded = try #require(put.httpBody)
+        let decoded = try #require(UIImage(data: uploaded))
+        #expect(decoded.size.width * decoded.scale == RecipeImageEncoder.longestEdge)
+        #expect(uploaded.count <= RecipeImageEncoder.ceiling)
+        #expect(recipe.imageData == uploaded)
+    }
+
+    @Test("Bytes that are not a photo are shared as no photo rather than staged")
+    func undecodableBytesAreNotUploaded() async {
+        let (cookbook, transport, _) = makeSharer()
+        let recipe = privateRecipe()
+        recipe.imageData = Data(repeating: 0xFF, count: 512)
+
+        await cookbook.share(recipe)
+
+        #expect(transport.requests.count == 1)
+        #expect(transport.requests[0].url?.path == "/recipes")
+    }
+
+    /// The share outlives its screen, so the account can change under it. Creating anyway
+    /// publishes one user's Recipe as whoever happens to be signed in when the POST goes out.
+    @Test("A share whose account changes mid-flight is abandoned rather than published")
+    func anAccountChangeMidShareAbandonsIt() async {
+        let faults = ShareFaults()
+        let (cookbook, transport, auth) = makeSharer(faults)
+        let recipe = photographedRecipe()
+        faults.during = { step in
+            guard step == .put else { return }
+            auth.setSession(token: "someone-else", user: otherAccount())
+        }
+
+        await cookbook.share(recipe)
+
+        #expect(!transport.requests.contains { $0.url?.path == "/recipes" })
+        #expect(recipe.isPrivate)
+        #expect(cookbook.shareState(of: recipe) == .failed)
+    }
+
+    /// The refusal belongs to the session the API turned down. Recording whichever session
+    /// is current when the answer lands would pin it to an account that was never refused.
+    @Test("A refusal is recorded against the session that was refused")
+    func aRefusalBelongsToTheSessionThatWasRefused() async {
+        let faults = ShareFaults(step: .presign, status: 401)
+        let (cookbook, _, auth) = makeSharer(faults)
+        let recipe = photographedRecipe()
+        faults.during = { step in
+            guard step == .presign else { return }
+            auth.setSession(token: "fresh", user: otherAccount())
+        }
+
+        await cookbook.share(recipe)
+
+        #expect(cookbook.shareState(of: recipe) == nil)
+    }
+
+    /// The Recipe stays editable while the upload runs, and the staged photo is already
+    /// chosen by then: fields read afterwards would publish an edit against the old photo.
+    @Test("A Recipe edited mid-share publishes what the user confirmed")
+    func anEditMidShareDoesNotChangeWhatIsPublished() async throws {
+        let faults = ShareFaults()
+        let (cookbook, transport, _) = makeSharer(faults)
+        let recipe = photographedRecipe()
+        faults.during = { step in
+            guard step == .put else { return }
+            recipe.name = "Something Else"
+            recipe.imageData = nil
+        }
+
+        await cookbook.share(recipe)
+
+        let create = try #require(transport.requests.last)
+        let body = try #require(create.httpBody)
+        let json = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        #expect(json["name"] as? String == "Sunday Ragu")
+        #expect(json["image_key"] as? String == "incoming/abc")
     }
 }
