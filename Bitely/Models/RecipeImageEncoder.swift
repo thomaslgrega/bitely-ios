@@ -37,6 +37,18 @@ enum RecipeImageEncoder {
         return encoded.map(EncodedRecipeImage.init)
     }
 
+    /// Bytes already on disk as the share finds them. A photo picked before this encoder
+    /// existed was stored full-resolution and survives an app update, so anything outside
+    /// the contract goes through the encoder rather than up to a presign that refuses it.
+    static func conforming(_ data: Data) -> EncodedRecipeImage? {
+        guard let image = UIImage(data: data) else { return nil }
+        let longest = max(image.size.width, image.size.height) * image.scale
+        guard longest > longestEdge || data.count > ceiling else {
+            return EncodedRecipeImage(data: data)
+        }
+        return encode(image)
+    }
+
     /// Renders at scale 1 whatever the source's scale, so the JPEG's pixels are the size
     /// this asked for. The ratio is capped at 1: a photo smaller than the edge is left alone.
     private static func downscaled(_ image: UIImage) -> UIImage {

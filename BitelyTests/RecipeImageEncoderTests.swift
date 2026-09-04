@@ -85,3 +85,33 @@ struct RecipeImageEncoderTests {
         #expect(squeezed.contentLength < roomy.contentLength)
     }
 }
+
+@Suite("Bytes already on disk")
+struct ConformingImageTests {
+
+    @Test("Bytes within the contract are handed back as they are")
+    func conformingBytesArePassedThrough() throws {
+        let stored = try #require(noisyImage(width: 400, height: 300).jpegData(compressionQuality: 0.8))
+
+        let conforming = try #require(RecipeImageEncoder.conforming(stored))
+
+        #expect(conforming.data == stored)
+    }
+
+    @Test("A full-resolution photo stored before the encoder existed is re-encoded")
+    func oversizedBytesAreReEncoded() throws {
+        let legacy = try #require(noisyImage(width: 2400, height: 1800).jpegData(compressionQuality: 0.8))
+
+        let conforming = try #require(RecipeImageEncoder.conforming(legacy))
+
+        #expect(try pixelSize(of: conforming) == CGSize(width: 800, height: 600))
+        #expect(conforming.contentLength <= RecipeImageEncoder.ceiling)
+    }
+
+    /// Bytes that decode to nothing are not a photo, which is what `RecipeThumbnail` already
+    /// makes of them.
+    @Test("Bytes that are not an image answer nothing")
+    func undecodableBytesAnswerNothing() {
+        #expect(RecipeImageEncoder.conforming(Data(repeating: 0xFF, count: 512)) == nil)
+    }
+}
