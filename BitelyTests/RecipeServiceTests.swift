@@ -2,6 +2,18 @@ import Foundation
 import Testing
 @testable import Bitely
 
+/// One transport answers both the API and R2, so an upload's two legs are recorded in order.
+private func makeService(transport: StubTransport, signedIn: Bool = true) -> RecipeService {
+    let store = AuthStore(defaults: makeIsolatedDefaults())
+    if signedIn {
+        store.setSession(token: "t", user: User(id: "u9", email: nil, firstName: nil, lastName: nil))
+    }
+    return RecipeService(
+        api: APIClient(authStore: store, transport: transport),
+        uploads: PresignedUploader(transport: transport)
+    )
+}
+
 @Suite("RecipeService")
 struct RecipeServiceTests {
     private let detailPayload = #"""
@@ -17,17 +29,6 @@ struct RecipeServiceTests {
       "total_cook_time": 25
     }
     """#
-
-    private func makeService(transport: StubTransport, signedIn: Bool = true) -> RecipeService {
-        let store = AuthStore(defaults: makeIsolatedDefaults())
-        if signedIn {
-            store.setSession(token: "t", user: User(id: "u9", email: nil, firstName: nil, lastName: nil))
-        }
-        return RecipeService(
-            api: APIClient(authStore: store, transport: transport),
-            uploads: PresignedUploader(transport: transport)
-        )
-    }
 
     @Test("getRecipeById requests the recipe by path")
     func getRecipeById() async throws {
@@ -249,17 +250,6 @@ private func uploadTransport(
 @Suite("Recipe image upload")
 struct RecipeImageUploadTests {
     private let image = EncodedRecipeImage(data: Data(repeating: 0xFF, count: 2048))
-
-    private func makeService(transport: StubTransport, signedIn: Bool = true) -> RecipeService {
-        let store = AuthStore(defaults: makeIsolatedDefaults())
-        if signedIn {
-            store.setSession(token: "t", user: User(id: "u9", email: nil, firstName: nil, lastName: nil))
-        }
-        return RecipeService(
-            api: APIClient(authStore: store, transport: transport),
-            uploads: PresignedUploader(transport: transport)
-        )
-    }
 
     @Test("The presign request carries the content type and length the encoder answered")
     func presignDeclaresTheBytes() async throws {

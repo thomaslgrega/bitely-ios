@@ -14,6 +14,9 @@ struct EditRecipeView: View {
 
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
+    /// Whether this visit touched the photo. An edit to anything else leaves the stored
+    /// bytes alone, rather than putting an already-encoded JPEG through a second pass.
+    @State private var photoEdited = false
 
     var body: some View {
         ScrollView {
@@ -114,6 +117,7 @@ struct EditRecipeView: View {
                 if let data = try? await newItem?.loadTransferable(type: Data.self),
                    let image = UIImage(data: data) {
                     selectedImage = image
+                    photoEdited = true
                 }
             }
         }
@@ -123,6 +127,7 @@ struct EditRecipeView: View {
         Button {
             selectedPhotoItem = nil
             selectedImage = nil
+            photoEdited = true
         } label: {
             Image(systemName: "trash")
                 .font(.system(size: SymbolSize.control, weight: .medium))
@@ -174,7 +179,9 @@ struct EditRecipeView: View {
 
         // Encoded here rather than at share time, so SwiftData never holds the picker's
         // full-size blob and a share has nothing left to prepare — ADR-0002.
-        recipe.imageData = selectedImage.flatMap { RecipeImageEncoder.encode($0) }?.data
+        if photoEdited {
+            recipe.imageData = selectedImage.flatMap { RecipeImageEncoder.encode($0) }?.data
+        }
 
         cookbook.commit(recipe, into: modelContext)
         dismiss()

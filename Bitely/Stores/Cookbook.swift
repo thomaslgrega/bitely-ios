@@ -61,6 +61,14 @@ struct HeldRecipes {
     func contains(_ remoteId: String) -> Bool { byRemoteId[remoteId] != nil }
 }
 
+/// Where one Recipe's share got to. Absent means nothing has been attempted, or the last
+/// attempt landed. Session-only and keyed by local Recipe id — ADR-0002.
+enum ShareState: Equatable {
+    case inFlight
+    case failed
+    case needsSignIn
+}
+
 /// Which of the device's Recipes this user wrote, for the length of a session.
 ///
 /// The Recipes themselves come from SwiftData; `me/recipes` answers what the device cannot
@@ -87,6 +95,9 @@ final class Cookbook {
     /// Where each Recipe's share got to, by local id. In memory for the session, because an
     /// app killed mid-share has shared nothing and the Recipe is still Private — ADR-0002.
     private var shares: [UUID: ShareState] = [:]
+    /// The session each refusal was raised against, so signing in again makes it stale
+    /// rather than leaving the Recipe offering the sheet it has already been through.
+    private var refusals: [UUID: String] = [:]
 
     @ObservationIgnored private let service: RecipeService
     @ObservationIgnored private let authStore: AuthStore
@@ -177,7 +188,11 @@ final class Cookbook {
 
     /// The state a view draws the Share button from. It lives here rather than on the
     /// Recipe, so `@Query` never sees it — ADR-0002.
-    func shareState(of recipe: Recipe) -> ShareState? { shares[recipe.id] }
+    func shareState(of recipe: Recipe) -> ShareState? {
+        let state = shares[recipe.id]
+        guard state == .needsSignIn else { return state }
+        return refusals[recipe.id] == authStore.accessToken ? .needsSignIn : nil
+    }
 
     /// Fired rather than awaited: the share outlives the screen that asked for it, so its
     /// `Task` belongs to this object rather than to a view — ADR-0002.
@@ -186,14 +201,11 @@ final class Cookbook {
     }
 
     /// Publishes a Private Recipe: stages its photo, creates the Shared Recipe claiming the
-    /// staged key, then records the authorship the API just granted.
-    ///
-    /// Fail-closed at every step — a Shared Recipe published without its photo cannot be
-    /// given one afterwards (#57) and the corpus is public, so a failure leaves the fixable
-    /// state on the device. ADR-0002.
+    /// staged key, then records the authorship. Fail-closed at every step — ADR-0002.
     func share(_ recipe: Recipe) async {
         guard shares[recipe.id] != .inFlight else { return }
         shares[recipe.id] = .inFlight
+        refusals[recipe.id] = nil
 
         do {
             var imageKey: String?
@@ -219,6 +231,7 @@ final class Cookbook {
             shares[recipe.id] = nil
         } catch let error as APIError where error.statusCode == 401 {
             shares[recipe.id] = .needsSignIn
+            refusals[recipe.id] = authStore.accessToken
         } catch {
             shares[recipe.id] = .failed
         }

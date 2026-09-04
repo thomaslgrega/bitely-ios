@@ -15,7 +15,7 @@ struct PresignRequest: Encodable {
 /// What the API answers a presign request with. `expires_at` is not decoded: the upload
 /// follows immediately, and a stale URL is R2's `403` rather than something to pre-empt.
 struct PresignedUpload: Decodable {
-    let uploadUrl: String
+    let uploadUrl: URL
     let key: String
 
     enum CodingKeys: String, CodingKey {
@@ -43,13 +43,6 @@ struct PresignedUploader {
         request.httpBody = image.data
 
         let (data, response) = try await transport.send(request)
-
-        guard let http = response as? HTTPURLResponse else {
-            throw URLError(.badServerResponse)
-        }
-
-        guard (200...299).contains(http.statusCode) else {
-            throw APIError(statusCode: http.statusCode, body: String(data: data, encoding: .utf8))
-        }
+        try APIError.check(data, response)
     }
 }

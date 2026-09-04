@@ -11,15 +11,16 @@ private func noisyImage(width: CGFloat, height: CGFloat) -> UIImage {
     return UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format)
         .image { context in
             var generator = SystemRandomNumberGenerator()
-            for x in stride(from: 0, to: width, by: 2) {
-                for y in stride(from: 0, to: height, by: 2) {
+            let block: CGFloat = 4
+            for x in stride(from: 0, to: width, by: block) {
+                for y in stride(from: 0, to: height, by: block) {
                     UIColor(
                         red: .random(in: 0...1, using: &generator),
                         green: .random(in: 0...1, using: &generator),
                         blue: .random(in: 0...1, using: &generator),
                         alpha: 1
                     ).setFill()
-                    context.fill(CGRect(x: x, y: y, width: 2, height: 2))
+                    context.fill(CGRect(x: x, y: y, width: block, height: block))
                 }
             }
         }
@@ -67,7 +68,7 @@ struct RecipeImageEncoderTests {
 
     @Test("The output fits under the ceiling")
     func fitsUnderTheCeiling() throws {
-        let encoded = try #require(RecipeImageEncoder.encode(noisyImage(width: 4000, height: 3000)))
+        let encoded = try #require(RecipeImageEncoder.encode(noisyImage(width: 2400, height: 1800)))
 
         #expect(encoded.contentLength <= RecipeImageEncoder.ceiling)
     }

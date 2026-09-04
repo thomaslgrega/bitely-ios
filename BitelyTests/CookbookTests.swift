@@ -533,7 +533,7 @@ private let sharedDetail = #"""
  "calories":null,"total_cook_time":null}
 """#
 
-enum ShareStep: String, CaseIterable {
+fileprivate enum ShareStep: String, CaseIterable {
     case presign, put, create
 }
 
@@ -573,7 +573,9 @@ private func shareTransport(_ faults: ShareFaults) -> StubTransport {
 }
 
 @MainActor
-private func makeSharer(_ faults: ShareFaults = ShareFaults()) -> (Cookbook, StubTransport) {
+private func makeSharer(
+    _ faults: ShareFaults = ShareFaults()
+) -> (Cookbook, StubTransport, AuthStore) {
     let transport = shareTransport(faults)
     let auth = AuthStore(defaults: makeIsolatedDefaults())
     auth.setSession(
@@ -584,7 +586,7 @@ private func makeSharer(_ faults: ShareFaults = ShareFaults()) -> (Cookbook, Stu
         api: APIClient(authStore: auth, transport: transport),
         uploads: PresignedUploader(transport: transport)
     )
-    return (Cookbook(service: service, authStore: auth), transport)
+    return (Cookbook(service: service, authStore: auth), transport, auth)
 }
 
 private func photographedRecipe() -> Recipe {
@@ -599,7 +601,7 @@ struct SharingTests {
 
     @Test("A photographed Recipe stages its bytes, then claims the key on the create")
     func sharesInThreeSteps() async throws {
-        let (cookbook, transport) = makeSharer()
+        let (cookbook, transport, _) = makeSharer()
 
         await cookbook.share(photographedRecipe())
 
@@ -618,7 +620,7 @@ struct SharingTests {
 
     @Test("A Recipe with no photo goes straight to the create, carrying no key")
     func aPhotolessRecipeSkipsTheUpload() async throws {
-        let (cookbook, transport) = makeSharer()
+        let (cookbook, transport, _) = makeSharer()
 
         await cookbook.share(privateRecipe())
 
@@ -632,7 +634,7 @@ struct SharingTests {
     /// The local Recipe keeps its own bytes beside the address R2 now serves — ADR-0002.
     @Test("A share that lands files the Recipe under My Recipes with the URL it was given")
     func aLandedShareRecordsBoth() async {
-        let (cookbook, _) = makeSharer()
+        let (cookbook, _, _) = makeSharer()
         let recipe = photographedRecipe()
 
         await cookbook.share(recipe)
@@ -646,8 +648,8 @@ struct SharingTests {
 
     @Test("A failure at any step leaves the Recipe Private and the failure on it",
           arguments: ShareStep.allCases)
-    func aFailedStepLeavesTheRecipePrivate(step: ShareStep) async {
-        let (cookbook, _) = makeSharer(ShareFaults(step: step))
+    fileprivate func aFailedStepLeavesTheRecipePrivate(step: ShareStep) async {
+        let (cookbook, _, _) = makeSharer(ShareFaults(step: step))
         let recipe = photographedRecipe()
 
         await cookbook.share(recipe)
@@ -659,7 +661,7 @@ struct SharingTests {
 
     @Test("A session the API has stopped accepting asks for a sign-in, not a retry")
     func anExpiredSessionAsksForASignIn() async {
-        let (cookbook, _) = makeSharer(ShareFaults(step: .presign, status: 401))
+        let (cookbook, _, _) = makeSharer(ShareFaults(step: .presign, status: 401))
         let recipe = photographedRecipe()
 
         await cookbook.share(recipe)
@@ -668,9 +670,26 @@ struct SharingTests {
         #expect(cookbook.shareState(of: recipe) == .needsSignIn)
     }
 
+    /// Without this the sheet is a dead end: the button would go on offering the sign-in the
+    /// user has already been through, and the share could never be made again.
+    @Test("Signing in again makes the refusal stale, so the share is offered afresh")
+    func signingInAgainClearsTheRefusal() async {
+        let (cookbook, _, auth) = makeSharer(ShareFaults(step: .presign, status: 401))
+        let recipe = photographedRecipe()
+        await cookbook.share(recipe)
+        #expect(cookbook.shareState(of: recipe) == .needsSignIn)
+
+        auth.setSession(
+            token: "fresh",
+            user: User(id: "u1", email: "cook@example.com", firstName: "Nicky", lastName: nil)
+        )
+
+        #expect(cookbook.shareState(of: recipe) == nil)
+    }
+
     @Test("A second tap while the first share is in flight is the same share asked for twice")
     func aSecondTapIsDropped() async {
-        let (cookbook, transport) = makeSharer()
+        let (cookbook, transport, _) = makeSharer()
         let recipe = photographedRecipe()
 
         await withTaskGroup(of: Void.self) { group in
@@ -684,7 +703,7 @@ struct SharingTests {
     @Test("A retry that lands clears the failure it was offered for")
     func aRetryClearsTheFailure() async {
         let faults = ShareFaults(step: .put)
-        let (cookbook, _) = makeSharer(faults)
+        let (cookbook, _, _) = makeSharer(faults)
         let recipe = photographedRecipe()
 
         await cookbook.share(recipe)

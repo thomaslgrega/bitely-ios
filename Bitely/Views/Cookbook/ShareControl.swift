@@ -6,14 +6,6 @@ extension Recipe {
     var isPrivate: Bool { remoteId == nil }
 }
 
-/// Where one Recipe's share got to. Absent means nothing has been attempted, or the last
-/// attempt landed. Session-only and keyed by local Recipe id — ADR-0002.
-enum ShareState: Equatable {
-    case inFlight
-    case failed
-    case needsSignIn
-}
-
 /// Whether a Recipe's detail screen offers Share, what it reads, and what one tap does.
 /// Signed out it presents auth at the moment of sharing, where the intent is unambiguous and
 /// there is no half-filled form to lose — docs/design/app-flow.md, Cookbook.

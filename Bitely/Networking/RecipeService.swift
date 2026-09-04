@@ -21,8 +21,7 @@ final class RecipeService {
             path: "recipes/images", method: "POST", body: body, requiresAuth: true
         )
 
-        guard let url = URL(string: presigned.uploadUrl) else { throw URLError(.badURL) }
-        try await uploads.upload(image, to: url)
+        try await uploads.upload(image, to: presigned.uploadUrl)
 
         return presigned.key
     }
