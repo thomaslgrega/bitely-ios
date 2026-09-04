@@ -3,9 +3,28 @@ import Foundation
 @Observable
 final class RecipeService {
     private let api: APIClient
+    private let uploads: PresignedUploader
 
-    init(api: APIClient) {
+    init(api: APIClient, uploads: PresignedUploader = PresignedUploader()) {
         self.api = api
+        self.uploads = uploads
+    }
+
+    /// Stages a Recipe's photo in the bucket and answers the `image_key` a share claims it
+    /// with. The three-step dance — presign, PUT, key — is the client's alone; `bitelyapi`
+    /// ADR-0006.
+    func uploadImage(_ image: EncodedRecipeImage) async throws -> String {
+        let body = try JSONEncoder().encode(
+            PresignRequest(contentType: image.contentType, contentLength: image.contentLength)
+        )
+        let presigned: PresignedUpload = try await api.request(
+            path: "recipes/images", method: "POST", body: body, requiresAuth: true
+        )
+
+        guard let url = URL(string: presigned.uploadUrl) else { throw URLError(.badURL) }
+        try await uploads.upload(image, to: url)
+
+        return presigned.key
     }
 
     func getRecipeById(id: String) async throws -> RecipeDetailDTO {

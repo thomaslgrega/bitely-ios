@@ -84,6 +84,9 @@ final class Cookbook {
     /// The saves whose fetch is still in flight. The heart only fills on the insert, so a
     /// second tap during the fetch is the same save asked for twice and is dropped.
     private var saving: Set<String> = []
+    /// Where each Recipe's share got to, by local id. In memory for the session, because an
+    /// app killed mid-share has shared nothing and the Recipe is still Private — ADR-0002.
+    private var shares: [UUID: ShareState] = [:]
 
     @ObservationIgnored private let service: RecipeService
     @ObservationIgnored private let authStore: AuthStore
@@ -169,6 +172,55 @@ final class Cookbook {
             loadedForSession = session
         } catch {
             forgetAuthorship()
+        }
+    }
+
+    /// The state a view draws the Share button from. It lives here rather than on the
+    /// Recipe, so `@Query` never sees it — ADR-0002.
+    func shareState(of recipe: Recipe) -> ShareState? { shares[recipe.id] }
+
+    /// Fired rather than awaited: the share outlives the screen that asked for it, so its
+    /// `Task` belongs to this object rather than to a view — ADR-0002.
+    func beginShare(_ recipe: Recipe) {
+        Task { await share(recipe) }
+    }
+
+    /// Publishes a Private Recipe: stages its photo, creates the Shared Recipe claiming the
+    /// staged key, then records the authorship the API just granted.
+    ///
+    /// Fail-closed at every step — a Shared Recipe published without its photo cannot be
+    /// given one afterwards (#57) and the corpus is public, so a failure leaves the fixable
+    /// state on the device. ADR-0002.
+    func share(_ recipe: Recipe) async {
+        guard shares[recipe.id] != .inFlight else { return }
+        shares[recipe.id] = .inFlight
+
+        do {
+            var imageKey: String?
+            if let data = recipe.imageData {
+                imageKey = try await service.uploadImage(EncodedRecipeImage(data: data))
+            }
+
+            let shared = try await service.createRecipe(recipe: CreateRecipeRequest(
+                name: recipe.name,
+                category: recipe.category,
+                instructions: recipe.instructions,
+                imageKey: imageKey,
+                ingredients: recipe.ingredients.map {
+                    CreateIngredientRequest(name: $0.name, measurement: $0.measurement)
+                },
+                calories: recipe.calories,
+                totalCookTime: recipe.totalCookTime
+            ))
+
+            recipe.remoteId = shared.id
+            recipe.imageURL = shared.imageUrl
+            recordAuthorship(of: shared)
+            shares[recipe.id] = nil
+        } catch let error as APIError where error.statusCode == 401 {
+            shares[recipe.id] = .needsSignIn
+        } catch {
+            shares[recipe.id] = .failed
         }
     }
 

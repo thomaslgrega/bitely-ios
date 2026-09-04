@@ -7,7 +7,6 @@ enum RecipeTab {
 
 struct RecipeInfoContentView: View {
     @Environment(AuthStore.self) private var authStore
-    @Environment(RecipeService.self) private var recipeService
     @Environment(Cookbook.self) private var cookbook
 
     let recipe: Recipe
@@ -20,7 +19,11 @@ struct RecipeInfoContentView: View {
     @State private var selectedTab: RecipeTab = .ingredients
 
     private var shareControl: ShareControl {
-        ShareControl(recipe: recipe, isAuthenticated: authStore.isAuthenticated)
+        ShareControl(
+            recipe: recipe,
+            isAuthenticated: authStore.isAuthenticated,
+            shareState: cookbook.shareState(of: recipe)
+        )
     }
 
     var body: some View {
@@ -53,7 +56,7 @@ struct RecipeInfoContentView: View {
         .background(Color.surface)
         .alert("Do you want to share this recipe?", isPresented: $showShareAlert) {
             Button("Cancel", role: .cancel) {}
-            Button("Share", action: shareRecipe)
+            Button("Share") { cookbook.beginShare(recipe) }
         }
         .sheet(isPresented: $showAuthSheet) {
             AuthSheet()
@@ -109,9 +112,10 @@ struct RecipeInfoContentView: View {
 
             if shareControl.isOffered {
                 Button(action: share) {
-                    Label("Share", systemImage: "square.and.arrow.up")
+                    Label(shareControl.label, systemImage: "square.and.arrow.up")
                 }
                 .buttonStyle(.secondary)
+                .disabled(!shareControl.isEnabled)
             }
         }
     }
@@ -151,29 +155,8 @@ struct RecipeInfoContentView: View {
     private func share() {
         switch shareControl.tap {
         case .confirmShare: showShareAlert = true
+        case .share: cookbook.beginShare(recipe)
         case .presentAuth: showAuthSheet = true
-        }
-    }
-
-    private func shareRecipe() {
-        Task {
-            do {
-                let ingredients = recipe.ingredients.map { CreateIngredientRequest(name: $0.name, measurement: $0.measurement) }
-                let remoteRecipe = try await recipeService.createRecipe(recipe: CreateRecipeRequest(
-                    name: recipe.name,
-                    category: recipe.category,
-                    instructions: recipe.instructions,
-                    imageKey: nil,
-                    ingredients: ingredients,
-                    calories: recipe.calories,
-                    totalCookTime: recipe.totalCookTime
-                ))
-
-                recipe.remoteId = remoteRecipe.id
-                cookbook.recordAuthorship(of: remoteRecipe)
-            } catch {
-                print("Failed to share recipe:", error)
-            }
         }
     }
 }

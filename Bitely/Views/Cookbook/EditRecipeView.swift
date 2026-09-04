@@ -172,11 +172,9 @@ struct EditRecipeView: View {
 
         recipe.ingredients = recipe.ingredients.filter { $0.name.trimmingCharacters(in: .whitespaces) != "" }
 
-        if let jpegData = selectedImage?.jpegData(compressionQuality: 0.8) {
-            recipe.imageData = jpegData
-        } else {
-            recipe.imageData = nil
-        }
+        // Encoded here rather than at share time, so SwiftData never holds the picker's
+        // full-size blob and a share has nothing left to prepare — ADR-0002.
+        recipe.imageData = selectedImage.flatMap { RecipeImageEncoder.encode($0) }?.data
 
         cookbook.commit(recipe, into: modelContext)
         dismiss()
