@@ -18,9 +18,9 @@ struct ShareControl: Equatable {
 
     let isPrivate: Bool
     let isAuthenticated: Bool
-    let shareState: ShareState?
+    let shareState: CorpusWriteState?
 
-    init(isPrivate: Bool, isAuthenticated: Bool, shareState: ShareState? = nil) {
+    init(isPrivate: Bool, isAuthenticated: Bool, shareState: CorpusWriteState? = nil) {
         self.isPrivate = isPrivate
         self.isAuthenticated = isAuthenticated
         self.shareState = shareState
@@ -54,7 +54,7 @@ struct ShareControl: Equatable {
 }
 
 extension ShareControl {
-    init(recipe: Recipe, isAuthenticated: Bool, shareState: ShareState? = nil) {
+    init(recipe: Recipe, isAuthenticated: Bool, shareState: CorpusWriteState? = nil) {
         self.init(
             isPrivate: recipe.isPrivate,
             isAuthenticated: isAuthenticated,

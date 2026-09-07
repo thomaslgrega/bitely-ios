@@ -27,7 +27,11 @@ struct RecipeInfoContentView: View {
     }
 
     private var editControl: UnsharedEditControl {
-        UnsharedEditControl(recipe: recipe, editState: cookbook.editState(of: recipe))
+        UnsharedEditControl(
+            isAuthored: cookbook.propagatesEdits(to: recipe),
+            hasUnsharedEdit: recipe.hasUnsharedEdit,
+            editState: cookbook.editState(of: recipe)
+        )
     }
 
     var body: some View {

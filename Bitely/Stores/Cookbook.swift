@@ -65,7 +65,7 @@ struct HeldRecipes {
 /// that carries a later edit. Absent means nothing has been attempted, or the last attempt
 /// landed. Session-only and keyed by local Recipe id — ADR-0002. What a failed push leaves
 /// behind for the next session is on the Recipe instead — ADR-0003.
-enum ShareState: Equatable {
+enum CorpusWriteState: Equatable {
     case inFlight
     case failed
     case needsSignIn
@@ -102,7 +102,7 @@ final class Cookbook {
     /// session, because an app killed mid-share has shared nothing and the Recipe is still
     /// Private — ADR-0002. A Recipe is Private or Shared and never both, so a share and a
     /// push never contend for the same entry.
-    private var writes: [UUID: ShareState] = [:]
+    private var writes: [UUID: CorpusWriteState] = [:]
     /// The session each refusal was raised against, so signing in again makes it stale
     /// rather than leaving the Recipe offering the sheet it has already been through.
     private var refusals: [UUID: String] = [:]
@@ -196,13 +196,13 @@ final class Cookbook {
 
     /// The state a view draws the Share button from. It lives here rather than on the
     /// Recipe, so `@Query` never sees it — ADR-0002.
-    func shareState(of recipe: Recipe) -> ShareState? { writeState(of: recipe) }
+    func shareState(of recipe: Recipe) -> CorpusWriteState? { writeState(of: recipe) }
 
     /// The same for the push that carries an edit. A Recipe is Private or Shared, so only
     /// one of the two controls ever reads this.
-    func editState(of recipe: Recipe) -> ShareState? { writeState(of: recipe) }
+    func editState(of recipe: Recipe) -> CorpusWriteState? { writeState(of: recipe) }
 
-    private func writeState(of recipe: Recipe) -> ShareState? {
+    private func writeState(of recipe: Recipe) -> CorpusWriteState? {
         let state = writes[recipe.id]
         guard state == .needsSignIn else { return state }
         return refusals[recipe.id] == authStore.accessToken ? .needsSignIn : nil
@@ -287,17 +287,20 @@ final class Cookbook {
     /// nowhere to go, and this user's own Shared Recipe pushes — ADR-0003.
     func commit(_ recipe: Recipe, photoEdited: Bool, into context: ModelContext) {
         if recipe.modelContext == nil { context.insert(recipe) }
-        guard pushes(recipe) else { return }
+        recipe.editGeneration += 1
+        guard propagatesEdits(to: recipe) else { return }
 
         recipe.unsharedTextEdit = true
         recipe.unsharedImageEdit = recipe.unsharedImageEdit || photoEdited
         beginPush(recipe)
     }
 
-    /// Whether an edit to this Recipe is owed to the corpus. Signed out the device cannot
-    /// tell this user's own Shared Recipes from the ones they saved, so it records nothing
-    /// rather than flagging someone else's work — ADR-0003.
-    private func pushes(_ recipe: Recipe) -> Bool {
+    /// Whether an edit to this Recipe is owed to the corpus, which is also whether one owed
+    /// by an earlier session may still be sent. Signed out, or before `me/recipes` has
+    /// answered, the device cannot tell this user's own Shared Recipes from the ones they
+    /// saved — and a pending edit left by another account is that account's, not this
+    /// one's — so it neither records nor sends anything — ADR-0003.
+    func propagatesEdits(to recipe: Recipe) -> Bool {
         guard recipe.remoteId != nil, authStore.accessToken != nil else { return false }
         return hasResolvedAuthorship && segment(for: recipe) == .myRecipes
     }
@@ -311,7 +314,8 @@ final class Cookbook {
     /// pushed too — ADR-0003. A Recipe refused for the current session is left alone: the
     /// control is offering the sheet, and re-firing on every appearance would talk over it.
     func push(_ recipe: Recipe) async {
-        guard let remoteId = recipe.remoteId,
+        guard propagatesEdits(to: recipe),
+              let remoteId = recipe.remoteId,
               recipe.hasUnsharedEdit,
               writes[recipe.id] != .inFlight,
               writeState(of: recipe) != .needsSignIn else { return }
@@ -329,11 +333,12 @@ final class Cookbook {
     /// the newest edit rather than replaying a failed one.
     private func attemptPush(_ recipe: Recipe, to remoteId: String) async -> Bool {
         let session = authStore.accessToken
+        let generation = recipe.editGeneration
 
         do {
             if recipe.unsharedImageEdit {
                 let image = stagedImage(of: recipe)
-                try await leg(\.unsharedImageEdit, of: recipe) {
+                try await leg(\.unsharedImageEdit, of: recipe, from: generation) {
                     if let image {
                         let key = try await self.service.uploadImage(image)
                         recipe.imageURL = try await self.service.setRecipeImage(id: remoteId, key: key)
@@ -345,7 +350,7 @@ final class Cookbook {
             }
 
             let update = UpdateRecipeRequest(recipe)
-            try await leg(\.unsharedTextEdit, of: recipe) {
+            try await leg(\.unsharedTextEdit, of: recipe, from: generation) {
                 guard self.authStore.accessToken == session else { throw AccountChanged() }
                 try await self.service.editRecipe(id: remoteId, recipe: update)
             }
@@ -367,21 +372,18 @@ final class Cookbook {
         }
     }
 
-    /// Runs one leg of a push with its flag already cleared, so a save made while the leg is
-    /// in flight re-marks it rather than being cleared by the response it beat. A failure
-    /// puts the mark back, leaving exactly what did not land to retry.
+    /// Runs one leg and clears its flag only once the response has landed, and only if the
+    /// Recipe has not been saved again since the leg began. The flag is the durable record,
+    /// so clearing it up front would let a kill mid-flight forget an edit the corpus never
+    /// received; the generation is what tells a stale success from a current one.
     private func leg(
         _ flag: ReferenceWritableKeyPath<Recipe, Bool>,
         of recipe: Recipe,
+        from generation: Int,
         _ write: () async throws -> Void
     ) async throws {
-        recipe[keyPath: flag] = false
-        do {
-            try await write()
-        } catch {
-            recipe[keyPath: flag] = true
-            throw error
-        }
+        try await write()
+        if recipe.editGeneration == generation { recipe[keyPath: flag] = false }
     }
 
     /// Keeps a corpus Recipe. A grid carries summaries, which have neither ingredients nor

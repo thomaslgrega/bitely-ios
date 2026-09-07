@@ -42,6 +42,10 @@ final class Recipe {
     /// The two legs of an Unshared Edit, stored and cleared separately — ADR-0003.
     var unsharedTextEdit: Bool = false
     var unsharedImageEdit: Bool = false
+    /// How many times this Recipe has been saved, so a push can tell whether the edit it
+    /// carried is still the newest one. Transient: it orders one session's writes and means
+    /// nothing across a launch, where the two flags above are the durable record — ADR-0003.
+    @Transient var editGeneration: Int = 0
     var calories: Int?
     var totalCookTime: Int?
 

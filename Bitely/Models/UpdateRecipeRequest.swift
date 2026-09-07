@@ -16,9 +16,8 @@ struct UpdateRecipeRequest: Encodable {
     }
 }
 
-/// The write replaces a Recipe's Ingredients wholesale and stores the ids it is given, so
-/// the local id goes up for want of the server's — a Recipe kept from the corpus mints its
-/// own. Nothing reads an Ingredient by id across the boundary, so the two never have to agree.
+/// The local id goes up for want of the server's: a Recipe kept from the corpus mints its
+/// own, and nothing reads an Ingredient by id across the boundary — `bitelyapi` ADR-0006.
 struct UpdateIngredientRequest: Encodable {
     let id: String
     let name: String

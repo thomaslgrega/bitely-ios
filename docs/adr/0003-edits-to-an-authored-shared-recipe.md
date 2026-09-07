@@ -6,8 +6,7 @@ status: accepted
 
 `Cookbook.commit` writes to the `ModelContext` and nothing reaches the API, so a user who
 edits a Recipe they authored and shared leaves the corpus serving the old one. `bitelyapi`
-ADR-0006 settles the wire shape this needs: `PUT /recipes/{id}` carries no image, and the
-Recipe Image moved to `PUT /recipes/{id}/image` and `DELETE /recipes/{id}/image`.
+ADR-0006 settles the wire shape this needs and owns it.
 
 The local write is authoritative and always succeeds. The push to the corpus is
 best-effort, and what it leaves behind when it fails is an **Unshared Edit**: two flags on
@@ -42,10 +41,10 @@ make the drift visible for one session and invisible forever after.
 and would earn its own ADR if it were ever wanted. Nothing here queues: the flags say the
 device is ahead, and the next push makes the corpus match.
 
-**One flag rather than two.** `bitelyapi` ADR-0006 orders a save image-first, so the common
-failure is the text leg failing after the image leg landed. A single flag would re-run both
-on retry: a second presign, a second transfer of the same bytes, and an orphaned object in
-the bucket. Two flags cost one `@Model` property.
+**One flag rather than two.** A save is written in the order `bitelyapi` ADR-0006 sets, so
+the common failure leaves one leg landed and the other not. A single flag would re-run both
+on retry: a second transfer of the same bytes, and an orphaned object in the bucket. Two
+flags cost one `@Model` property.
 
 **Storing the staged key instead of a second flag** would let a retry skip the upload it
 already did. The presigned URL expires in five minutes and any retry worth having is later
@@ -69,10 +68,19 @@ ever meeting.
 A push in flight does not block a save. The save re-marks the flags and the running push
 loops, so the last edit reaches the corpus without the user touching anything.
 
+A flag is cleared only once the response that lands its leg has arrived, never before it,
+so an app killed mid-push still finds the edit recorded on the next launch. Telling a save
+made during a push from the one the push is carrying therefore needs a second signal, and
+that is a transient generation count: it orders one session's writes, and a launch that has
+forgotten it is a launch where the durable flags are the whole truth anyway.
+
+A pending edit belongs to the account that made it. Signing in as someone else files that
+Recipe under Saved, and a Saved Recipe neither sends nor offers a retry — so the edit waits
+rather than going up under the wrong name, and comes back when its author returns.
+
 The detail screen retries on appearance. That is the one place the state is visible and the
 one place the edit was made from, so nothing sweeps the store and nothing observes the
 scene phase.
 
-The Recipe's `imageURL` is rewritten from the `200` that `PUT .../image` answers, because
-the promoted key is server-minted and a `204` would force a `GET` to learn where the photo
-landed (`bitelyapi` ADR-0006).
+The Recipe's `imageURL` is rewritten from what the image write answers rather than from a
+later read, per `bitelyapi` ADR-0006.

@@ -12,17 +12,20 @@ struct UnsharedEditControl: Equatable {
         case presentAuth
     }
 
-    let isShared: Bool
+    /// Whether this user authored the Shared Recipe, not merely whether it is Shared: a
+    /// pending edit left by another account is that account's to send, and this one is not
+    /// offered the retry for it.
+    let isAuthored: Bool
     let hasUnsharedEdit: Bool
-    let editState: ShareState?
+    let editState: CorpusWriteState?
 
-    init(isShared: Bool, hasUnsharedEdit: Bool, editState: ShareState? = nil) {
-        self.isShared = isShared
+    init(isAuthored: Bool, hasUnsharedEdit: Bool, editState: CorpusWriteState? = nil) {
+        self.isAuthored = isAuthored
         self.hasUnsharedEdit = hasUnsharedEdit
         self.editState = editState
     }
 
-    var isOffered: Bool { isShared && hasUnsharedEdit }
+    var isOffered: Bool { isAuthored && hasUnsharedEdit }
 
     var label: String {
         switch editState {
@@ -37,12 +40,3 @@ struct UnsharedEditControl: Equatable {
     var tap: Tap { editState == .needsSignIn ? .presentAuth : .push }
 }
 
-extension UnsharedEditControl {
-    init(recipe: Recipe, editState: ShareState? = nil) {
-        self.init(
-            isShared: !recipe.isPrivate,
-            hasUnsharedEdit: recipe.hasUnsharedEdit,
-            editState: editState
-        )
-    }
-}

@@ -38,7 +38,9 @@ private func pushTransport(_ faults: PushFaults) -> StubTransport {
 
         switch (url.host, url.path, method) {
         case (_, "/me/recipes", _):
-            body = authorshipBody
+            // Authorship is the account's, so a second account authored none of it.
+            let isOwner = request.value(forHTTPHeaderField: "Authorization") == "Bearer token"
+            body = isOwner ? authorshipBody : "[]"
         case (_, "/recipes/images", _):
             faults.during?(.presign)
             if faults.leg == .presign {
@@ -328,7 +330,7 @@ struct EditPushTests {
             guard leg == .text, !edited else { return }
             edited = true
             recipe.name = "Braised Short Rib"
-            recipe.unsharedTextEdit = true
+            recipe.editGeneration += 1
         }
 
         await cookbook.push(recipe)
@@ -355,6 +357,61 @@ struct EditPushTests {
 
         #expect(cookbook.editState(of: recipe) == .needsSignIn)
         #expect(recipe.unsharedTextEdit)
+    }
+
+    /// The flag is what survives a kill, so clearing it before the response landed would let
+    /// an app killed mid-push forget an edit the corpus never received — ADR-0003.
+    @Test("The pending flag stands until the response that lands its leg has arrived")
+    func theFlagOutlivesTheRequestItIsWaitingOn() async throws {
+        let faults = PushFaults()
+        let (cookbook, _, _) = makePusher(faults)
+        await cookbook.loadAuthorship()
+        let context = try makeContext()
+        let recipe = authored()
+        cookbook.commit(recipe, photoEdited: false, into: context)
+
+        var pendingWhileInFlight: Bool?
+        faults.during = { leg in
+            guard leg == .text else { return }
+            pendingWhileInFlight = recipe.unsharedTextEdit
+        }
+
+        await cookbook.push(recipe)
+
+        #expect(pendingWhileInFlight == true)
+        #expect(recipe.unsharedTextEdit == false)
+    }
+
+    /// Issue #57: the branch is authorship, and a Saved Recipe stays local forever. A pending
+    /// edit is the account's that made it, so it is neither sent nor offered under another.
+    @Test("An edit left pending by one account is not sent or offered under another")
+    func aPendingEditDoesNotFollowTheAccount() async throws {
+        let faults = PushFaults(leg: .text)
+        let (cookbook, transport, auth) = makePusher(faults)
+        await cookbook.loadAuthorship()
+        let context = try makeContext()
+        let recipe = authored()
+        cookbook.commit(recipe, photoEdited: false, into: context)
+        await cookbook.push(recipe)
+        #expect(recipe.unsharedTextEdit)
+
+        faults.leg = nil
+        auth.setSession(
+            token: "someone-else",
+            user: User(id: "u2", email: "sam@example.com", firstName: "Sam", lastName: nil)
+        )
+        await cookbook.loadAuthorship()
+        let before = pushRequests(transport).count
+
+        await cookbook.push(recipe)
+
+        #expect(pushRequests(transport).count == before)
+        #expect(recipe.unsharedTextEdit)
+        let control = UnsharedEditControl(
+            isAuthored: cookbook.propagatesEdits(to: recipe),
+            hasUnsharedEdit: recipe.hasUnsharedEdit
+        )
+        #expect(control.isOffered == false)
     }
 
     /// The detail screen pushes on every appearance, so without this a refused Recipe would
@@ -478,22 +535,22 @@ struct EditPushTests {
 @Suite("The Unshared Edit control")
 struct UnsharedEditControlTests {
 
-    @Test("It reports on a Shared Recipe with an Unshared Edit and on nothing else",
+    @Test("It reports on an authored Shared Recipe with an Unshared Edit and on nothing else",
           arguments: [
-            (isShared: true, hasEdit: true, offered: true),
-            (isShared: true, hasEdit: false, offered: false),
-            (isShared: false, hasEdit: true, offered: false),
-            (isShared: false, hasEdit: false, offered: false)
+            (isAuthored: true, hasEdit: true, offered: true),
+            (isAuthored: true, hasEdit: false, offered: false),
+            (isAuthored: false, hasEdit: true, offered: false),
+            (isAuthored: false, hasEdit: false, offered: false)
           ])
-    func itIsOfferedOnlyWhereThereIsDrift(isShared: Bool, hasEdit: Bool, offered: Bool) {
-        let control = UnsharedEditControl(isShared: isShared, hasUnsharedEdit: hasEdit)
+    func itIsOfferedOnlyWhereThereIsDrift(isAuthored: Bool, hasEdit: Bool, offered: Bool) {
+        let control = UnsharedEditControl(isAuthored: isAuthored, hasUnsharedEdit: hasEdit)
 
         #expect(control.isOffered == offered)
     }
 
     @Test("A push in flight says so and cannot be asked for again")
     func aPushInFlightSaysSo() {
-        let control = UnsharedEditControl(isShared: true, hasUnsharedEdit: true, editState: .inFlight)
+        let control = UnsharedEditControl(isAuthored: true, hasUnsharedEdit: true, editState: .inFlight)
 
         #expect(control.label == "Sharing changes…")
         #expect(control.isEnabled == false)
@@ -501,7 +558,7 @@ struct UnsharedEditControlTests {
 
     @Test("A failed push offers the retry directly")
     func aFailedPushOffersARetry() {
-        let control = UnsharedEditControl(isShared: true, hasUnsharedEdit: true, editState: .failed)
+        let control = UnsharedEditControl(isAuthored: true, hasUnsharedEdit: true, editState: .failed)
 
         #expect(control.label == "Changes not shared — tap to retry")
         #expect(control.isEnabled)
@@ -512,7 +569,7 @@ struct UnsharedEditControlTests {
     /// the same thing, because to the user those are one situation.
     @Test("An edit that has not been attempted reads as one to retry")
     func anUnattemptedEditReadsTheSame() {
-        let control = UnsharedEditControl(isShared: true, hasUnsharedEdit: true)
+        let control = UnsharedEditControl(isAuthored: true, hasUnsharedEdit: true)
 
         #expect(control.label == "Changes not shared — tap to retry")
         #expect(control.tap == .push)
@@ -520,7 +577,7 @@ struct UnsharedEditControlTests {
 
     @Test("A push refused for the session offers auth rather than a retry")
     func aRefusedPushOffersAuth() {
-        let control = UnsharedEditControl(isShared: true, hasUnsharedEdit: true, editState: .needsSignIn)
+        let control = UnsharedEditControl(isAuthored: true, hasUnsharedEdit: true, editState: .needsSignIn)
 
         #expect(control.label == "Sign in again to share changes")
         #expect(control.tap == .presentAuth)
@@ -532,11 +589,11 @@ struct UnsharedEditControlTests {
     func theTwoControlsDoNotOverlap() {
         let onShared = (
             share: ShareControl(isPrivate: false, isAuthenticated: true),
-            edits: UnsharedEditControl(isShared: true, hasUnsharedEdit: true)
+            edits: UnsharedEditControl(isAuthored: true, hasUnsharedEdit: true)
         )
         let onPrivate = (
             share: ShareControl(isPrivate: true, isAuthenticated: true),
-            edits: UnsharedEditControl(isShared: false, hasUnsharedEdit: true)
+            edits: UnsharedEditControl(isAuthored: false, hasUnsharedEdit: true)
         )
 
         #expect(onShared.share.isOffered == false)
