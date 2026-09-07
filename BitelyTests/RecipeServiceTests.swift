@@ -143,13 +143,21 @@ struct RecipeServiceTests {
         #expect(created.id == "r1")
     }
 
-    @Test("editRecipe PUTs to the recipe's own path")
+    /// The id is the path's alone, and the write carries no image field at all: a body naming
+    /// `image_key` is refused by name — `bitelyapi` ADR-0006.
+    @Test("editRecipe PUTs the whole Recipe to its own path, naming neither id nor image")
     func editRecipe() async throws {
-        let transport = StubTransport.status(200)
+        let transport = StubTransport.status(204)
         let service = makeService(transport: transport)
-        let detail = try JSONDecoder().decode(RecipeDetailDTO.self, from: Data(detailPayload.utf8))
+        let recipe = Recipe(
+            remoteId: "r1",
+            name: "Shakshuka",
+            category: .breakfast,
+            ingredients: [Ingredient(name: "eggs", measurement: "4")],
+            totalCookTime: 25
+        )
 
-        try await service.editRecipe(recipe: detail)
+        try await service.editRecipe(id: "r1", recipe: UpdateRecipeRequest(recipe))
 
         let sent = try #require(transport.lastRequest)
         #expect(sent.httpMethod == "PUT")
@@ -157,8 +165,38 @@ struct RecipeServiceTests {
 
         let body = try #require(sent.httpBody)
         let object = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
-        #expect(object["id"] as? String == "r1")
         #expect(object["total_cook_time"] as? Int == 25)
+        #expect(object["id"] == nil)
+        #expect(object["image_key"] == nil)
+        #expect(object["image_url"] == nil)
+    }
+
+    @Test("Setting a Recipe Image claims the staged key and answers where it now serves from")
+    func setRecipeImage() async throws {
+        let transport = StubTransport.json(#"{"image_url":"https://pub.example/recipes/r1/7c1.jpg"}"#)
+        let service = makeService(transport: transport)
+
+        let url = try await service.setRecipeImage(id: "r1", key: "incoming/abc")
+
+        let sent = try #require(transport.lastRequest)
+        #expect(sent.httpMethod == "PUT")
+        #expect(sent.url?.path == "/recipes/r1/image")
+        let body = try #require(sent.httpBody)
+        let object = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        #expect(object["image_key"] as? String == "incoming/abc")
+        #expect(url == "https://pub.example/recipes/r1/7c1.jpg")
+    }
+
+    @Test("Removing a Recipe Image deletes the sub-resource")
+    func deleteRecipeImage() async throws {
+        let transport = StubTransport.status(204)
+        let service = makeService(transport: transport)
+
+        try await service.deleteRecipeImage(id: "r1")
+
+        let sent = try #require(transport.lastRequest)
+        #expect(sent.httpMethod == "DELETE")
+        #expect(sent.url?.path == "/recipes/r1/image")
     }
 
     private let matchPayload = #"""

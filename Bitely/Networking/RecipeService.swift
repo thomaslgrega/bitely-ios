@@ -1,5 +1,22 @@
 import Foundation
 
+/// What `PUT /recipes/{id}/image` claims, and what it answers.
+struct RecipeImageRequest: Encodable {
+    let imageKey: String
+
+    enum CodingKeys: String, CodingKey {
+        case imageKey = "image_key"
+    }
+}
+
+struct RecipeImageLocation: Decodable {
+    let imageUrl: String
+
+    enum CodingKeys: String, CodingKey {
+        case imageUrl = "image_url"
+    }
+}
+
 @Observable
 final class RecipeService {
     private let api: APIClient
@@ -60,9 +77,24 @@ final class RecipeService {
         return try await api.request(path: "recipes", method: "POST", body: data, requiresAuth: true)
     }
 
-    func editRecipe(recipe: RecipeDetailDTO) async throws {
+    func editRecipe(id: String, recipe: UpdateRecipeRequest) async throws {
         let data = try JSONEncoder().encode(recipe)
-        try await api.requestNoResponse(path: "recipes/\(recipe.id)", method: "PUT", body: data, requiresAuth: true)
+        try await api.requestNoResponse(path: "recipes/\(id)", method: "PUT", body: data, requiresAuth: true)
+    }
+
+    /// Points a Shared Recipe at a staged upload and answers where the photo now serves
+    /// from — `bitelyapi` ADR-0006.
+    func setRecipeImage(id: String, key: String) async throws -> String {
+        let body = try JSONEncoder().encode(RecipeImageRequest(imageKey: key))
+        let location: RecipeImageLocation = try await api.request(
+            path: "recipes/\(id)/image", method: "PUT", body: body, requiresAuth: true
+        )
+        return location.imageUrl
+    }
+
+    /// Idempotent, so a retried save cannot fail on its second attempt — `bitelyapi` ADR-0006.
+    func deleteRecipeImage(id: String) async throws {
+        try await api.requestNoResponse(path: "recipes/\(id)/image", method: "DELETE", requiresAuth: true)
     }
 }
 

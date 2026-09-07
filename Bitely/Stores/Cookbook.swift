@@ -61,16 +61,18 @@ struct HeldRecipes {
     func contains(_ remoteId: String) -> Bool { byRemoteId[remoteId] != nil }
 }
 
-/// Where one Recipe's share got to. Absent means nothing has been attempted, or the last
-/// attempt landed. Session-only and keyed by local Recipe id — ADR-0002.
+/// Where one Recipe's write to the corpus got to — the share that publishes it, or the push
+/// that carries a later edit. Absent means nothing has been attempted, or the last attempt
+/// landed. Session-only and keyed by local Recipe id — ADR-0002. What a failed push leaves
+/// behind for the next session is on the Recipe instead — ADR-0003.
 enum ShareState: Equatable {
     case inFlight
     case failed
     case needsSignIn
 }
 
-/// A share abandoned because the account moved under it. The staged key is bound to no one
-/// until the create claims it, so stopping there publishes nothing.
+/// A write abandoned because the account moved under it, rather than filing one user's
+/// Recipe under another's name.
 private struct AccountChanged: Error {}
 
 /// Which of the device's Recipes this user wrote, for the length of a session.
@@ -96,9 +98,11 @@ final class Cookbook {
     /// The saves whose fetch is still in flight. The heart only fills on the insert, so a
     /// second tap during the fetch is the same save asked for twice and is dropped.
     private var saving: Set<String> = []
-    /// Where each Recipe's share got to, by local id. In memory for the session, because an
-    /// app killed mid-share has shared nothing and the Recipe is still Private — ADR-0002.
-    private var shares: [UUID: ShareState] = [:]
+    /// Where each Recipe's write to the corpus got to, by local id. In memory for the
+    /// session, because an app killed mid-share has shared nothing and the Recipe is still
+    /// Private — ADR-0002. A Recipe is Private or Shared and never both, so a share and a
+    /// push never contend for the same entry.
+    private var writes: [UUID: ShareState] = [:]
     /// The session each refusal was raised against, so signing in again makes it stale
     /// rather than leaving the Recipe offering the sheet it has already been through.
     private var refusals: [UUID: String] = [:]
@@ -192,8 +196,14 @@ final class Cookbook {
 
     /// The state a view draws the Share button from. It lives here rather than on the
     /// Recipe, so `@Query` never sees it — ADR-0002.
-    func shareState(of recipe: Recipe) -> ShareState? {
-        let state = shares[recipe.id]
+    func shareState(of recipe: Recipe) -> ShareState? { writeState(of: recipe) }
+
+    /// The same for the push that carries an edit. A Recipe is Private or Shared, so only
+    /// one of the two controls ever reads this.
+    func editState(of recipe: Recipe) -> ShareState? { writeState(of: recipe) }
+
+    private func writeState(of recipe: Recipe) -> ShareState? {
+        let state = writes[recipe.id]
         guard state == .needsSignIn else { return state }
         return refusals[recipe.id] == authStore.accessToken ? .needsSignIn : nil
     }
@@ -212,8 +222,8 @@ final class Cookbook {
     /// the upload runs — read afterwards, either publishes something the user never
     /// confirmed.
     func share(_ recipe: Recipe) async {
-        guard shares[recipe.id] != .inFlight else { return }
-        shares[recipe.id] = .inFlight
+        guard writes[recipe.id] != .inFlight else { return }
+        writes[recipe.id] = .inFlight
         refusals[recipe.id] = nil
 
         let session = authStore.accessToken
@@ -241,12 +251,9 @@ final class Cookbook {
             recipe.remoteId = shared.id
             recipe.imageURL = shared.imageUrl
             recordAuthorship(of: shared)
-            shares[recipe.id] = nil
-        } catch let error as APIError where error.statusCode == 401 {
-            shares[recipe.id] = .needsSignIn
-            refusals[recipe.id] = session
+            writes[recipe.id] = nil
         } catch {
-            shares[recipe.id] = .failed
+            record(error, for: recipe, against: session)
         }
     }
 
@@ -275,12 +282,106 @@ final class Cookbook {
         loadedForSession = nil
     }
 
-    /// Editing is local for every Recipe in the Cookbook, whoever authored it: adding salt
-    /// to a Saved Recipe writes to the local copy and never reaches the API, which is why
-    /// gating sharing costs the user nothing — docs/design/app-flow.md, Cookbook.
-    func commit(_ recipe: Recipe, into context: ModelContext) {
-        guard recipe.modelContext == nil else { return }
-        context.insert(recipe)
+    /// Saves an edit. The local write always stands; where else it goes follows authorship.
+    /// A Saved Recipe stays local because it is someone else's work, a Private Recipe has
+    /// nowhere to go, and this user's own Shared Recipe pushes — ADR-0003.
+    func commit(_ recipe: Recipe, photoEdited: Bool, into context: ModelContext) {
+        if recipe.modelContext == nil { context.insert(recipe) }
+        guard pushes(recipe) else { return }
+
+        recipe.unsharedTextEdit = true
+        recipe.unsharedImageEdit = recipe.unsharedImageEdit || photoEdited
+        beginPush(recipe)
+    }
+
+    /// Whether an edit to this Recipe is owed to the corpus. Signed out the device cannot
+    /// tell this user's own Shared Recipes from the ones they saved, so it records nothing
+    /// rather than flagging someone else's work — ADR-0003.
+    private func pushes(_ recipe: Recipe) -> Bool {
+        guard recipe.remoteId != nil, authStore.accessToken != nil else { return false }
+        return hasResolvedAuthorship && segment(for: recipe) == .myRecipes
+    }
+
+    /// Fired rather than awaited, for the reason a share is — ADR-0002.
+    func beginPush(_ recipe: Recipe) {
+        Task { await push(recipe) }
+    }
+
+    /// Carries an Unshared Edit to the corpus, looping so that a save made while it ran is
+    /// pushed too — ADR-0003. A Recipe refused for the current session is left alone: the
+    /// control is offering the sheet, and re-firing on every appearance would talk over it.
+    func push(_ recipe: Recipe) async {
+        guard let remoteId = recipe.remoteId,
+              recipe.hasUnsharedEdit,
+              writes[recipe.id] != .inFlight,
+              writeState(of: recipe) != .needsSignIn else { return }
+        writes[recipe.id] = .inFlight
+        refusals[recipe.id] = nil
+
+        while recipe.hasUnsharedEdit {
+            guard await attemptPush(recipe, to: remoteId) else { return }
+        }
+        writes[recipe.id] = nil
+    }
+
+    /// One pass at both legs, image first so a failure there has changed nothing —
+    /// `bitelyapi` ADR-0006. Everything it sends is read when it runs, so a retry carries
+    /// the newest edit rather than replaying a failed one.
+    private func attemptPush(_ recipe: Recipe, to remoteId: String) async -> Bool {
+        let session = authStore.accessToken
+
+        do {
+            if recipe.unsharedImageEdit {
+                let image = stagedImage(of: recipe)
+                try await leg(\.unsharedImageEdit, of: recipe) {
+                    if let image {
+                        let key = try await self.service.uploadImage(image)
+                        recipe.imageURL = try await self.service.setRecipeImage(id: remoteId, key: key)
+                    } else {
+                        try await self.service.deleteRecipeImage(id: remoteId)
+                        recipe.imageURL = nil
+                    }
+                }
+            }
+
+            let update = UpdateRecipeRequest(recipe)
+            try await leg(\.unsharedTextEdit, of: recipe) {
+                guard self.authStore.accessToken == session else { throw AccountChanged() }
+                try await self.service.editRecipe(id: remoteId, recipe: update)
+            }
+            return true
+        } catch {
+            record(error, for: recipe, against: session)
+            return false
+        }
+    }
+
+    /// Where a share and a push both report what stopped them. A 401 is the one failure a
+    /// retry cannot fix, so it asks for the account rather than offering the tap again.
+    private func record(_ error: Error, for recipe: Recipe, against session: String?) {
+        if let error = error as? APIError, error.statusCode == 401 {
+            writes[recipe.id] = .needsSignIn
+            refusals[recipe.id] = session
+        } else {
+            writes[recipe.id] = .failed
+        }
+    }
+
+    /// Runs one leg of a push with its flag already cleared, so a save made while the leg is
+    /// in flight re-marks it rather than being cleared by the response it beat. A failure
+    /// puts the mark back, leaving exactly what did not land to retry.
+    private func leg(
+        _ flag: ReferenceWritableKeyPath<Recipe, Bool>,
+        of recipe: Recipe,
+        _ write: () async throws -> Void
+    ) async throws {
+        recipe[keyPath: flag] = false
+        do {
+            try await write()
+        } catch {
+            recipe[keyPath: flag] = true
+            throw error
+        }
     }
 
     /// Keeps a corpus Recipe. A grid carries summaries, which have neither ingredients nor

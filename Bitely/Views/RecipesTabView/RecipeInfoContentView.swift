@@ -26,6 +26,10 @@ struct RecipeInfoContentView: View {
         )
     }
 
+    private var editControl: UnsharedEditControl {
+        UnsharedEditControl(recipe: recipe, editState: cookbook.editState(of: recipe))
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.xl) {
@@ -54,6 +58,9 @@ struct RecipeInfoContentView: View {
             .padding(.bottom, Spacing.xxxl)
         }
         .background(Color.surface)
+        // An Unshared Edit outlives the session that made it, so the one screen that reports
+        // it is also where it is retried — ADR-0003.
+        .task { cookbook.beginPush(recipe) }
         .alert("Do you want to share this recipe?", isPresented: $showShareAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Share") { cookbook.beginShare(recipe) }
@@ -117,6 +124,14 @@ struct RecipeInfoContentView: View {
                 .buttonStyle(.secondary)
                 .disabled(!shareControl.isEnabled)
             }
+
+            if editControl.isOffered {
+                Button(action: pushEdit) {
+                    Label(editControl.label, systemImage: "arrow.up.circle")
+                }
+                .buttonStyle(.secondary)
+                .disabled(!editControl.isEnabled)
+            }
         }
     }
 
@@ -156,6 +171,15 @@ struct RecipeInfoContentView: View {
         switch shareControl.tap {
         case .confirmShare: showShareAlert = true
         case .share: cookbook.beginShare(recipe)
+        case .presentAuth: showAuthSheet = true
+        }
+    }
+
+    /// A push needs no confirmation: the user already confirmed the edit by saving it, and
+    /// the Recipe is Shared either way.
+    private func pushEdit() {
+        switch editControl.tap {
+        case .push: cookbook.beginPush(recipe)
         case .presentAuth: showAuthSheet = true
         }
     }
