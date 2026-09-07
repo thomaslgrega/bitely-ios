@@ -1,9 +1,9 @@
 import PhotosUI
 import SwiftUI
 
-/// Editing is local and available on every Recipe in the Cookbook, whoever authored it.
-/// Adding salt to a Saved Recipe writes to the local copy and never reaches the API —
-/// which is why gating sharing costs the user nothing. docs/design/app-flow.md, Cookbook.
+/// Editing is offered on every Recipe in the Cookbook, and `Cookbook.commit` decides where
+/// the edit lands: local only for a Saved Recipe, and pushed to the corpus for a Shared
+/// Recipe this user authored — ADR-0003, docs/design/app-flow.md, Cookbook.
 struct EditRecipeView: View {
     @Environment(Cookbook.self) private var cookbook
     @Environment(\.modelContext) var modelContext
@@ -183,7 +183,7 @@ struct EditRecipeView: View {
             recipe.imageData = selectedImage.flatMap { RecipeImageEncoder.encode($0) }?.data
         }
 
-        cookbook.commit(recipe, into: modelContext)
+        cookbook.commit(recipe, photoEdited: photoEdited, into: modelContext)
         dismiss()
     }
 }

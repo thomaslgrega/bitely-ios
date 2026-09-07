@@ -39,6 +39,13 @@ final class Recipe {
     /// Renamed with the API's field — `bitelyapi` ADR-0006 — so stored Recipes keep theirs.
     @Attribute(originalName: "thumbnailURL") var imageURL: String?
     var imageData: Data?
+    /// The two legs of an Unshared Edit, stored and cleared separately — ADR-0003.
+    var unsharedTextEdit: Bool = false
+    var unsharedImageEdit: Bool = false
+    /// How many times this Recipe has been saved, so a push can tell whether the edit it
+    /// carried is still the newest one. Transient: it orders one session's writes and means
+    /// nothing across a launch, where the two flags above are the durable record — ADR-0003.
+    @Transient var editGeneration: Int = 0
     var calories: Int?
     var totalCookTime: Int?
 
@@ -75,6 +82,11 @@ final class Recipe {
         self.calories = calories
         self.totalCookTime = totalCookTime
     }
+}
+
+extension Recipe {
+    /// Whether the device is ahead of the corpus for this Recipe.
+    var hasUnsharedEdit: Bool { unsharedTextEdit || unsharedImageEdit }
 }
 
 extension Recipe {

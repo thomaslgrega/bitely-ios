@@ -84,10 +84,16 @@ cannot be re-shared under this user's name. Signed out, the action presents the
 auth sheet at the moment of sharing, where the intent is unambiguous and there is
 no half-filled form to lose. Switching segments never presents a sheet.
 
-**Editing** is local and available on every Recipe in the Cookbook regardless of
-who authored it. Adding salt or raising the oven temperature on a Saved Recipe
+**Editing** is available on every Recipe in the Cookbook, and where it lands
+follows authorship. Adding salt or raising the oven temperature on a Saved Recipe
 writes to the local copy only and never reaches the API — which is why gating
-sharing costs the user nothing.
+sharing costs the user nothing. A Private Recipe has nowhere else to go. Editing a
+Shared Recipe this user authored writes to the device first and then pushes to the
+corpus, because the corpus is public and would otherwise serve the old Recipe. The
+local write always stands; a push that fails leaves an Unshared Edit on that Recipe,
+which its detail screen reports and retries — ADR-0003. Signed out, an edit stays
+local: the device cannot tell this user's own Shared Recipes from the ones they
+saved until `me/recipes` has answered.
 
 **Unsaving** always confirms. It deletes a local Recipe whose Ingredients and
 instructions may have been edited, and the new control is a heart, light enough

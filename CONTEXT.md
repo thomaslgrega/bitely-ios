@@ -18,6 +18,14 @@ from other people.
 _Avoid_: Library, collection, "my recipes" as a name for the whole Cookbook —
 it names one of the two segments
 
+### Publishing
+
+**Unshared Edit**:
+An edit to a Shared Recipe this user authored that the corpus has not received. The
+device is ahead, and the Recipe's detail screen says so until it is not — ADR-0003.
+Editing a Saved Recipe never makes one: that is someone else's work and stays local.
+_Avoid_: Unsynced, unpublished change, pending change, draft
+
 ### Discovery
 
 **Today's Picks**:

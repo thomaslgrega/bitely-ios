@@ -346,7 +346,7 @@ struct CookbookTests {
         let (cookbook, _, _) = makeCookbook()
         let context = try makeContext()
         let saved = someoneElses()
-        cookbook.commit(saved, into: context)
+        cookbook.commit(saved, photoEdited: false, into: context)
         try context.save()
 
         // The tap raises the confirmation rather than unsaving, so nothing is gone yet.
@@ -372,11 +372,11 @@ struct CookbookTests {
             category: .breakfast,
             ingredients: [Ingredient(name: "eggs", measurement: "4")]
         )
-        cookbook.commit(saved, into: context)
+        cookbook.commit(saved, photoEdited: false, into: context)
         try context.save()
 
         saved.ingredients.append(Ingredient(name: "salt", measurement: "1 tsp"))
-        cookbook.commit(saved, into: context)
+        cookbook.commit(saved, photoEdited: false, into: context)
         try context.save()
 
         let stored = try #require(try context.fetch(FetchDescriptor<Recipe>()).first)
@@ -391,8 +391,8 @@ struct CookbookTests {
         let context = try makeContext()
         let recipe = privateRecipe()
 
-        cookbook.commit(recipe, into: context)
-        cookbook.commit(recipe, into: context)
+        cookbook.commit(recipe, photoEdited: false, into: context)
+        cookbook.commit(recipe, photoEdited: false, into: context)
         try context.save()
 
         #expect(try context.fetch(FetchDescriptor<Recipe>()).count == 1)

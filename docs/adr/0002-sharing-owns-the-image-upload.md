@@ -74,3 +74,7 @@ shared.
 The failed state is keyed by local Recipe id and lives in memory, so it is invisible
 to `@Query` and cannot be observed by a view that only holds a `Recipe`. Views read
 it through `Cookbook`, the way they already ask `offersSaving(of:)`.
+
+ADR-0003 gives the app the `PUT` path whose absence is cited above, so fail-closed now
+stands on its own terms — a partial share is still a public Recipe the user did not
+confirm — rather than on the reason recorded here.
